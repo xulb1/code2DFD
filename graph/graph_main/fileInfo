@@ -1,0 +1,445 @@
+{
+  "fileInfos" : [ {
+    "path" : "code2DFD.py",
+    "modificationInfo" : {
+      "contentHash" : -1611203567,
+      "lastModified" : 1750757694858
+    },
+    "linesOfCode" : 118
+  }, {
+    "path" : "core/DFD.py",
+    "modificationInfo" : {
+      "contentHash" : 597914269,
+      "lastModified" : 1750687965771
+    },
+    "linesOfCode" : 49
+  }, {
+    "path" : "core/dfd_extraction.py",
+    "modificationInfo" : {
+      "contentHash" : -533829326,
+      "lastModified" : 1750687965771
+    },
+    "linesOfCode" : 484
+  }, {
+    "path" : "core/external_components.py",
+    "modificationInfo" : {
+      "contentHash" : -1603065314,
+      "lastModified" : 1750687965771
+    },
+    "linesOfCode" : 77
+  }, {
+    "path" : "core/external_entity.py",
+    "modificationInfo" : {
+      "contentHash" : -450705731,
+      "lastModified" : 1750687965771
+    },
+    "linesOfCode" : 17
+  }, {
+    "path" : "core/file_interaction.py",
+    "modificationInfo" : {
+      "contentHash" : -576616693,
+      "lastModified" : 1750687965771
+    },
+    "linesOfCode" : 459
+  }, {
+    "path" : "core/information_flow.py",
+    "modificationInfo" : {
+      "contentHash" : -1332864070,
+      "lastModified" : 1750687965771
+    },
+    "linesOfCode" : 19
+  }, {
+    "path" : "core/parse_files.py",
+    "modificationInfo" : {
+      "contentHash" : 949495619,
+      "lastModified" : 1750687965771
+    },
+    "linesOfCode" : 767
+  }, {
+    "path" : "core/service.py",
+    "modificationInfo" : {
+      "contentHash" : -1408009798,
+      "lastModified" : 1750687965772
+    },
+    "linesOfCode" : 17
+  }, {
+    "path" : "core/technology_switch.py",
+    "modificationInfo" : {
+      "contentHash" : -1055608264,
+      "lastModified" : 1750687965772
+    },
+    "linesOfCode" : 58
+  }, {
+    "path" : "flask_code2DFD.py",
+    "modificationInfo" : {
+      "contentHash" : -552929115,
+      "lastModified" : 1750750723510
+    },
+    "linesOfCode" : 39
+  }, {
+    "path" : "microservice_dfds_metamodel.py",
+    "modificationInfo" : {
+      "contentHash" : 1192929252,
+      "lastModified" : 1750687965772
+    },
+    "linesOfCode" : 93
+  }, {
+    "path" : "output_generators/codeable_model.py",
+    "modificationInfo" : {
+      "contentHash" : -450717541,
+      "lastModified" : 1750687965772
+    },
+    "linesOfCode" : 162
+  }, {
+    "path" : "output_generators/codeable_models_to_plantuml.py",
+    "modificationInfo" : {
+      "contentHash" : -590248429,
+      "lastModified" : 1750687965772
+    },
+    "linesOfCode" : 212
+  }, {
+    "path" : "output_generators/json_architecture.py",
+    "modificationInfo" : {
+      "contentHash" : 714468916,
+      "lastModified" : 1750687965772
+    },
+    "linesOfCode" : 23
+  }, {
+    "path" : "output_generators/json_edges.py",
+    "modificationInfo" : {
+      "contentHash" : -1071728659,
+      "lastModified" : 1750687965772
+    },
+    "linesOfCode" : 43
+  }, {
+    "path" : "output_generators/logger.py",
+    "modificationInfo" : {
+      "contentHash" : -450858385,
+      "lastModified" : 1750687965772
+    },
+    "linesOfCode" : 25
+  }, {
+    "path" : "output_generators/plaintext.py",
+    "modificationInfo" : {
+      "contentHash" : 859941635,
+      "lastModified" : 1750687965772
+    },
+    "linesOfCode" : 30
+  }, {
+    "path" : "output_generators/traceability.py",
+    "modificationInfo" : {
+      "contentHash" : -1597016173,
+      "lastModified" : 1750687965773
+    },
+    "linesOfCode" : 164
+  }, {
+    "path" : "output_generators/visualizer.py",
+    "modificationInfo" : {
+      "contentHash" : 677496958,
+      "lastModified" : 1750687965773
+    },
+    "linesOfCode" : 19
+  }, {
+    "path" : "technology_specific_extractors/apache_httpd/aph_entry.py",
+    "modificationInfo" : {
+      "contentHash" : 844870357,
+      "lastModified" : 1750687965795
+    },
+    "linesOfCode" : 191
+  }, {
+    "path" : "technology_specific_extractors/circuit_breaker/cbr_entry.py",
+    "modificationInfo" : {
+      "contentHash" : 928380206,
+      "lastModified" : 1750687965800
+    },
+    "linesOfCode" : 60
+  }, {
+    "path" : "technology_specific_extractors/consul/cns_entry.py",
+    "modificationInfo" : {
+      "contentHash" : -1605592583,
+      "lastModified" : 1750687965800
+    },
+    "linesOfCode" : 46
+  }, {
+    "path" : "technology_specific_extractors/database_connections/dbc_entry.py",
+    "modificationInfo" : {
+      "contentHash" : -92644516,
+      "lastModified" : 1750687965800
+    },
+    "linesOfCode" : 247
+  }, {
+    "path" : "technology_specific_extractors/databases/dbs_entry.py",
+    "modificationInfo" : {
+      "contentHash" : -1580181958,
+      "lastModified" : 1750687965800
+    },
+    "linesOfCode" : 73
+  }, {
+    "path" : "technology_specific_extractors/docker/dcr_entry.py",
+    "modificationInfo" : {
+      "contentHash" : -1320317967,
+      "lastModified" : 1750687965800
+    },
+    "linesOfCode" : 30
+  }, {
+    "path" : "technology_specific_extractors/docker_compose/dcm_entry.py",
+    "modificationInfo" : {
+      "contentHash" : 1074704473,
+      "lastModified" : 1750687965801
+    },
+    "linesOfCode" : 229
+  }, {
+    "path" : "technology_specific_extractors/docker_compose/dcm_parser.py",
+    "modificationInfo" : {
+      "contentHash" : -611157580,
+      "lastModified" : 1750687965801
+    },
+    "linesOfCode" : 686
+  }, {
+    "path" : "technology_specific_extractors/elasticsearch/ela_entry.py",
+    "modificationInfo" : {
+      "contentHash" : -894510676,
+      "lastModified" : 1750687965801
+    },
+    "linesOfCode" : 55
+  }, {
+    "path" : "technology_specific_extractors/environment_variables.py",
+    "modificationInfo" : {
+      "contentHash" : -721317104,
+      "lastModified" : 1750687965801
+    },
+    "linesOfCode" : 36
+  }, {
+    "path" : "technology_specific_extractors/eureka/eur_entry.py",
+    "modificationInfo" : {
+      "contentHash" : 1124684041,
+      "lastModified" : 1750687965801
+    },
+    "linesOfCode" : 117
+  }, {
+    "path" : "technology_specific_extractors/feign_client/fgn_entry.py",
+    "modificationInfo" : {
+      "contentHash" : 2069718915,
+      "lastModified" : 1750687965801
+    },
+    "linesOfCode" : 118
+  }, {
+    "path" : "technology_specific_extractors/gradle/grd_entry.py",
+    "modificationInfo" : {
+      "contentHash" : -2039505295,
+      "lastModified" : 1750687965802
+    },
+    "linesOfCode" : 181
+  }, {
+    "path" : "technology_specific_extractors/grafana/grf_entry.py",
+    "modificationInfo" : {
+      "contentHash" : 866676797,
+      "lastModified" : 1750687965802
+    },
+    "linesOfCode" : 34
+  }, {
+    "path" : "technology_specific_extractors/html/html_entry.py",
+    "modificationInfo" : {
+      "contentHash" : 1263231226,
+      "lastModified" : 1750687965802
+    },
+    "linesOfCode" : 56
+  }, {
+    "path" : "technology_specific_extractors/http_security/hts_entry.py",
+    "modificationInfo" : {
+      "contentHash" : -1181675559,
+      "lastModified" : 1750687965802
+    },
+    "linesOfCode" : 143
+  }, {
+    "path" : "technology_specific_extractors/hystrix/hsx_entry.py",
+    "modificationInfo" : {
+      "contentHash" : 643497022,
+      "lastModified" : 1750687965802
+    },
+    "linesOfCode" : 65
+  }, {
+    "path" : "technology_specific_extractors/implicit_connections/imp_entry.py",
+    "modificationInfo" : {
+      "contentHash" : -1136715166,
+      "lastModified" : 1750687965802
+    },
+    "linesOfCode" : 147
+  }, {
+    "path" : "technology_specific_extractors/kafka/kfk_entry.py",
+    "modificationInfo" : {
+      "contentHash" : -724127490,
+      "lastModified" : 1750687965802
+    },
+    "linesOfCode" : 475
+  }, {
+    "path" : "technology_specific_extractors/kibana/kib_entry.py",
+    "modificationInfo" : {
+      "contentHash" : 1518541627,
+      "lastModified" : 1750687965803
+    },
+    "linesOfCode" : 25
+  }, {
+    "path" : "technology_specific_extractors/load_balancer/lob_entry.py",
+    "modificationInfo" : {
+      "contentHash" : -1979113165,
+      "lastModified" : 1750687965803
+    },
+    "linesOfCode" : 53
+  }, {
+    "path" : "technology_specific_extractors/local_logging/llo_entry.py",
+    "modificationInfo" : {
+      "contentHash" : -582472911,
+      "lastModified" : 1750687965803
+    },
+    "linesOfCode" : 100
+  }, {
+    "path" : "technology_specific_extractors/logstash/log_entry.py",
+    "modificationInfo" : {
+      "contentHash" : -1885696676,
+      "lastModified" : 1750687965804
+    },
+    "linesOfCode" : 158
+  }, {
+    "path" : "technology_specific_extractors/maven/mvn_entry.py",
+    "modificationInfo" : {
+      "contentHash" : -2051853623,
+      "lastModified" : 1750687965804
+    },
+    "linesOfCode" : 269
+  }, {
+    "path" : "technology_specific_extractors/nginx/ngn_entry.py",
+    "modificationInfo" : {
+      "contentHash" : 2081358449,
+      "lastModified" : 1750687965804
+    },
+    "linesOfCode" : 282
+  }, {
+    "path" : "technology_specific_extractors/plaintext_credentials/plc_entry.py",
+    "modificationInfo" : {
+      "contentHash" : -414279976,
+      "lastModified" : 1750687965804
+    },
+    "linesOfCode" : 66
+  }, {
+    "path" : "technology_specific_extractors/prometheus/prm_entry.py",
+    "modificationInfo" : {
+      "contentHash" : 391086996,
+      "lastModified" : 1750687965804
+    },
+    "linesOfCode" : 121
+  }, {
+    "path" : "technology_specific_extractors/rabbitmq/rmq_entry.py",
+    "modificationInfo" : {
+      "contentHash" : -508642474,
+      "lastModified" : 1750687965805
+    },
+    "linesOfCode" : 398
+  }, {
+    "path" : "technology_specific_extractors/repository_rest_resource/rrr_entry.py",
+    "modificationInfo" : {
+      "contentHash" : 999263833,
+      "lastModified" : 1750687965805
+    },
+    "linesOfCode" : 25
+  }, {
+    "path" : "technology_specific_extractors/resttemplate/rst_entry.py",
+    "modificationInfo" : {
+      "contentHash" : -362756497,
+      "lastModified" : 1750687965805
+    },
+    "linesOfCode" : 368
+  }, {
+    "path" : "technology_specific_extractors/ribbon/rib_entry.py",
+    "modificationInfo" : {
+      "contentHash" : 14752962,
+      "lastModified" : 1750687965805
+    },
+    "linesOfCode" : 34
+  }, {
+    "path" : "technology_specific_extractors/service_functionality_classification/itf_entry.py",
+    "modificationInfo" : {
+      "contentHash" : -813745140,
+      "lastModified" : 1750687965805
+    },
+    "linesOfCode" : 64
+  }, {
+    "path" : "technology_specific_extractors/spring_admin/sad_entry.py",
+    "modificationInfo" : {
+      "contentHash" : 1104250874,
+      "lastModified" : 1750687965805
+    },
+    "linesOfCode" : 145
+  }, {
+    "path" : "technology_specific_extractors/spring_config/cnf_entry.py",
+    "modificationInfo" : {
+      "contentHash" : 395418472,
+      "lastModified" : 1750687965806
+    },
+    "linesOfCode" : 306
+  }, {
+    "path" : "technology_specific_extractors/spring_encryption/enc_entry.py",
+    "modificationInfo" : {
+      "contentHash" : -663412719,
+      "lastModified" : 1750687965806
+    },
+    "linesOfCode" : 129
+  }, {
+    "path" : "technology_specific_extractors/spring_gateway/sgt_entry.py",
+    "modificationInfo" : {
+      "contentHash" : 613823522,
+      "lastModified" : 1750687965806
+    },
+    "linesOfCode" : 87
+  }, {
+    "path" : "technology_specific_extractors/spring_oauth/soa_entry.py",
+    "modificationInfo" : {
+      "contentHash" : 1539093134,
+      "lastModified" : 1750687965806
+    },
+    "linesOfCode" : 219
+  }, {
+    "path" : "technology_specific_extractors/ssl/ssl_entry.py",
+    "modificationInfo" : {
+      "contentHash" : 2131153420,
+      "lastModified" : 1750687965806
+    },
+    "linesOfCode" : 26
+  }, {
+    "path" : "technology_specific_extractors/turbine/trb_entry.py",
+    "modificationInfo" : {
+      "contentHash" : -1464839278,
+      "lastModified" : 1750687965807
+    },
+    "linesOfCode" : 246
+  }, {
+    "path" : "technology_specific_extractors/zipkin/zip_entry.py",
+    "modificationInfo" : {
+      "contentHash" : -1557513687,
+      "lastModified" : 1750687965807
+    },
+    "linesOfCode" : 105
+  }, {
+    "path" : "technology_specific_extractors/zookeeper/zoo_entry.py",
+    "modificationInfo" : {
+      "contentHash" : 1320216893,
+      "lastModified" : 1750687965807
+    },
+    "linesOfCode" : 48
+  }, {
+    "path" : "technology_specific_extractors/zuul/zul_entry.py",
+    "modificationInfo" : {
+      "contentHash" : -808923490,
+      "lastModified" : 1750687965807
+    },
+    "linesOfCode" : 116
+  }, {
+    "path" : "tmp/tmp.py",
+    "modificationInfo" : {
+      "contentHash" : -799402494,
+      "lastModified" : 1750687965807
+    },
+    "linesOfCode" : 3
+  } ],
+  "appVersion" : "1.3.0"
+}
