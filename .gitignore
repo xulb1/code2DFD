@@ -1,6 +1,79 @@
-*.pyc
 *.DS_Store
-.vscode/
 analysed_repositories/
 code2DFD_output/*
 output/*
+CodeableModels/
+
+################################################################################
+# Bellow is the github python gitignore code from https://github.com/uzdun/CodeableModels
+
+# IDE directories
+.vscode/
+.idea/
+
+# additional ignored test files
+*.noseids
+
+# generated files
+
+_generated/
+
+# Sphinx build
+docsrc/build
+
+
+#
+# below is the github python gitignore code from
+# https://github.com/github/gitignore/blob/master/Python.gitignore
+#
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# C extensions
+*.so
+
+# Distribution / packaging
+bin/
+build/
+develop-eggs/
+dist/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+.tox/
+.coverage
+.cache
+nosetests.xml
+coverage.xml
+
+# Translations
+*.mo
+
+# Mr Developer
+.mr.developer.cfg
+.project
+.pydevproject
+
+# Rope
+.ropeproject
+
+# Django stuff:
+*.log
+*.pot
+
+# Sphinx documentation
+docs/_build/

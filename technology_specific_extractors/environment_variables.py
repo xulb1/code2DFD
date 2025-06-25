@@ -3,7 +3,7 @@ import core.file_interaction as fi
 env_vars = dict()
 
 def extract_environment_variables():
-    """Extracts environemnt avriables from .env file, if exiting.
+    """Extracts environemnt variables from .env file, if exiting.
     """
 
     global env_vars

@@ -17,6 +17,7 @@ def output_codeable_model(microservices, information_flows, external_components)
 
     # CodeableModels needs the name of one of the nodes for its final invocation, is written into this var
     last_node = str()
+    allComponents = str()
 
     # Microservices
     for m in microservices.keys():
@@ -51,6 +52,7 @@ def output_codeable_model(microservices, information_flows, external_components)
 
         file_content += new_line
         last_node = name
+        allComponents += f"{name}, "
 
 
     # External Components
@@ -83,6 +85,7 @@ def output_codeable_model(microservices, information_flows, external_components)
         else:
             new_line = "\n" + name + " = CClass(external_component, \"" + str(external_components[e]["name"]) + ")"
         file_content += new_line
+        allComponents += f"{name}, "
 
 
     # Information Flows
@@ -118,7 +121,8 @@ def output_codeable_model(microservices, information_flows, external_components)
             new_line = "\nadd_links({" + sender + ": " + receiver + "})"
         file_content += new_line
 
-    file_content += footer(last_node)
+    file_content += f"allComponents = [{allComponents[:-2]}]"
+    file_content += footer()
 
     output_path = str()
     output_path = create_file(model_name, file_content)
@@ -149,8 +153,8 @@ output_directory = \".\" \n\
 model_name = "
 
 
-def footer(last_node):
-    return "\nmodel = CBundle(model_name, elements = " + last_node + ".class_object.get_connected_elements())\n\
+def footer():
+    return "\nmodel = CBundle(model_name, elements = allComponents\n\
 def run():\n\
     generator = PlantUMLGenerator()\n\
     generator.plant_uml_jar_path = plantuml_path\n\

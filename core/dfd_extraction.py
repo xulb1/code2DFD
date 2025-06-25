@@ -157,9 +157,12 @@ def DFD_extraction():
     json_edges.generate_json_edges(information_flows)
     json_architecture.generate_json_architecture(microservices, information_flows, external_components)
 
-    #calculate_metrics.calculate_single_system(repo_path)
+    sep = "\n\n================================ ======================================"
+    print(sep, microservices, sep, information_flows, sep, external_components )
+    
+    # calculate_metrics.calculate_single_system(repo_path)
 
-    #check_traceability.check_traceability(microservices, information_flows, external_components, traceability_content)
+    # check_traceability.check_traceability(microservices, information_flows, external_components, traceability_content)
 
     return codeable_models, traceability_content
 
