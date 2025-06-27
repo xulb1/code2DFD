@@ -28,6 +28,7 @@ def set_microservices(dfd) -> None:
             raw_files = fi.get_file_as_yaml("docker-compose*")
         if len(raw_files) == 0:
             microservices = tech_sw.get_microservices(dfd)
+            # print(f"==============================================\ndom_entry-1\n{microservices}\n==============================================")
             microservices = clean_pom_names(microservices)
             tmp.tmp_config.set("DFD", "microservices", str(microservices).replace("%", "%%"))
             return
@@ -37,6 +38,7 @@ def set_microservices(dfd) -> None:
 
     if not microservices_set:
         microservices = tech_sw.get_microservices(dfd)
+        # print(f"==============================================\ndom_entry-2\n{microservices}\n==============================================")
         microservices = clean_pom_names(microservices)
         tmp.tmp_config.set("DFD", "microservices", str(microservices).replace("%", "%%"))
         return
@@ -121,6 +123,7 @@ def set_information_flows(dfd):
         information_flows = dict()
 
     microservices = tech_sw.get_microservices(dfd)
+    print(f"==============================================\ndom_entry-3\n{microservices}\n==============================================")
 
     # Download docker-compose file
     if not docker_compose_content:
@@ -173,6 +176,7 @@ def detect_microservice(file_path: str, dfd) -> str:
     """
 
     microservices = tech_sw.get_microservices(dfd)
+    # print(f"==============================================\ndom_entry-4\n{microservices}\n==============================================")
     microservice = False
     dockerfile_path = False
 

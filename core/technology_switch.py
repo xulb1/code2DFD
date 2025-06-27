@@ -1,18 +1,20 @@
 import ast
 
 from output_generators.logger import logger
-import technology_specific_extractors.database_connections.dbc_entry as dbc
+# Component extractors
 import technology_specific_extractors.docker_compose.dcm_entry as dcm
-import technology_specific_extractors.feign_client.fgn_entry as fgn
 import technology_specific_extractors.gradle.grd_entry as grd
-import technology_specific_extractors.html.html_entry as html
-import technology_specific_extractors.implicit_connections.imp_entry as imp
-import technology_specific_extractors.kafka.kfk_entry as kfk
 import technology_specific_extractors.maven.mvn_entry as mvn
-import technology_specific_extractors.rabbitmq.rmq_entry as rmq
+# Flow extractors
+import technology_specific_extractors.database_connections.dbc_entry as dbc
+import technology_specific_extractors.implicit_connections.imp_entry as imp
+import technology_specific_extractors.feign_client.fgn_entry as fgn
 import technology_specific_extractors.resttemplate.rst_entry as rst
-import tmp.tmp as tmp
+import technology_specific_extractors.rabbitmq.rmq_entry as rmq
+import technology_specific_extractors.html.html_entry as html
+import technology_specific_extractors.kafka.kfk_entry as kfk
 
+import tmp.tmp as tmp
 
 def get_microservices(dfd) -> dict:
     """Calls get_microservices from correct container technology or returns existing list.

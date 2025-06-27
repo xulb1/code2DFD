@@ -31,7 +31,7 @@ def add_trace(traceability_info: dict):
 
         # check if parent item exists, otherwise can't add
         if not traceability_info["parent_item"] in traceability[type].keys():
-            #print("Can't add traceability " + str(traceability_info))
+            print("Can't add traceability " + str(traceability_info))
             pass
         else:
 

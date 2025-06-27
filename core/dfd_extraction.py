@@ -22,8 +22,7 @@ from technology_specific_extractors.elasticsearch.ela_entry import detect_elasti
 from technology_specific_extractors.eureka.eur_entry import detect_eureka, detect_eureka_server_only
 from technology_specific_extractors.grafana.grf_entry import detect_grafana
 from technology_specific_extractors.http_security.hts_entry import detect_authentication_scopes
-from technology_specific_extractors.hystrix.hsx_entry import (detect_hystrix_circuit_breakers,
-                                     detect_hystrix_dashboard)
+from technology_specific_extractors.hystrix.hsx_entry import (detect_hystrix_circuit_breakers, detect_hystrix_dashboard)
 from technology_specific_extractors.kafka.kfk_entry import detect_kafka_server
 from technology_specific_extractors.kibana.kib_entry import detect_kibana
 from technology_specific_extractors.load_balancer.lob_entry import detect_load_balancers
@@ -35,8 +34,7 @@ from technology_specific_extractors.prometheus.prm_entry import detect_prometheu
 from technology_specific_extractors.rabbitmq.rmq_entry import detect_rabbitmq_server
 from technology_specific_extractors.repository_rest_resource.rrr_entry import detect_endpoints
 from technology_specific_extractors.ribbon.rib_entry import detect_ribbon_load_balancers
-from technology_specific_extractors.service_functionality_classification.itf_entry import \
-    classify_internal_infrastructural
+from technology_specific_extractors.service_functionality_classification.itf_entry import classify_internal_infrastructural
 from technology_specific_extractors.spring_admin.sad_entry import detect_spring_admin_server
 from technology_specific_extractors.spring_config.cnf_entry import detect_spring_config
 from technology_specific_extractors.spring_encryption.enc_entry import detect_spring_encryption
@@ -87,6 +85,7 @@ def DFD_extraction():
     microservices, information_flows, external_components = dict(), dict(), dict()
 
     microservices = tech_sw.get_microservices(dfd)
+    # print(f"==============================================\ndfd_extraction1\n{microservices}\n==============================================")
     
     microservices = detect_databases(microservices)
     microservices = overwrite_port(microservices)
@@ -123,7 +122,11 @@ def DFD_extraction():
 
     # Detect everything else / execute all technology implementations
     print("Classifying all services")
+    # print(f"==============================================\ndfd_extraction2-dfd1\n{type(dfd)}\n==============================================")
     microservices = tech_sw.get_microservices(dfd)
+    # print(f"==============================================\ndfd_extraction2-dfd2\n{type(dfd)}\n==============================================")
+    print(f"==============================================\ndfd_extraction2\n{microservices}\n==============================================")
+    
     microservices, information_flows, external_components = classify_microservices(microservices, information_flows, external_components, dfd)
 
     # Merging
@@ -157,8 +160,8 @@ def DFD_extraction():
     json_edges.generate_json_edges(information_flows)
     json_architecture.generate_json_architecture(microservices, information_flows, external_components)
 
-    sep = "\n\n================================ ======================================"
-    print(sep, microservices, sep, information_flows, sep, external_components )
+    # sep = "\n\n================================ ======================================"
+    # print(sep, microservices, sep, information_flows, sep, external_components )
     
     # calculate_metrics.calculate_single_system(repo_path)
 

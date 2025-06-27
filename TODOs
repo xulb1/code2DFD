@@ -1,0 +1,16 @@
+TODO
+avoid multiple time invocation (at different stages...) of
+- get_microservices
+- technology-specific classifiers
+
+TODO
+move hardcoded pattern keyword in a central configuration file
+
+TODO
+refactoring de l'outils celon le modèle présenté dans la thèse PSL2358 de Benni et Hathat
+
+
+R6-7-8-11-12-17-18
+
+TODO
+extraction2 vs dom_entry-3 inutile ?

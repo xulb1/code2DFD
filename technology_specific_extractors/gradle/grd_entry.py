@@ -131,6 +131,7 @@ def detect_microservice(file_path, dfd):
 
     microservice = [False, False]
     microservices = tech_sw.get_microservices(dfd)
+    # print(f"\n\n==============================================\ngrd_entry-1\n{microservices}\n==============================================")
 
 
     found_gradle = False
