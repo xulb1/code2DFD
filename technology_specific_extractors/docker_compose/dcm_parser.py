@@ -34,7 +34,7 @@ class MyConstructor(ruamel.yaml.constructor.RoundTripConstructor):
         if not isinstance(node, ruamel.yaml.nodes.ScalarNode):
             raise ruamel.yaml.constructor.ConstructorError(
                 None, None,
-                "expected a scalar node, but found %s" % node.id,
+                f"expected a scalar node, but found {node.id}",
                 node.start_mark)
 
         if node.style == '|' and isinstance(node.value, ruamel.yaml.compat.text_type):
@@ -198,65 +198,51 @@ def extract_microservices(file_content, file_name) -> set:
             # Environment
             try:
                 environment_entries = file.get("services", {}).get(s).get("environment")
+                if environment_entries: print(environment_entries, "env1")
                 username, password = None, None
                 for line_nr, entry in enumerate(environment_entries):
-                    if "MONGODB_USERNAME" in entry:
-                        username = file.get("services", {}).get(s).get("environment").get("MONGODB_USERNAME")
-                        line_nr = file["services"][s]["environment"]["MONGODB_USERNAME"].lc.line
+                    print(entry)
+                    if ("MONGODB" in entry.upper() and
+                        "USER" in entry.upper()):
+                        username = file.get("services", {}).get(s).get("environment").get(entry)
+                        print(username,"user")
+                        line_nr = file["services"][s]["environment"][entry].lc.line
                         length_tuple = re.search(password.replace("$", "\$"), lines[line_nr].replace("$", "\$")).span()
                         span = "[" + str(length_tuple[0]) +  ":" + str(length_tuple[1]) + "]"
                         if username != None:
                             properties.add(("datasource_username", username, (file_name, line_nr + 1, span)))
-                    elif "MONGODB_USER" in entry:
-                        username = file.get("services", {}).get(s).get("environment").get("MONGODB_USER")
-                        line_nr = file["services"][s]["environment"]["MONGODB_USER"].lc.line
-                        length_tuple = re.search(password.replace("$", "\$"), lines[line_nr].replace("$", "\$")).span()
-                        span = "[" + str(length_tuple[0]) +  ":" + str(length_tuple[1]) + "]"
-                        if username != None:
-                            properties.add(("datasource_username", username, (file_name, line_nr + 1, span)))
-                    elif "MYSQL_USERNAME" in entry:
-                        username = file.get("services", {}).get(s).get("environment").get("MYSQL_USERNAME")
-                        line_nr = file["services"][s]["environment"]["MYSQL_USERNAME"].lc.line
-                        length_tuple = re.search(password.replace("$", "\$"), lines[line_nr].replace("$", "\$")).span()
-                        span = "[" + str(length_tuple[0]) +  ":" + str(length_tuple[1]) + "]"
-                        if username != None:
-                            properties.add(("datasource_username", username, (file_name, line_nr + 1, span)))
-                    elif "MYSQL_USER" in entry:
-                        username = file.get("services", {}).get(s).get("environment").get("MYSQL_USER")
-                        line_nr = file["services"][s]["environment"]["MYSQL_USER"].lc.line
+                    
+                    elif ("MYSQL" in entry.upper() and
+                          "USER"  in entry.upper()):
+                        username = file.get("services", {}).get(s).get("environment").get(entry)
+                        line_nr = file["services"][s]["environment"][entry].lc.line
                         length_tuple = re.search(password.replace("$", "\$"), lines[line_nr].replace("$", "\$")).span()
                         span = "[" + str(length_tuple[0]) +  ":" + str(length_tuple[1]) + "]"
                         if username != None:
                             properties.add(("datasource_username", username, (file_name, line_nr + 1, span)))
 
-                    elif "MONGODB_PASSWORD" in entry:
-                        password = file.get("services", {}).get(s).get("environment").get("MONGODB_PASSWORD")
-                        line_nr = file["services"][s]["environment"]["MONGODB_PASSWORD"].lc.line
+                    elif ("MONGODB" in entry.upper() and
+                          "PASS"    in entry.upper()):
+                        password = file.get("services", {}).get(s).get("environment").get(entry)
+                        print(password, "pwd")
+                        line_nr = file["services"][s]["environment"][entry].lc.line
                         length_tuple = re.search(password.replace("$", "\$"), lines[line_nr].replace("$", "\$")).span()
                         span = "[" + str(length_tuple[0]) +  ":" + str(length_tuple[1]) + "]"
                         if password != None:
                             properties.add(("datasource_password", password, (file_name, line_nr + 1, span)))
-                    elif "MONGODB_PASS" in entry:
-                        password = file.get("services", {}).get(s).get("environment").get("MONGODB_PASS")
-                        line_nr = file["services"][s]["environment"]["MONGODB_PASS"].lc.line
+                    # DELETED
+                    # elif "MONGODB_PASS" in entry:
+                    elif ("MYSQL" in entry.upper() and
+                          "PASS"  in entry.upper()):
+                        password = file.get("services", {}).get(s).get("environment").get(entry)
+                        print(password)
+                        line_nr = file["services"][s]["environment"][entry].lc.line
                         length_tuple = re.search(password.replace("$", "\$"), lines[line_nr].replace("$", "\$")).span()
                         span = "[" + str(length_tuple[0]) +  ":" + str(length_tuple[1]) + "]"
                         if password != None:
                             properties.add(("datasource_password", password, (file_name, line_nr + 1, span)))
-                    elif "MYSQL_PASSWORD" in entry:
-                        password = file.get("services", {}).get(s).get("environment").get("MYSQL_PASSWORD")
-                        line_nr = file["services"][s]["environment"]["MYSQL_PASSWORD"].lc.line
-                        length_tuple = re.search(password.replace("$", "\$"), lines[line_nr].replace("$", "\$")).span()
-                        span = "[" + str(length_tuple[0]) +  ":" + str(length_tuple[1]) + "]"
-                        if password != None:
-                            properties.add(("datasource_password", password, (file_name, line_nr + 1, span)))
-                    elif "MYSQL_PASS" in entry:
-                        password = file.get("services", {}).get(s).get("environment").get("MYSQL_PASS")
-                        line_nr = file["services"][s]["environment"]["MYSQL_PASS"].lc.line
-                        length_tuple = re.search(password.replace("$", "\$"), lines[line_nr].replace("$", "\$")).span()
-                        span = "[" + str(length_tuple[0]) +  ":" + str(length_tuple[1]) + "]"
-                        if password != None:
-                            properties.add(("datasource_password", password, (file_name, line_nr + 1, span)))
+                    # DELETED
+                    # elif "MYSQL_PASS" in entry:
             except:
                 pass
 
@@ -469,6 +455,7 @@ def extract_microservices(file_content, file_name) -> set:
             # Environment
             try:
                 environment_entries = file.get(s).get("environment")
+                print(environment_entries, "env2")
                 username, password = None, None
                 for line_nr, entry in enumerate(environment_entries):
                     if "MONGODB_USERNAME" in entry:

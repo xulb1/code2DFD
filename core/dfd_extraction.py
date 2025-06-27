@@ -82,10 +82,10 @@ def DFD_extraction():
     """
     dfd = CDFD("TestDFD")
 
-    microservices, information_flows, external_components = dict(), dict(), dict()
+    microservices1, information_flows, external_components = dict(), dict(), dict()
 
     microservices = tech_sw.get_microservices(dfd)
-    # print(f"==============================================\ndfd_extraction1\n{microservices}\n==============================================")
+    assert microservices != microservices1, "Egalité - 1"
     
     microservices = detect_databases(microservices)
     microservices = overwrite_port(microservices)
@@ -113,36 +113,33 @@ def DFD_extraction():
     # Merge old and new
     for new_flow in new_information_flows.keys():
         try:
-            id = max(information_flows.keys()) + 1
-        except:
-            id = 0
-        information_flows[id] = dict()
-        information_flows[id] = new_information_flows[new_flow]
+            key = max(information_flows.keys()) + 1
+        except Exception:
+            key = 0
+        information_flows[key] = dict()
+        information_flows[key] = new_information_flows[new_flow]
     print("Extracted information flows from API-calls, message brokers, and database connections")
 
     # Detect everything else / execute all technology implementations
     print("Classifying all services")
-    # print(f"==============================================\ndfd_extraction2-dfd1\n{type(dfd)}\n==============================================")
     microservices = tech_sw.get_microservices(dfd)
-    # print(f"==============================================\ndfd_extraction2-dfd2\n{type(dfd)}\n==============================================")
-    print(f"==============================================\ndfd_extraction2\n{microservices}\n==============================================")
+    # microservice
+    # s1 = microservices
     
+    # FIXME
     microservices, information_flows, external_components = classify_microservices(microservices, information_flows, external_components, dfd)
-
+    # assert microservices1 != microservices, "Egalité"
+    
     # Merging
     print("Merging duplicate items")
-
     merge_duplicate_flows(information_flows)
-
     merge_duplicate_nodes(microservices)
     merge_duplicate_nodes(external_components)
-
     merge_duplicate_annotations(microservices)
     merge_duplicate_annotations(information_flows)
     merge_duplicate_annotations(external_components)
 
     print("Cleaning database connections")
-
     clean_database_connections(microservices, information_flows)
 
     # Printing
@@ -164,7 +161,6 @@ def DFD_extraction():
     # print(sep, microservices, sep, information_flows, sep, external_components )
     
     # calculate_metrics.calculate_single_system(repo_path)
-
     # check_traceability.check_traceability(microservices, information_flows, external_components, traceability_content)
 
     return codeable_models, traceability_content

@@ -21,7 +21,6 @@ def set_information_flows(dfd) -> set:
         external_components = dict()
 
     microservices = tech_sw.get_microservices(dfd)
-    # print(f"==============================================\n dbc_entry-1\n{microservices}\n==============================================")
 
     microservices, information_flows, external_components = check_properties(microservices, information_flows, external_components)
 

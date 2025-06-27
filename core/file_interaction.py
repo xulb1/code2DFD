@@ -184,7 +184,6 @@ def detect_microservice(file_path, dfd):
     """
 
     microservices_set = tech_sw.get_microservices(dfd)
-    # print(f"==============================================\nfile_interaction-1\n{microservices}\n==============================================")
 
     microservices = [microservices_set[x]["name"] for x in microservices_set.keys()]
 
@@ -290,7 +289,6 @@ def resolve_url(url: str, microservice: str, dfd) -> str:
     """
 
     microservices = tech_sw.get_microservices(dfd)
-    # print(f"==============================================\n file_interaction_2\n{microservices}\n==============================================")
     target_service = False
 
     if "http" in url:

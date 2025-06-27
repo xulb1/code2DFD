@@ -11,7 +11,6 @@ def set_information_flows(dfd) -> dict:
     """
 
     microservices = tech_sw.get_microservices(dfd)
-    # print(f"\n\n==============================================\nfgn_entry-1\n{microservices}\n==============================================")
 
     if tmp.tmp_config.has_option("DFD", "information_flows"):
         information_flows = ast.literal_eval(tmp.tmp_config["DFD"]["information_flows"])
@@ -107,7 +106,6 @@ def is_microservice(service: str, dfd) -> bool:
         return False
     is_microservice = False
     microservices = tech_sw.get_microservices(dfd)
-    # print(f"\n\n==============================================\nfgn_entry-2\n{microservices}\n==============================================")
     for m in microservices.keys():
         if service.casefold() == microservices[m]["name"].casefold():
             is_microservice = True

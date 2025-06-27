@@ -27,7 +27,7 @@ def api_invocation(url: str, commit: str) -> dict:
     """Entry function for when tool is called via API call.
     """
 
-    print("New call for " + url)
+    print(f"New call for {url}")
 
     start_time = datetime.now()
 

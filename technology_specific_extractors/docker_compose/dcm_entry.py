@@ -28,7 +28,6 @@ def set_microservices(dfd) -> None:
             raw_files = fi.get_file_as_yaml("docker-compose*")
         if len(raw_files) == 0:
             microservices = tech_sw.get_microservices(dfd)
-            # print(f"==============================================\ndom_entry-1\n{microservices}\n==============================================")
             microservices = clean_pom_names(microservices)
             tmp.tmp_config.set("DFD", "microservices", str(microservices).replace("%", "%%"))
             return
@@ -38,7 +37,6 @@ def set_microservices(dfd) -> None:
 
     if not microservices_set:
         microservices = tech_sw.get_microservices(dfd)
-        # print(f"==============================================\ndom_entry-2\n{microservices}\n==============================================")
         microservices = clean_pom_names(microservices)
         tmp.tmp_config.set("DFD", "microservices", str(microservices).replace("%", "%%"))
         return
@@ -52,7 +50,7 @@ def clean_pom_names(microservices: dict) -> dict:
     """Deletes "pom_" from microservice names. Needed in specific cases.
     """
 
-    for m in microservices.keys():
+    for m in microservices:
         microservices[m]["name"] = microservices[m]["name"].replace("pom_", "")
 
     return microservices
@@ -70,15 +68,16 @@ def dictionarify(elements_set: set, properties_dict: dict) -> dict:
     for e in elements_set:
         try:
             properties = properties_dict[e[0]]
-        except:
+        except Exception:
             properties = set()
-        tuple = check_image(e[1])
-        if tuple:
-            stereotypes = tuple[0]
-            tagged_values = tuple[1]
+        
+        imageInfo = check_image(e[1])
+        if imageInfo:
+            stereotypes = imageInfo[0]
+            tagged_values = imageInfo[1]
         else:
-            stereotypes = list()
-            tagged_values = list()
+            stereotypes = []
+            tagged_values = []
         if e[3]:
             tagged_values.append(("Port", str(e[3][0])))
             trace = dict()
@@ -88,18 +87,19 @@ def dictionarify(elements_set: set, properties_dict: dict) -> dict:
             trace["line"] = e[3][2]
             trace["span"] = e[3][3]
             traceability.add_trace(trace)
+            
         try:
-            id = max(elements.keys()) + 1
-        except:
-            id = 0
-        elements[id] = dict()
+            newKey = max(elements.keys()) + 1
+        except Exception:
+            newKey = 0
+        elements[newKey] = dict()
 
-        elements[id]["name"] = e[0]
-        elements[id]["image"] = e[1]
-        elements[id]["type"] = e[2]
-        elements[id]["properties"] = properties
-        elements[id]["stereotype_instances"] = stereotypes
-        elements[id]["tagged_values"] = tagged_values
+        elements[newKey]["name"] = e[0]
+        elements[newKey]["image"] = e[1]
+        elements[newKey]["type"] = e[2]
+        elements[newKey]["properties"] = properties
+        elements[newKey]["stereotype_instances"] = stereotypes
+        elements[newKey]["tagged_values"] = tagged_values
 
         trace = dict()
         trace["item"] = e[0]#.replace("pom_", "")
@@ -111,7 +111,7 @@ def dictionarify(elements_set: set, properties_dict: dict) -> dict:
     return elements
 
 
-def set_information_flows(dfd):
+def set_information_flows(dfd) -> dict:
     """Adds information flows based on "links" parameter in docker-compose.
     """
 
@@ -123,7 +123,6 @@ def set_information_flows(dfd):
         information_flows = dict()
 
     microservices = tech_sw.get_microservices(dfd)
-    print(f"==============================================\ndom_entry-3\n{microservices}\n==============================================")
 
     # Download docker-compose file
     if not docker_compose_content:
@@ -153,22 +152,20 @@ def get_environment_variables(docker_compose_file_URL: str) -> set:
         for line in env_file_lines:
             try:
                 environment_variables.add((line.split("=")[0].strip(), line.split("=")[1].strip()))
-            except:
+            except Exception:
                 logger.debug("error splitting line in dco_entry.set_microservices")
-    except:
+    except Exception:
         logger.info("No .env file exists")
     return environment_variables
 
 
-def check_image(image: str):
+def check_image(image: str) -> list:
     """Check image for some specific technologies.
     """
 
-    tuple = False
     if "weaveworks/scope" in image:
-        tuple = [["monitoring_dashboard"], [("Monitoring Dashboard", "Weave Scope")]]
-
-    return tuple
+        return [["monitoring_dashboard"], [("Monitoring Dashboard", "Weave Scope")]]
+    return []
 
 
 def detect_microservice(file_path: str, dfd) -> str:
@@ -176,24 +173,22 @@ def detect_microservice(file_path: str, dfd) -> str:
     """
 
     microservices = tech_sw.get_microservices(dfd)
-    # print(f"==============================================\ndom_entry-4\n{microservices}\n==============================================")
     microservice = False
     dockerfile_path = False
 
     local_repo_path = tmp.tmp_config["Repository"]["local_path"]
 
     # Find corresponding dockerfile
-    dirs = list()
+    dirs = []
     found_docker = False
 
     path = os.path.dirname(file_path)
     while not found_docker and path != "":
         dirs.append(os.scandir(os.path.join(local_repo_path, path)))
         while dirs:
-            dir = dirs.pop()
-            for entry in dir:
-                if entry.is_file():
-                    if entry.name.casefold() == "dockerfile":
+            directory = dirs.pop()
+            for entry in directory:
+                if entry.is_file() and entry.name.casefold() == "dockerfile":
                         dockerfile_path = os.path.relpath(entry.path, start=local_repo_path).strip("/")
                         found_docker = True
         path = os.path.dirname(path)
