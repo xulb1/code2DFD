@@ -9,6 +9,8 @@ import tmp.tmp as tmp
 import output_generators.traceability as traceability
 
 docker_compose_content = False
+# TODO
+# possible_filenames = ["docker-compose.yml", "docker-compose.yaml", "docker-compose*"]
 
 
 def set_microservices(dfd) -> None:
@@ -21,11 +23,13 @@ def set_microservices(dfd) -> None:
 
     # Download docker-compose file
     if not docker_compose_content:
-        raw_files = fi.get_file_as_yaml("docker-compose.yml")
-        if len(raw_files) == 0:
-            raw_files = fi.get_file_as_yaml("docker-compose.yaml")
-        if len(raw_files) == 0:
-            raw_files = fi.get_file_as_yaml("docker-compose*")
+        possible_filenames = ["docker-compose.yml", "docker-compose.yaml", "docker-compose*"]
+
+        for filename in possible_filenames:
+            raw_files = fi.get_file_as_yaml(filename)
+            if raw_files:
+                break
+
         if len(raw_files) == 0:
             microservices = tech_sw.get_microservices(dfd)
             microservices = clean_pom_names(microservices)
@@ -80,30 +84,30 @@ def dictionarify(elements_set: set, properties_dict: dict) -> dict:
             tagged_values = []
         if e[3]:
             tagged_values.append(("Port", str(e[3][0])))
-            trace = dict()
-            trace["parent_item"] = e[0]#.replace("pom_", "")
-            trace["item"] = "Port"
-            trace["file"] = e[3][1]
-            trace["line"] = e[3][2]
-            trace["span"] = e[3][3]
-            traceability.add_trace(trace)
+            traceability.add_trace({
+                "parent_item": e[0],#.replace("pom_", "")
+                "item": "Port",
+                "file": e[3][1],
+                "line": e[3][2],
+                "span": e[3][3]
+            })
             
         newKey = max(elements.keys(), default=-1) + 1
-        elements[newKey] = dict()
-
-        elements[newKey]["name"] = e[0]
-        elements[newKey]["image"] = e[1]
-        elements[newKey]["type"] = e[2]
-        elements[newKey]["properties"] = properties
-        elements[newKey]["stereotype_instances"] = stereotypes
-        elements[newKey]["tagged_values"] = tagged_values
-
-        trace = dict()
-        trace["item"] = e[0]#.replace("pom_", "")
-        trace["file"] = e[4][0]
-        trace["line"] = e[4][1]
-        trace["span"] = e[4][2]
-        traceability.add_trace(trace)
+        elements[newKey] = {
+            "name": e[0],
+            "image": e[1],
+            "type": e[2],
+            "properties": properties,
+            "stereotype_instances": stereotypes,
+            "tagged_values": tagged_values
+        }
+        
+        traceability.add_trace({
+            "item": e[0],#.replace("pom_", "")
+            "file": e[4][0],
+            "line": e[4][1],
+            "span": e[4][2]
+        })
 
     return elements
 
@@ -123,15 +127,17 @@ def set_information_flows(dfd) -> dict:
 
     # Download docker-compose file
     if not docker_compose_content:
-        raw_files = fi.get_file_as_yaml("docker-compose.yml")
-        if len(raw_files) == 0:
-            raw_files = fi.get_file_as_yaml("docker-compose.yaml")
-        if len(raw_files) == 0:
-            raw_files = fi.get_file_as_yaml("docker-compose*")
-        if len(raw_files) == 0:
-            return information_flows
-        docker_compose_content = raw_files[0]["content"]
+        possible_filenames = ["docker-compose.yml", "docker-compose.yaml", "docker-compose*"]
 
+        for filename in possible_filenames:
+            raw_files = fi.get_file_as_yaml(filename)
+            if raw_files:
+                docker_compose_content = raw_files[0]["content"]
+                break
+        
+        if not docker_compose_content:
+            return information_flows
+            
     information_flows = dcm_parser.extract_information_flows(docker_compose_content, microservices, information_flows)
 
     tmp.tmp_config.set("DFD", "information_flows", str(information_flows).replace("%", "%%"))
@@ -149,10 +155,12 @@ def get_environment_variables(docker_compose_file_URL: str) -> set:
         for line in env_file_lines:
             try:
                 environment_variables.add((line.split("=")[0].strip(), line.split("=")[1].strip()))
-            except Exception:
+            except Exception as e:
+                print(e)
                 logger.debug("error splitting line in dco_entry.set_microservices")
-    except Exception:
-        logger.info("No .env file exists")
+    except Exception as e:
+        print(e)
+        logger.info("No .env file exists",e)
     return environment_variables
 
 
@@ -195,31 +203,32 @@ def detect_microservice(file_path: str, dfd) -> str:
 
     # find docker-compose path
     try:
-        raw_files = fi.get_file_as_lines("docker-compose.yml")
-        if len(raw_files) == 0:
-            raw_files = fi.get_file_as_lines("docker-compose.yaml")
-        if len(raw_files) == 0:
-            raw_files = fi.get_file_as_yaml("docker-compose*")
+        possible_filenames = ["docker-compose.yml", "docker-compose.yaml", "docker-compose*"]
+
+        for filename in possible_filenames:
+            raw_files = fi.get_file_as_lines(filename)
+            if raw_files:
+                break
         if len(raw_files) == 0:
             return microservice
         docker_compose_path = raw_files[0]["path"]          # path in the repo (w/0 "analysed_...")
         docker_compose_location = os.path.dirname(docker_compose_path)
-    except:
-        pass
+    except Exception as e:
+        print(e)
 
     # path of dockerfile relative to docker-compose file
     # if dockerfile is in same branch in file structure as docker-compose-file:
     try:
         docker_image = os.path.relpath(dockerfile_location, start=docker_compose_location).strip("/")
-    except:
-        pass
+    except Exception as e:
+        print(e)
 
     # go through microservices to see if dockerfile_image fits an image
     try:
         for m in microservices.keys():
             if microservices[m]["image"] == docker_image:
                 microservice = microservices[m]["name"]
-    except:
-        pass
+    except Exception as e:
+        print(e)
 
     return microservice

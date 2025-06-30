@@ -1,6 +1,7 @@
 import ast
 import re
 from pathlib import Path
+import traceback
 
 import ruamel.yaml
 
@@ -60,6 +61,9 @@ def extract_microservices(file_content, file_name) -> set:
     i.e. without asking for user-input in case of errors.
     """
 
+    known_images = ["elasticsearch","kibana","logstash","grafana","kafka","rabbit","zookeeper","postgres","zipkin","prometheus","mongo","consul","mysql","scope","postgres","apache","nginx"]
+    
+
     yaml = ruamel.yaml.YAML()
     yaml.Constructor = MyConstructor
 
@@ -71,6 +75,7 @@ def extract_microservices(file_content, file_name) -> set:
         microservices_dict =  ast.literal_eval(tmp.tmp_config["DFD"]["microservices"])
     else:
         microservices_dict= dict()
+    
     microservices_set = set()
     properties_dict = dict()
 
@@ -147,51 +152,50 @@ def extract_microservices(file_content, file_name) -> set:
             # Password
             try:
                 password = file.get("services", {}).get(s).get("environment").get("MONGODB_PASSWORD")
-                line_nr = file["services"][s]["environment"]["MONGODB_PASSWORD"].lc.line
-                length_tuple = re.search(password.replace("$", "\$"), lines[line_nr].replace("$", "\$")).span()
+                line_number = file["services"][s]["environment"]["MONGODB_PASSWORD"].lc.line
+                length_tuple = re.search(password.replace("$", "\$"), lines[line_number].replace("$", "\$")).span()
                 span = "[" + str(length_tuple[0]) +  ":" + str(length_tuple[1]) + "]"
                 if "$" in password:
                     password = env.resolve_env_var(password)
                 if password != None:
-                    properties.add(("datasource_password", password, (file_name, line_nr + 1, span)))
+                    properties.add(("datasource_password", password, (file_name, line_number + 1, span)))
             except Exception as e:
                 pass
 
 
-
             try:
                 password = file.get("services", {}).get(s).get("environment").get("MONGODB_PASS")
-                line_nr = file["services"][s]["environment"]["MONGODB_PASS"].lc.line
-                length_tuple = re.search(password.replace("$", "\$"), lines[line_nr].replace("$", "\$")).span()
+                line_number = file["services"][s]["environment"]["MONGODB_PASS"].lc.line
+                length_tuple = re.search(password.replace("$", "\$"), lines[line_number].replace("$", "\$")).span()
                 span = "[" + str(length_tuple[0]) +  ":" + str(length_tuple[1]) + "]"
                 if "$" in password:
                     password = env.resolve_env_var(password)
                 if password != None:
-                    properties.add(("datasource_password", password, (file_name, line_nr + 1, span)))
+                    properties.add(("datasource_password", password, (file_name, line_number + 1, span)))
             except:
                 pass
             # Username
             try:
                 username = file.get("services", {}).get(s).get("environment").get("MONGODB_USERNAME")
-                line_nr = file["services"][s]["environment"]["MONGODB_USERNAME"].lc.line
-                length_tuple = re.search(username.replace("$", "\$"), lines[line_nr].replace("$", "\$")).span()
+                line_number = file["services"][s]["environment"]["MONGODB_USERNAME"].lc.line
+                length_tuple = re.search(username.replace("$", "\$"), lines[line_number].replace("$", "\$")).span()
                 span = "[" + str(length_tuple[0]) +  ":" + str(length_tuple[1]) + "]"
                 if "$" in username:
                     username = env.resolve_env_var(username)
                 if username != None:
-                    properties.add(("datasource_username", username, (file_name, line_nr + 1, span)))
+                    properties.add(("datasource_username", username, (file_name, line_number + 1, span)))
             except:
                 pass
 
             try:
                 username = file.get("services", {}).get(s).get("environment").get("MONGODB_USER")
-                line_nr = file["services"][s]["environment"]["MONGODB_USER"].lc.line
-                length_tuple = re.search(username.replace("$", "\$"), lines[line_nr].replace("$", "\$")).span()
+                line_number = file["services"][s]["environment"]["MONGODB_USER"].lc.line
+                length_tuple = re.search(username.replace("$", "\$"), lines[line_number].replace("$", "\$")).span()
                 span = "[" + str(length_tuple[0]) +  ":" + str(length_tuple[1]) + "]"
                 if "$" in username:
                     username = env.resolve_env_var(username)
                 if username != None:
-                    properties.add(("datasource_username", username, (file_name, line_nr + 1, span)))
+                    properties.add(("datasource_username", username, (file_name, line_number + 1, span)))
             except:
                 pass
 
@@ -200,47 +204,47 @@ def extract_microservices(file_content, file_name) -> set:
                 environment_entries = file.get("services", {}).get(s).get("environment")
                 if environment_entries: print(environment_entries, "env1")
                 username, password = None, None
-                for line_nr, entry in enumerate(environment_entries):
+                for line_number, entry in enumerate(environment_entries):
                     print(entry)
                     if ("MONGODB" in entry.upper() and
                         "USER" in entry.upper()):
                         username = file.get("services", {}).get(s).get("environment").get(entry)
                         print(username,"user")
-                        line_nr = file["services"][s]["environment"][entry].lc.line
-                        length_tuple = re.search(password.replace("$", "\$"), lines[line_nr].replace("$", "\$")).span()
+                        line_number = file["services"][s]["environment"][entry].lc.line
+                        length_tuple = re.search(password.replace("$", "\$"), lines[line_number].replace("$", "\$")).span()
                         span = "[" + str(length_tuple[0]) +  ":" + str(length_tuple[1]) + "]"
                         if username != None:
-                            properties.add(("datasource_username", username, (file_name, line_nr + 1, span)))
+                            properties.add(("datasource_username", username, (file_name, line_number + 1, span)))
                     
                     elif ("MYSQL" in entry.upper() and
                           "USER"  in entry.upper()):
                         username = file.get("services", {}).get(s).get("environment").get(entry)
-                        line_nr = file["services"][s]["environment"][entry].lc.line
-                        length_tuple = re.search(password.replace("$", "\$"), lines[line_nr].replace("$", "\$")).span()
+                        line_number = file["services"][s]["environment"][entry].lc.line
+                        length_tuple = re.search(password.replace("$", "\$"), lines[line_number].replace("$", "\$")).span()
                         span = "[" + str(length_tuple[0]) +  ":" + str(length_tuple[1]) + "]"
                         if username != None:
-                            properties.add(("datasource_username", username, (file_name, line_nr + 1, span)))
+                            properties.add(("datasource_username", username, (file_name, line_number + 1, span)))
 
                     elif ("MONGODB" in entry.upper() and
                           "PASS"    in entry.upper()):
                         password = file.get("services", {}).get(s).get("environment").get(entry)
                         print(password, "pwd")
-                        line_nr = file["services"][s]["environment"][entry].lc.line
-                        length_tuple = re.search(password.replace("$", "\$"), lines[line_nr].replace("$", "\$")).span()
+                        line_number = file["services"][s]["environment"][entry].lc.line
+                        length_tuple = re.search(password.replace("$", "\$"), lines[line_number].replace("$", "\$")).span()
                         span = "[" + str(length_tuple[0]) +  ":" + str(length_tuple[1]) + "]"
                         if password != None:
-                            properties.add(("datasource_password", password, (file_name, line_nr + 1, span)))
+                            properties.add(("datasource_password", password, (file_name, line_number + 1, span)))
                     # DELETED
                     # elif "MONGODB_PASS" in entry:
                     elif ("MYSQL" in entry.upper() and
                           "PASS"  in entry.upper()):
                         password = file.get("services", {}).get(s).get("environment").get(entry)
                         print(password)
-                        line_nr = file["services"][s]["environment"][entry].lc.line
-                        length_tuple = re.search(password.replace("$", "\$"), lines[line_nr].replace("$", "\$")).span()
+                        line_number = file["services"][s]["environment"][entry].lc.line
+                        length_tuple = re.search(password.replace("$", "\$"), lines[line_number].replace("$", "\$")).span()
                         span = "[" + str(length_tuple[0]) +  ":" + str(length_tuple[1]) + "]"
                         if password != None:
-                            properties.add(("datasource_password", password, (file_name, line_nr + 1, span)))
+                            properties.add(("datasource_password", password, (file_name, line_number + 1, span)))
                     # DELETED
                     # elif "MYSQL_PASS" in entry:
             except:
@@ -260,21 +264,21 @@ def extract_microservices(file_content, file_name) -> set:
             # Postgres
             try:
                 password = file.get("services", {}).get(s).get("environment").get("POSTGRES_PASSWORD")
-                line_nr = file["services"][s]["environment"]["POSTGRES_PASSWORD"].lc.line
-                length_tuple = re.search(password.replace("$", "\$"), lines[line_nr].replace("$", "\$")).span()
+                line_number = file["services"][s]["environment"]["POSTGRES_PASSWORD"].lc.line
+                length_tuple = re.search(password.replace("$", "\$"), lines[line_number].replace("$", "\$")).span()
                 span = "[" + str(length_tuple[0]) +  ":" + str(length_tuple[1]) + "]"
                 if password != None:
-                    properties.add(("datasource_password", password, (file_name, line_nr + 1, span)))
+                    properties.add(("datasource_password", password, (file_name, line_number + 1, span)))
             except:
                 pass
 
             try:
                 username = file.get("services", {}).get(s).get("environment").get("POSTGRES_USER")
-                line_nr = file["services"][s]["environment"]["POSTGRES_USER"].lc.line
-                length_tuple = re.search(username.replace("$", "\$"), lines[line_nr].replace("$", "\$")).span()
+                line_number = file["services"][s]["environment"]["POSTGRES_USER"].lc.line
+                length_tuple = re.search(username.replace("$", "\$"), lines[line_number].replace("$", "\$")).span()
                 span = "[" + str(length_tuple[0]) +  ":" + str(length_tuple[1]) + "]"
                 if username != None:
-                    properties.add(("datasource_username", username, (file_name, line_nr + 1, span)))
+                    properties.add(("datasource_username", username, (file_name, line_number + 1, span)))
             except:
                 pass
 
@@ -288,6 +292,7 @@ def extract_microservices(file_content, file_name) -> set:
                 port = (port_nr, file_name, line_number + 1, span)
             except:
                 try:
+                    # FIXME .get("services", {})
                     ports = file.get("services", {}).get(s).get("expose")
                     port_nr = ports[0].split(":")[0].strip("\" -")
                     line_number = file["services"][s]["expose"].lc.line
@@ -297,38 +302,24 @@ def extract_microservices(file_content, file_name) -> set:
                 except:
                     pass
 
+
+            # FIXME
             if not image:
                 image = "image"
                 if build:
                     image = build
 
+            # FIXME
             if not exists:
                 # Have to filter here and only add those with a known image.
                 # Otherwise, many dublicates will occur when developers call the services different in docker-compose than in Spring.application.name
-                known_images = ["elasticsearch",
-                                "kibana",
-                                "logstash",
-                                "grafana",
-                                "kafka",
-                                "rabbit",
-                                "zookeeper",
-                                "postgres",
-                                "zipkin",
-                                "prometheus",
-                                "mongo",
-                                "consul",
-                                "mysql",
-                                "scope",
-                                "postgres",
-                                "apache",
-                                "nginx"
-                                ]
                 for ki in known_images:
                     if ki in image:
                         properties_dict[s] = properties
                         microservices_set.add((s, image, "type", port, trace))
                         break
 
+            # FIXME
             # add additional information
             if exists and correct_id:
                 if "properties" in microservices_dict[correct_id]:
@@ -457,64 +448,64 @@ def extract_microservices(file_content, file_name) -> set:
                 environment_entries = file.get(s).get("environment")
                 print(environment_entries, "env2")
                 username, password = None, None
-                for line_nr, entry in enumerate(environment_entries):
+                for line_number, entry in enumerate(environment_entries):
                     if "MONGODB_USERNAME" in entry:
                         username = file.get("services", {}).get(s).get("environment").get("MONGODB_USERNAME")
-                        line_nr = file["services"][s]["environment"]["MONGODB_USERNAME"].lc.line
-                        length_tuple = re.search(password.replace("$", "\$"), lines[line_nr].replace("$", "\$")).span()
+                        line_number = file["services"][s]["environment"]["MONGODB_USERNAME"].lc.line
+                        length_tuple = re.search(password.replace("$", "\$"), lines[line_number].replace("$", "\$")).span()
                         span = "[" + str(length_tuple[0]) +  ":" + str(length_tuple[1]) + "]"
                         if username != None:
-                            properties.add(("datasource_username", username, (file_name, line_nr + 1, span)))
+                            properties.add(("datasource_username", username, (file_name, line_number + 1, span)))
                     elif "MONGODB_USER" in entry:
                         username = file.get("services", {}).get(s).get("environment").get("MONGODB_USER")
-                        line_nr = file["services"][s]["environment"]["MONGODB_USER"].lc.line
-                        length_tuple = re.search(password.replace("$", "\$"), lines[line_nr].replace("$", "\$")).span()
+                        line_number = file["services"][s]["environment"]["MONGODB_USER"].lc.line
+                        length_tuple = re.search(password.replace("$", "\$"), lines[line_number].replace("$", "\$")).span()
                         span = "[" + str(length_tuple[0]) +  ":" + str(length_tuple[1]) + "]"
                         if username != None:
-                            properties.add(("datasource_username", username, (file_name, line_nr + 1, span)))
+                            properties.add(("datasource_username", username, (file_name, line_number + 1, span)))
                     elif "MYSQL_USERNAME" in entry:
                         username = file.get("services", {}).get(s).get("environment").get("MYSQL_USERNAME")
-                        line_nr = file["services"][s]["environment"]["MYSQL_USERNAME"].lc.line
-                        length_tuple = re.search(password.replace("$", "\$"), lines[line_nr].replace("$", "\$")).span()
+                        line_number = file["services"][s]["environment"]["MYSQL_USERNAME"].lc.line
+                        length_tuple = re.search(password.replace("$", "\$"), lines[line_number].replace("$", "\$")).span()
                         span = "[" + str(length_tuple[0]) +  ":" + str(length_tuple[1]) + "]"
                         if username != None:
-                            properties.add(("datasource_username", username, (file_name, line_nr + 1, span)))
+                            properties.add(("datasource_username", username, (file_name, line_number + 1, span)))
                     elif "MYSQL_USER" in entry:
                         username = file.get("services", {}).get(s).get("environment").get("MYSQL_USER")
-                        line_nr = file["services"][s]["environment"]["MYSQL_USER"].lc.line
-                        length_tuple = re.search(password.replace("$", "\$"), lines[line_nr].replace("$", "\$")).span()
+                        line_number = file["services"][s]["environment"]["MYSQL_USER"].lc.line
+                        length_tuple = re.search(password.replace("$", "\$"), lines[line_number].replace("$", "\$")).span()
                         span = "[" + str(length_tuple[0]) +  ":" + str(length_tuple[1]) + "]"
                         if username != None:
-                            properties.add(("datasource_username", username, (file_name, line_nr + 1, span)))
+                            properties.add(("datasource_username", username, (file_name, line_number + 1, span)))
 
                     elif "MONGODB_PASSWORD" in entry:
                         password = file.get("services", {}).get(s).get("environment").get("MONGODB_PASSWORD")
-                        line_nr = file["services"][s]["environment"]["MONGODB_PASSWORD"].lc.line
-                        length_tuple = re.search(password.replace("$", "\$"), lines[line_nr].replace("$", "\$")).span()
+                        line_number = file["services"][s]["environment"]["MONGODB_PASSWORD"].lc.line
+                        length_tuple = re.search(password.replace("$", "\$"), lines[line_number].replace("$", "\$")).span()
                         span = "[" + str(length_tuple[0]) +  ":" + str(length_tuple[1]) + "]"
                         if password != None:
-                            properties.add(("datasource_password", password, (file_name, line_nr + 1, span)))
+                            properties.add(("datasource_password", password, (file_name, line_number + 1, span)))
                     elif "MONGODB_PASS" in entry:
                         password = file.get("services", {}).get(s).get("environment").get("MONGODB_PASS")
-                        line_nr = file["services"][s]["environment"]["MONGODB_PASS"].lc.line
-                        length_tuple = re.search(password.replace("$", "\$"), lines[line_nr].replace("$", "\$")).span()
+                        line_number = file["services"][s]["environment"]["MONGODB_PASS"].lc.line
+                        length_tuple = re.search(password.replace("$", "\$"), lines[line_number].replace("$", "\$")).span()
                         span = "[" + str(length_tuple[0]) +  ":" + str(length_tuple[1]) + "]"
                         if password != None:
-                            properties.add(("datasource_password", password, (file_name, line_nr + 1, span)))
+                            properties.add(("datasource_password", password, (file_name, line_number + 1, span)))
                     elif "MYSQL_PASSWORD" in entry:
                         password = file.get("services", {}).get(s).get("environment").get("MYSQL_PASSWORD")
-                        line_nr = file["services"][s]["environment"]["MYSQL_PASSWORD"].lc.line
-                        length_tuple = re.search(password.replace("$", "\$"), lines[line_nr].replace("$", "\$")).span()
+                        line_number = file["services"][s]["environment"]["MYSQL_PASSWORD"].lc.line
+                        length_tuple = re.search(password.replace("$", "\$"), lines[line_number].replace("$", "\$")).span()
                         span = "[" + str(length_tuple[0]) +  ":" + str(length_tuple[1]) + "]"
                         if password != None:
-                            properties.add(("datasource_password", password, (file_name, line_nr + 1, span)))
+                            properties.add(("datasource_password", password, (file_name, line_number + 1, span)))
                     elif "MYSQL_PASS" in entry:
                         password = file.get("services", {}).get(s).get("environment").get("MYSQL_PASS")
-                        line_nr = file["services"][s]["environment"]["MYSQL_PASS"].lc.line
-                        length_tuple = re.search(password.replace("$", "\$"), lines[line_nr].replace("$", "\$")).span()
+                        line_number = file["services"][s]["environment"]["MYSQL_PASS"].lc.line
+                        length_tuple = re.search(password.replace("$", "\$"), lines[line_number].replace("$", "\$")).span()
                         span = "[" + str(length_tuple[0]) +  ":" + str(length_tuple[1]) + "]"
                         if password != None:
-                            properties.add(("datasource_password", password, (file_name, line_nr + 1, span)))
+                            properties.add(("datasource_password", password, (file_name, line_number + 1, span)))
             except:
                 pass
 
@@ -577,24 +568,6 @@ def extract_microservices(file_content, file_name) -> set:
             if not exists:
                 # Have to filter here and only add those with a known image.
                 # Otherwise, many dublicates will occur when developers call the services different in docker-compose than in Spring.application.name
-                known_images = ["elasticsearch",
-                                "kibana",
-                                "logstash",
-                                "grafana",
-                                "kafka",
-                                "rabbit",
-                                "zookeeper",
-                                "postgres",
-                                "zipkin",
-                                "prometheus",
-                                "mongo",
-                                "consul",
-                                "mysql",
-                                "scope",
-                                "postgres",
-                                "apache",
-                                "nginx"
-                                ]
                 for ki in known_images:
                     if ki in image:
                         properties_dict[s] = properties
@@ -612,7 +585,7 @@ def extract_microservices(file_content, file_name) -> set:
     return microservices_set, properties_dict
 
 
-def extract_information_flows(file_content, microservices, information_flows):
+def extract_information_flows(file_content:  str, microservices: dict, information_flows: dict) -> dict:
     """Adds information flows based on "links".
     """
 
@@ -620,48 +593,44 @@ def extract_information_flows(file_content, microservices, information_flows):
     yaml.Constructor = MyConstructor
 
     discovery_server, config_server = False, False
-    for m in microservices.keys():
-        if "stereotype_instances" in microservices[m] and "service_discovery" in microservices[m]["stereotype_instances"]:
-            discovery_server = microservices[m]["name"]
-        if "stereotype_instances" in microservices[m] and "configuration_server" in microservices[m]["stereotype_instances"]:
-            config_server = microservices[m]["name"]
+    for m in microservices.values():
+        if "stereotype_instances" in m:
+            if "service_discovery" in m["stereotype_instances"]:
+                discovery_server = m["name"]
+            if "configuration_server" in m["stereotype_instances"]:
+                config_server = m["name"]
 
     file = yaml.load(file_content)
 
     if "services" in file:
         for s in file.get("services"):
-
             try:
                 links = file.get("services", {}).get(s).get("links")
-                for link in links:
-                    found_service = False
-                    for m in microservices.keys():
-                        if microservices[m]["name"] == link:
-                            found_service = True
-                    if found_service and not link in {discovery_server, config_server}:
-                        id = max(information_flows.keys(), default=-1) + 1
-                        information_flows[id] = dict()
-                        information_flows[id]["sender"] = s
-                        information_flows[id]["receiver"] = link
-                        information_flows[id]["stereotype_instances"] = ["restful_http"]
-
+                information_flows = get_flows(s,links, microservices, information_flows, discovery_server, config_server)
             except:
                 pass
     else:
         for s in file.keys():
             try:
                 links = file.get(s).get("links")
-                for link in links:
-                    found_service = False
-                    for m in microservices.keys():
-                        if microservices[m]["name"] == link:
-                            found_service = True
-                    if found_service and not link in {discovery_server, config_server}:
-                        id = max(information_flows.keys(), default=-1) + 1
-                        information_flows[id] = dict()
-                        information_flows[id]["sender"] = s
-                        information_flows[id]["receiver"] = link
-                        information_flows[id]["stereotype_instances"] = ["restful_http"]
+                information_flows = get_flows(s,links, microservices, information_flows, discovery_server, config_server)
             except:
                 pass
+    return information_flows
+
+def get_flows(s: str, links: str, microservices: dict, information_flows: dict, discovery_server: bool, config_server: bool) -> dict:
+    if not links:
+        return information_flows
+    
+    for link in links:
+        for m in microservices.values():
+            if m["name"] == link:
+                if not link in {discovery_server, config_server}:
+                    newKey = max(information_flows.keys(), default=-1) + 1
+                    information_flows[newKey] = {
+                        "sender": s,
+                        "receiver": link,
+                        "stereotype_instances": ["restful_http"]
+                    }
+    
     return information_flows
