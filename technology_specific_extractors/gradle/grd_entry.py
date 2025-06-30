@@ -31,10 +31,7 @@ def set_microservices(dfd) -> dict:
             microservice, properties = parse_configurations(gradle_file)
 
             if microservice[0]:
-                try:
-                    id = max(microservices.keys()) + 1
-                except:
-                    id = 0
+                id = max(microservices.keys(), default=-1) + 1
                 microservices[id] = dict()
 
                 microservices[id]["name"] = microservice[0]

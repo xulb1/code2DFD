@@ -25,10 +25,7 @@ def detect_elasticsearch(microservices: dict, information_flows: dict, dfd) -> d
                 kibana = microservices[m]["name"]
 
         if kibana:
-            try:
-                id = max(information_flows.keys()) + 1
-            except:
-                id = 0
+            id = max(information_flows.keys(), default=-1) + 1
             information_flows[id] = dict()
             information_flows[id]["sender"] = elasticsearch
             information_flows[id]["receiver"] = kibana

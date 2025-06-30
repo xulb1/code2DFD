@@ -31,10 +31,7 @@ def set_information_flows(dfd) -> set:
 
     # merge old and new flows
     for ni in new_information_flows.keys():
-        try:
-            id = max(information_flows.keys()) + 1
-        except:
-            id = 0
+        id = max(information_flows.keys(), default=-1) + 1
         information_flows[id] = new_information_flows[ni]
 
     tmp.tmp_config.set("DFD", "information_flows", str(information_flows).replace("%", "%%"))
@@ -169,10 +166,7 @@ def match_incoming_to_outgoing_endpoints(incoming_endpoints: set, outgoing_endpo
 
     if rabbit_server:
         for i in incoming_endpoints:
-            try:
-                id = max(information_flows.keys()) + 1
-            except:
-                id = 0
+            id = max(information_flows.keys(), default=-1) + 1
             information_flows[id] = dict()
 
             information_flows[id]["sender"] = rabbit_server
@@ -232,10 +226,7 @@ def match_incoming_to_outgoing_endpoints(incoming_endpoints: set, outgoing_endpo
                                 else:
                                     microservices[rabbit_id]["tagged_values"] = [("Password", password)]
 
-            try:
-                id = max(information_flows.keys()) + 1
-            except:
-                id = 0
+            id = max(information_flows.keys(), default=-1) + 1
             information_flows[id] = dict()
 
             information_flows[id]["sender"] = o[2]

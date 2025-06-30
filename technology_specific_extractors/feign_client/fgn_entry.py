@@ -75,10 +75,7 @@ def set_information_flows(dfd) -> dict:
                                     stereotype_instances.add("authenticated_request")
                 if target_service and microservice:
                     # set flow
-                    try:
-                        id2 = max(information_flows.keys()) + 1
-                    except:
-                        id2 = 0
+                    id2 = max(information_flows.keys(), default=-1) + 1
                     information_flows[id2] = dict()
 
                     information_flows[id2]["sender"] = microservice

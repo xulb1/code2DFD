@@ -74,10 +74,8 @@ def check_properties(microservices: dict, information_flows: dict, external_comp
 
         if database_service:    # found a connection to a microservice
             # set information flow
-            try:
-                id = max(information_flows.keys()) + 1
-            except:
-                id = 0
+            id = max(information_flows.keys(), default=-1) + 1
+
             information_flows[id] = dict()
             information_flows[id]["sender"] = database_service
             information_flows[id]["receiver"] = sender
@@ -95,13 +93,12 @@ def check_properties(microservices: dict, information_flows: dict, external_comp
             if username or password:
                 information_flows[id]["stereotype_instances"].append("plaintext_credentials_link")
 
-            trace = dict()
-            trace["item"] = database_service + " -> " + sender
-            trace["file"] = trace_info[0]
-            trace["line"] = trace_info[1]
-            trace["span"] = trace_info[2]
-
-            traceability.add_trace(trace)
+            traceability.add_trace({
+                "item": f"{database_service} -> {sender}",
+                "file": trace_info[0],
+                "line": trace_info[1],
+                "span": trace_info[2]
+            })
 
             # adjust service to database
             for id in microservices.keys():
@@ -154,10 +151,7 @@ def check_properties(microservices: dict, information_flows: dict, external_comp
                     database_type = "Neo4j"
 
             # create external component
-            try:
-                id = max(external_components.keys()) + 1
-            except:
-                id = 0
+            id = max(external_components.keys(), default=-1) + 1
             external_components[id] = dict()
             external_components[id]["name"] = "database-" + str(microservices[m]["name"])
             external_components[id]["type"] = "external_component"
@@ -200,10 +194,7 @@ def check_properties(microservices: dict, information_flows: dict, external_comp
                     external_components[id]["stereotype_instances"] = ["plaintext_credentials"]
 
             # set information flow
-            try:
-                id = max(information_flows.keys()) + 1
-            except:
-                id = 0
+            id = max(information_flows.keys(), default=-1) + 1
             information_flows[id] = dict()
             information_flows[id]["sender"] = "database-" + str(microservices[m]["name"])
             information_flows[id]["receiver"] = microservices[m]["name"]
@@ -215,10 +206,7 @@ def check_properties(microservices: dict, information_flows: dict, external_comp
             if password:
                 information_flows[id]["tagged_values"] = [("Password", password.strip())]
             if username:
-                try:
-                    information_flows[id]["tagged_values"].append(("Username", username.strip()))
-                except:
-                    information_flows[id]["tagged_values"] = [("Username", username.strip())]
+                information_flows[id].setdefault("tagged_values", []).append(("Username", username.strip()))
 
             tmp.tmp_config.set("DFD", "external_components", str(external_components).replace("%", "%%"))
 
@@ -237,11 +225,12 @@ def clean_database_connections(microservices: dict, information_flows: dict):
     """Removes database connections in wrong direction, which can occur from docker compose.
     """
 
+    to_purge = set()
     for microservice in microservices.values():
         if microservice["type"] == "database_component":
-            to_purge = set()
-            for i in information_flows.keys():
+            for i in information_flows:
                 if information_flows[i]["receiver"] == microservice["name"]:
                     to_purge.add(i)
-            for p in to_purge:
-                del information_flows[p]
+    
+    for p in to_purge:
+        del information_flows[p]

@@ -33,10 +33,7 @@ def set_information_flows(dfd):
                             if address_part == microservices[m]["name"]:
                                 microservice = tech_sw.detect_microservice(results[r]["path"], dfd)
                                 if microservice:
-                                    try:
-                                        id = max(information_flows.keys()) + 1
-                                    except:
-                                        id = 0
+                                    id = max(information_flows.keys(), default=-1) + 1
                                     information_flows[id] = dict()
 
                                     information_flows[id]["sender"] = microservice

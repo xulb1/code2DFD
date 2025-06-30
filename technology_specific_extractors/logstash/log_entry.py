@@ -65,10 +65,9 @@ def detect_logstash(microservices: dict, information_flows: dict, external_compo
                             # external
                             if not logstash:
                                 logstash_port = int(logstash_server.split(":")[1].strip().strip(""))
-                                try:
-                                    id = max(external_components.keys()) + 1
-                                except:
-                                    id = 0
+
+                                id = max(external_components.keys(), default=-1) + 1
+
                                 external_components[id] = dict()
                                 external_components[id]["name"] = "logstash"
                                 external_components[id]["type"] = "external_component"
@@ -82,10 +81,7 @@ def detect_logstash(microservices: dict, information_flows: dict, external_compo
                                 trace["span"] = trace_info[2]
                                 traceability.add_trace(trace)
 
-                                try:
-                                    id = max(information_flows.keys()) + 1
-                                except:
-                                    id = 0
+                                id = max(information_flows.keys(), default=-1) + 1
                                 information_flows[id] = dict()
                                 information_flows[id]["sender"] = microservices[m]["name"]
                                 information_flows[id]["receiver"] = "logstash"
@@ -116,10 +112,7 @@ def detect_logstash(microservices: dict, information_flows: dict, external_compo
             if ("Search Engine", "Elasticsearch") in microservices[m]["tagged_values"]:
                 elasticsearch = microservices[m]["name"]
         if elasticsearch:
-            try:
-                id = max(information_flows.keys()) + 1
-            except:
-                id = 0
+            id = max(information_flows.keys(), default=-1) + 1
             information_flows[id] = dict()
             information_flows[id]["sender"] = logstash
             information_flows[id]["receiver"] = elasticsearch
@@ -138,10 +131,7 @@ def detect_logstash(microservices: dict, information_flows: dict, external_compo
             for prop in microservices[m]["properties"]:
                 if prop[0] == "logstash_server":
                     if logstash in prop[1]:
-                        try:
-                            id = max(information_flows.keys()) + 1
-                        except:
-                            id = 0
+                        id = max(information_flows.keys(), default=-1) + 1
                         information_flows[id] = dict()
                         information_flows[id]["sender"] = microservices[m]["name"]
                         information_flows[id]["receiver"] = logstash

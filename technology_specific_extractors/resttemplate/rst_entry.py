@@ -25,10 +25,7 @@ def set_information_flows(dfd) -> dict:
     new_information_flows = match_incoming_to_outgoing_endpoints(incoming_endpoints, outgoing_endpoints, dfd)
 
     for ni in new_information_flows.keys():
-        try:
-            id = max(information_flows.keys()) + 1
-        except:
-            id = 0
+        id = max(information_flows.keys(), default=-1) + 1
         information_flows[id] = new_information_flows[ni]
 
     tmp.tmp_config.set("DFD", "information_flows", str(information_flows).replace("%", "%%"))
@@ -189,10 +186,7 @@ def find_rst_variable(parameter: str, file: dict, line_nr: int, information_flow
     microservices = tech_sw.get_microservices(dfd)
     for m in microservices.keys():
         if microservices[m]["name"] in parameter:
-            try:
-                id = max(information_flows.keys()) + 1
-            except:
-                id = 0
+            id = max(information_flows.keys(), default=-1) + 1
             information_flows[id] = dict()
 
             information_flows[id]["sender"] = microservice
@@ -349,10 +343,7 @@ def match_incoming_to_outgoing_endpoints(incoming_endpoints: list, outgoing_endp
                         stereotype_instances.append("ssl_secured")
 
         # set flow
-        try:
-            id = max(information_flows.keys()) + 1
-        except:
-            id = 0
+        id = max(information_flows.keys(), default=-1) + 1
         information_flows[id] = dict()
 
         information_flows[id]["sender"] = i[0]

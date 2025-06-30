@@ -12,10 +12,10 @@ def detect_circuit_breakers(microservices: dict, information_flows: dict, dfd) -
         # Check if circuit breaker tech was found
         circuit_breaker_tuple = False
         correct_id = False
-        for m in microservices.keys():
+        for m in microservices:
             if microservices[m]["name"] == microservice:
                 correct_id = m
-                for prop in microservices[m]["properties"]:
+                for prop in microservices[correct_id]["properties"]:
                     if prop[0] == "circuit_breaker":
                         circuit_breaker_tuple = ("Circuit Breaker", prop[1])
 
@@ -23,38 +23,28 @@ def detect_circuit_breakers(microservices: dict, information_flows: dict, dfd) -
             for line_nr in range(len(results[r]["content"])):
                 line = results[r]["content"][line_nr]
                 if "@EnableCircuitBreaker" in line:
-                    if "stereotype_instances" in microservices[correct_id]:
-                        microservices[correct_id]["stereotype_instances"].append("circuit_breaker")
-                    else:
-                        microservices[correct_id]["stereotype_instances"] = ["circuit_breaker"]
+                    microservices[correct_id].setdefault("stereotype_instances", []).append("circuit_breaker")
 
                     if circuit_breaker_tuple:
-                        if "tagged_values" in microservices[correct_id]:
-                            microservices[correct_id]["tagged_values"].append(circuit_breaker_tuple)
-                        else:
-                            microservices[correct_id]["tagged_values"] = [circuit_breaker_tuple]
+                        microservices[correct_id].setdefault("tagged_values", []).append(circuit_breaker_tuple)
 
                     # adjust flows going from this service
-                    for i in information_flows.keys():
-                        if information_flows[i]["sender"] == microservice:
-                            if "stereotype_instances" in information_flows[i]:
-                                information_flows[i]["stereotype_instances"].append("circuit_breaker_link")
-                            else:
-                                information_flows[i]["stereotype_instances"] = ["circuit_breaker_link"]
+                    for flow in information_flows.values():
+                        if flow["sender"] == microservice:
+                            flow.setdefault("stereotype_instances", []).append("circuit_breaker_link")
+                            
                             if circuit_breaker_tuple:
-                                if "tagged_values" in information_flows[i]:
-                                    if type(information_flows[i]["tagged_values"]) == list:
-                                        information_flows[i]["tagged_values"].append(circuit_breaker_tuple)
+                                if "tagged_values" in flow:
+                                    if type(flow["tagged_values"]) == list:
+                                        flow["tagged_values"].append(circuit_breaker_tuple)
                                     else:
-                                        information_flows[i]["tagged_values"].add(circuit_breaker_tuple)
+                                        flow["tagged_values"].add(circuit_breaker_tuple)
                                 else:
-                                    information_flows[i]["tagged_values"] = [circuit_breaker_tuple]
+                                    flow["tagged_values"] = [circuit_breaker_tuple]
 
     return microservices, information_flows
 
 
+# TODO
 def detect_circuit_breaker_tech(path):
-
-    circuit_breaker_tuple = False
-
-    return circuit_breaker_tuple
+    return False

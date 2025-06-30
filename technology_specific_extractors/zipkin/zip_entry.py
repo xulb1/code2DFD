@@ -47,10 +47,8 @@ def detect_zipkin_server(microservices: dict, information_flows: dict, iterative
                                 zipkin_server = microservices[m2]["name"]
                         if zipkin_server:
                             correct_id = m2
-                            try:
-                                id = max(information_flows.keys()) + 1
-                            except:
-                                id = 0
+                            
+                            id = max(information_flows.keys(), default=-1) + 1
                             information_flows[id] = dict()
                             information_flows[id]["sender"] = microservices[m]["name"]
                             information_flows[id]["receiver"] = zipkin_server
@@ -90,6 +88,7 @@ def detect_zipkin_server(microservices: dict, information_flows: dict, iterative
             port = connections_exist.split("http:")[1]
             if ":" in port:
                 port = port.split(":")[1].strip("/").strip()
+        
         id_ = max(microservices.keys(), default=-1) + 1
         microservices[id_] = dict()
         microservices[id_]["name"] = "zipkin-server"

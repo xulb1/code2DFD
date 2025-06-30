@@ -68,10 +68,7 @@ def detect_spring_cloud_gateway(microservices: dict, information_flows: dict, ex
                         if microservices[m2]["name"] == prop[1]:
                             target_service = prop[1]
                 if target_service:
-                    try:
-                        id = max(information_flows.keys()) + 1
-                    except:
-                        id = 0
+                    id = max(information_flows.keys(), default=-1) + 1
                     information_flows[id] = dict()
                     information_flows[id]["sender"] = server
                     information_flows[id]["receiver"] = target_service

@@ -122,15 +122,12 @@ def pagList2lines(pagList) -> dict:
         containing_files_URLs = extract_downloadURL(p)
         for file in containing_files_URLs.keys():
             f = containing_files_URLs[file]
-            try:
-                id_ = max(results.keys()) + 1
-            except:
-                id_ = 0
-            results[id_] = dict()
+            key = max(results.keys(), default=-1) + 1
+            results[key] = dict()
 
-            results[id_]["content"] = file_as_lines(f["path"])
-            results[id_]["name"] = f["name"]
-            results[id_]["path"] = f["path"]
+            results[key]["content"] = file_as_lines(f["path"])
+            results[key]["name"] = f["name"]
+            results[key]["path"] = f["path"]
 
         return results
 
@@ -141,14 +138,11 @@ def extract_downloadURL(files) -> dict:
 
     containing_files_URLs = dict()
     for f in files:
-        try:
-            id_ = max(containing_files_URLs.keys()) + 1
-        except:
-            id_ = 0
-        containing_files_URLs[id_] = dict()
+        key = max(containing_files_URLs.keys(), default=-1) + 1
 
-        containing_files_URLs[id_]["path"] = f.path
-        containing_files_URLs[id_]["name"] = f.name
+        containing_files_URLs[key] = dict()
+        containing_files_URLs[key]["path"] = f.path
+        containing_files_URLs[key]["name"] = f.name
     return containing_files_URLs
 
 
@@ -444,17 +438,15 @@ def get_file_as_lines(filename: str) -> dict:
 
     if stdout:
         for line in stdout.decode().splitlines():
-            try:
-                id_ = max(files.keys()) + 1
-            except:
-                id_ = 0
-            files[id_] = dict()
+            key = max(files.keys(), default=-1) + 1
+            
+            files[key] = dict()
 
             with open(line, 'r') as file:
-                files[id_]["content"] = file.readlines()
+                files[key]["content"] = file.readlines()
 
-            files[id_]["name"] = os.path.basename(line)
+            files[key]["name"] = os.path.basename(line)
 
-            files[id_]["path"] = os.path.relpath(line, start=local_path)
+            files[key]["path"] = os.path.relpath(line, start=local_path)
 
     return files

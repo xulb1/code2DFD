@@ -30,7 +30,7 @@ def detect_via_docker(microservices: dict, information_flows: dict, external_com
 
         for line_nr in range(len(results[r]["content"])):
             line = results[r]["content"][line_nr]
-            if "apache2ctl" in line and line.strip()[0:3] == "CMD":
+            if "apache2ctl" in line and line.strip()[:3] == "CMD":
                 docker_path = results[r]["path"]
                 mark_server(microservices, microservice)
 
@@ -71,7 +71,7 @@ def add_user(information_flows: dict, external_components: dict, microservice: s
         microservice = "apache-server"
 
         trace = dict()
-        trace["item"] = "apache-server"
+        trace["item"] = microservice
         trace["file"] = trace_info[0]
         trace["line"] = trace_info[1]
         trace["span"] = trace_info[2]
@@ -91,27 +91,18 @@ def mark_server(microservices: dict, microservice: str) -> dict:
     """
 
     if not microservice:
-        microservice = "apache-server"
-        try:
-            id = max(microservices.keys()) + 1
-        except:
-            id = 0
-        microservices[id] = dict()
-        microservices[id]["name"] = microservice
-        microservices[id]["stereotype_instances"] = ["web_server"]
-        microservices[id]["tagged_values"] = [("Web Server", "Apache httpd")]
+        newKey = max(microservices.keys(), default=-1) + 1
+        
+        microservices[newKey] = dict()
+        microservices[newKey]["name"] = "apache-server"
+        microservices[newKey]["stereotype_instances"] = ["web_server"]
+        microservices[newKey]["tagged_values"] = [("Web Server", "Apache httpd")]
     else:
-        for m in microservices.keys():
+        for m in microservices:
             if microservices[m]["name"] == microservice: # this is the service
-                try:
-                    microservices[m]["stereotype_instances"].append("web_server")
-                except:
-                    microservices[m]["stereotype_instances"] = ["web_server"]
-                try:
-                    microservices[m]["tagged_values"].append(("Web Server", "Apache httpd"))
-                except:
-                    microservices[m]["tagged_values"] = [("Web Server", "Apache httpd")]
-
+                microservices[m].setdefault("stereotype_instances", []).append("web_server")
+                microservices[m].setdefault("tagged_values", []).append(("Web Server", "Apache httpd"))
+                
     return microservices
 
 
@@ -124,68 +115,64 @@ def add_connections_docker(microservices: dict, information_flows: dict, file, d
     for line in file:
         if "COPY" in line and ".conf" in line:
             config_file_path = line.strip().split(" ")[1]
-    if config_file_path:
-        if docker_path:
-            complete_config_file_path = os.path.join(os.path.dirname(docker_path), config_file_path)
-            config_file_name = os.path.basename(complete_config_file_path)
-            files = fi.get_file_as_lines(config_file_name)
-            for f in files:
-                if files[f]["path"] == complete_config_file_path:
-                    config_file = files[f]
-            if config_file:
-                microservices, information_flows = add_connections(microservices, information_flows, files[f]["content"], microservice, file_name)
+    
+    if config_file_path and docker_path:
+        complete_config_file_path = os.path.join(os.path.dirname(docker_path), config_file_path)
+        config_file_name = os.path.basename(complete_config_file_path)
+        files = fi.get_file_as_lines(config_file_name)
+        for f in files:
+            if files[f]["path"] == complete_config_file_path:
+                config_file = files[f]
+        if config_file:
+            microservices, information_flows = add_connections(microservices, information_flows, files[f]["content"], microservice, file_name)
 
     return microservices, information_flows
 
 
-def add_connections(microservices: dict, information_flows: dict, file, microservice: bool, file_name) -> dict:
+def add_connections(microservices: dict, information_flows: dict, file, microservice: str, file_name) -> dict:
     """Adds connections to other services based on ProxyPass keyword.
     """
 
     if not microservice:
         microservice = "apache-server"
-    line_nr = 0
-    for line in file:
-        if "ProxyPass " in line:
-            parts = line.split(" ")
-            for part in parts:
-                if "http" in part and "://" in part:
-                    target_service = False
-                    host = part.split("://")[1].split(":")[0]
-                    if host == "localhost":
-                        port = part.split("://")[1].split(":")[1].strip().strip("\"").strip("/")
-                        for m in microservices.keys():
-                            try:
-                                for prop in microservices[m]["tagged_values"]:
-                                    if prop[0] == "Port":
-                                        if str(prop[1]) == str(port):
-                                            target_service = microservices[m]["name"]
-                            except Exception as e:
-                                pass
-                    else:
-                        for m in microservices.keys():
-                            if microservices[m]["name"] == host:
-                                target_service = host
-                    if target_service:
+    
+    for line_nr, line in enumerate(file):
+        if "ProxyPass " not in line:
+            continue
+        
+        parts = line.split(" ")
+        for part in parts:
+            if "http" in part and "://" in part:
+                target_service = False
+                host = part.split("://")[1].split(":")[0]
+                if host == "localhost":
+                    port = part.split("://")[1].split(":")[1].strip().strip("\"").strip("/")
+                    for value in microservices.values():
                         try:
-                            id = max(information_flows.keys()) + 1
-                        except:
-                            id = 0
-                        information_flows[id] = dict()
-                        information_flows[id]["sender"] = microservice
-                        information_flows[id]["receiver"] = target_service
-                        information_flows[id]["stereotype_instances"] = ["restful_http"]
+                            for prop in value["tagged_values"]:
+                                if (prop[0] == "Port" and str(prop[1]) == str(port)):
+                                    target_service = value["name"]
+                        except Exception:
+                            pass
+                else:
+                    for value in microservices.values():
+                        if value["name"] == host:
+                            target_service = host
+                
+                if target_service:
+                    newKey = max(information_flows.keys(), default=-1) + 1
+                    
+                    information_flows[newKey] = dict()
+                    information_flows[newKey]["sender"] = microservice
+                    information_flows[newKey]["receiver"] = target_service
+                    information_flows[newKey]["stereotype_instances"] = ["restful_http"]
 
-                        trace = dict()
-                        trace["item"] = microservice + " -> " + target_service
-                        trace["file"] = file_name
-                        trace["line"] = line_nr
-                        trace["span"] = "span"
-                        traceability.add_trace(trace)
-
-                    else:
-
-                        pass
+                    traceability.add_trace({
+                        "item": f"{microservice} -> {target_service}",
+                        "file": file_name,
+                        "line": line_nr,
+                        "span": "span"
+                    })
 
         line_nr += 1
     return microservices, information_flows

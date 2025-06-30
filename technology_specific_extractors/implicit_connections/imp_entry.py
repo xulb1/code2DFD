@@ -25,19 +25,13 @@ def set_information_flows(dfd) -> dict:
     new_information_flows = weavescope(microservices)
     # merge old and new flows
     for ni in new_information_flows.keys():
-        try:
-            id = max(information_flows.keys()) + 1
-        except:
-            id = 0
+        id = max(information_flows.keys(), default=-1) + 1
         information_flows[id] = new_information_flows[ni]
 
     # Zuul
     new_information_flows = zuul(microservices)
     for ni in new_information_flows.keys():
-        try:
-            id = max(information_flows.keys()) + 1
-        except:
-            id = 0
+        id = max(information_flows.keys(), default=-1) + 1
         information_flows[id] = new_information_flows[ni]
 
     tmp.tmp_config.set("DFD", "information_flows", str(information_flows).replace("%", "%%"))
@@ -52,10 +46,7 @@ def weavescope(microservices):
             if ("Monitoring Dashboard", "Weave Scope") in microservices[m]["tagged_values"]:
                 for mi in microservices.keys():
                     if not microservices[mi]["name"] == microservices[m]["name"]:
-                        try:
-                            id = max(new_information_flows.keys()) + 1
-                        except:
-                            id = 0
+                        id = max(new_information_flows.keys(), default=-1) + 1
                         new_information_flows[id] = dict()
 
                         new_information_flows[id]["sender"] = microservices[mi]["name"]
@@ -110,10 +101,7 @@ def extract_routes_properties(path, service):
                     microservice = line.split("=")[1].strip()
                 new_information_flows = dict()
                 if microservice:
-                    try:
-                        id = max(new_information_flows.keys()) + 1
-                    except:
-                        id = 0
+                    id = max(new_information_flows.keys(), default=-1) + 1
                     new_information_flows[id] = dict()
 
                     new_information_flows[id]["sender"] = service
@@ -124,7 +112,7 @@ def extract_routes_properties(path, service):
         return False
     return
 
-
+#FIXME
 def extract_routes_yaml(path, service):
     try:
         with open(path, 'r') as f:
@@ -133,10 +121,7 @@ def extract_routes_yaml(path, service):
             routes = document.get("zuul").get("routes")
 
             new_information_flows = dict()
-            try:
-                id = max(new_information_flows.keys()) + 1
-            except:
-                id = 0
+            id = max(new_information_flows.keys(), default=-1) + 1
             new_information_flows[id] = dict()
 
             new_information_flows[id]["sender"] = service

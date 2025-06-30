@@ -88,10 +88,7 @@ def dictionarify(elements_set: set, properties_dict: dict) -> dict:
             trace["span"] = e[3][3]
             traceability.add_trace(trace)
             
-        try:
-            newKey = max(elements.keys()) + 1
-        except Exception:
-            newKey = 0
+        newKey = max(elements.keys(), default=-1) + 1
         elements[newKey] = dict()
 
         elements[newKey]["name"] = e[0]

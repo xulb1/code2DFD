@@ -31,10 +31,7 @@ def set_information_flows(dfd) -> set:
 
     # merge old and new flows
     for ni in new_information_flows.keys():
-        try:
-            id = max(information_flows.keys()) + 1
-        except:
-            id = 0
+        id = max(information_flows.keys(), default=-1) + 1
         information_flows[id] = new_information_flows[ni]
 
     information_flows = detect_stream_binders(microservices, information_flows, dfd)
@@ -196,10 +193,7 @@ def match_incoming_to_outgoing_endpoints(microservices: dict, incoming_endpoints
 
     if kafka_server:
         for i in incoming_endpoints:
-            try:
-                id = max(information_flows.keys()) + 1
-            except:
-                id = 0
+            id = max(information_flows.keys(), default=-1) + 1
             information_flows[id] = dict()
 
             information_flows[id]["sender"] = kafka_server
@@ -226,10 +220,7 @@ def match_incoming_to_outgoing_endpoints(microservices: dict, incoming_endpoints
             traceability.add_trace(trace)
 
         for o in outgoing_endpoints:
-            try:
-                id = max(information_flows.keys()) + 1
-            except:
-                id = 0
+            id = max(information_flows.keys(), default=-1) + 1
             information_flows[id] = dict()
 
             information_flows[id]["sender"] = o[1]
@@ -279,10 +270,7 @@ def match_incoming_to_outgoing_endpoints(microservices: dict, incoming_endpoints
 
         # turn it into a dictionary
         for i in information_flows_set:
-            try:
-                id = max(information_flows.keys()) + 1
-            except:
-                id = 0
+            id = max(information_flows.keys(), default=-1) + 1
             information_flows[id] = dict()
 
             information_flows[id]["sender"] = i[0]
@@ -406,10 +394,7 @@ def detect_stream_binders(microservices: dict, information_flows: dict, dfd) -> 
             results = fi.search_keywords("@SendTo")
             for r in results.keys():
                 if tech_sw.detect_microservice(results[r]["path"], dfd) == microservices[m]["name"]:
-                    try:
-                        id = max(information_flows.keys()) + 1
-                    except:
-                        id = 0
+                    id = max(information_flows.keys(), default=-1) + 1
                     information_flows[id] = dict()
 
                     information_flows[id]["sender"] = microservices[m]["name"]
@@ -441,10 +426,7 @@ def detect_stream_binders(microservices: dict, information_flows: dict, dfd) -> 
             for r in results.keys():
                 if tech_sw.detect_microservice(results[r]["path"], dfd) == microservices[m]["name"]:
 
-                    try:
-                        id = max(information_flows.keys()) + 1
-                    except:
-                        id = 0
+                    id = max(information_flows.keys(), default=-1) + 1
                     information_flows[id] = dict()
 
                     information_flows[id]["sender"] = kafka_server

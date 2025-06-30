@@ -40,10 +40,7 @@ def detect_server_docker(microservices: dict, information_flows: dict, dfd) -> d
         if not found:
             prometheus_server = "prometheus_server"
             # add service
-            try:
-                id = max(microservices.keys()) + 1
-            except:
-                id = 0
+            id = max(microservices.keys(), default=-1) + 1
             microservices[id] = dict()
             microservices[id]["name"] = "prometheus_server"
             microservices[id]["image"] = results[r]["path"]
@@ -100,10 +97,7 @@ def detect_connections(microservices: dict, information_flows: dict, dockerfile,
                                     if microservices[m]["name"] == part:
                                         target_service = microservices[m]["name"]
                     if target_service:
-                        try:
-                            id = max(information_flows.keys()) + 1
-                        except:
-                            id = 0
+                        id = max(information_flows.keys(), default=-1) + 1
                         information_flows[id] = dict()
                         information_flows[id]["sender"] = target_service
                         information_flows[id]["receiver"] = prometheus_server

@@ -95,10 +95,7 @@ def detect_nginx(microservices: dict, information_flows: dict, external_componen
                             microservices[m]["tagged_values"] = [("Web Application", "Nginx")]
 
             else:
-                try:
-                    id = max(microservices.keys()) + 1
-                except:
-                    id = 0
+                id = max(microservices.keys(), default=-1) + 1
                 microservices[id] = dict()
 
                 local_repo_path = tmp.tmp_config["Repository"]["local_path"]
@@ -240,10 +237,7 @@ def detect_nginx(microservices: dict, information_flows: dict, external_componen
                         microservices[m]["stereotype_instances"] = ["gateway"]
 
             # Set connection between web app and gateway
-            try:
-                id = max(information_flows.keys()) + 1
-            except:
-                id = 0
+            id = max(information_flows.keys(), default=-1) + 1
             information_flows[id] = dict()
             information_flows[id]["sender"] = web_app
             information_flows[id]["receiver"] = gateway

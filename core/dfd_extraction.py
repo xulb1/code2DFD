@@ -112,10 +112,7 @@ def DFD_extraction():
 
     # Merge old and new
     for new_flow in new_information_flows.keys():
-        try:
-            key = max(information_flows.keys()) + 1
-        except Exception:
-            key = 0
+        key = max(information_flows.keys(), default=-1) + 1
         information_flows[key] = dict()
         information_flows[key] = new_information_flows[new_flow]
     print("Extracted information flows from API-calls, message brokers, and database connections")

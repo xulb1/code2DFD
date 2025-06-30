@@ -28,10 +28,7 @@ def detect_zookeeper(microservices: dict, information_flows: dict, dfd) -> dict:
                 if prop == ("Message Broker", "Kafka"):
                     kafka_service = microservices[m]["name"]
         if kafka_service:
-            try:
-                id = max(information_flows.keys()) + 1
-            except:
-                id = 0
+            id = max(information_flows.keys(), default=-1) + 1
             information_flows[id] = dict()
             information_flows[id]["sender"] = zookeeper_service
             information_flows[id]["receiver"] = kafka_service

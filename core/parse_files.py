@@ -8,7 +8,7 @@ import tmp.tmp as tmp
 from output_generators.logger import logger
 
 
-# The following is taken from ruamel.yaml's authro as a workaround for getting line count for str objects
+# The following is taken from ruamel.yaml's author as a workaround for getting line count for str objects
 # https://stackoverflow.com/questions/45716281/parsing-yaml-get-line-numbers-even-in-ordered-maps/45717104#45717104
 class Str(ruamel.yaml.scalarstring.ScalarString):
     __slots__ = ('lc')

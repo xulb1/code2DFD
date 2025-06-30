@@ -68,10 +68,7 @@ def detect_spring_admin_server(microservices: dict, information_flows: dict, dfd
                         traceability.add_trace(trace)
 
                 if not found:
-                    try:
-                        id = max(information_flows.keys()) + 1
-                    except:
-                        id = 0
+                    id = max(information_flows.keys(), default=-1) + 1
                     information_flows[id] = dict()
 
                     information_flows[id]["sender"] = microservices[m]["name"]
@@ -104,10 +101,7 @@ def detect_spring_admin_server(microservices: dict, information_flows: dict, dfd
                         traceability.add_trace(trace)
 
                 if not found:
-                    try:
-                        id = max(information_flows.keys()) + 1
-                    except:
-                        id = 0
+                    id = max(information_flows.keys(), default=-1) + 1
                     information_flows[id] = dict()
 
                     information_flows[id]["sender"] = admin_server
@@ -123,10 +117,7 @@ def detect_spring_admin_server(microservices: dict, information_flows: dict, dfd
                     traceability.add_trace(trace)
 
             else:
-                try:
-                    id = max(information_flows.keys()) + 1
-                except:
-                    id = 0
+                id = max(information_flows.keys(), default=-1) + 1
 
                 information_flows[id] = dict()
                 information_flows[id]["sender"] = admin_server

@@ -7,36 +7,28 @@ def detect_consul(microservices: dict, information_flows: dict, dfd) -> dict:
 
     # Server
     consul_server = set()
-    for m in microservices.keys():
-        if "consul:" in microservices[m]["image"]:
-            consul_server.add(microservices[m]["name"])
-            try:
-                microservices[m]["stereotype_instances"].append("service_discovery")
-            except:
-                microservices[m]["stereotype_instances"] = ["service_discovery"]
-            try:
-                microservices[m]["tagged_values"].append(("Service Discovery", "Consul"))
-            except:
-                microservices[m]["tagged_values"] = [("Service Discovery", "Consul")]
+    for value in microservices.values():
+        if "consul:" in value["image"]:
+            consul_server.add(value["name"])
+            value.setdefault("stereotype_instances", []).append("service_discovery")
+            value.setdefault("tagged_values", []).append(("Service Discovery", "Consul"))
 
     # Flows
     if consul_server:
-        for m in microservices.keys():
-            for prop in microservices[m]["properties"]:
+        for m in microservices.values():
+            for prop in m["properties"]:
                 if prop[0] == "consul_server":
                     for consul in consul_server:
                         if consul == prop[1]:
-                            try:
-                                id = max(information_flows.keys()) + 1
-                            except:
-                                id = 0
-                            information_flows[id] = dict()
-                            information_flows[id]["sender"] = consul
-                            information_flows[id]["receiver"] = microservices[m]["name"]
-                            information_flows[id]["stereotype_instances"] = ["restful_http"]
+                            newKey = max(information_flows.keys(), default=-1) + 1
+                            
+                            information_flows[newKey] = dict()
+                            information_flows[newKey]["sender"] = consul
+                            information_flows[newKey]["receiver"] = m["name"]
+                            information_flows[newKey]["stereotype_instances"] = ["restful_http"]
 
                             trace = dict()
-                            trace["item"] = consul + " -> " + microservices[m]["name"]
+                            trace["item"] = f"{consul} ->  {m["name"]}"
                             trace["file"] = prop[2][0]
                             trace["line"] = prop[2][1]
                             trace["span"] = prop[2][2]

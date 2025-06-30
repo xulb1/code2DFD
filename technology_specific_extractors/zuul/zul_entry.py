@@ -14,10 +14,7 @@ def detect_zuul(microservices: dict, information_flows: dict, external_component
     new_results = fi.search_keywords("@EnableZuulProxy")
 
     for r in new_results.keys():
-        try:
-            id = max(results.keys()) + 1
-        except:
-            id = 0
+        id = max(results.keys(), default=-1) + 1
         results[id] = dict()
         results[id] = new_results[r]
     zuul_server = str()
@@ -86,10 +83,7 @@ def detect_zuul(microservices: dict, information_flows: dict, external_component
                                     if microservices[m]["name"] in part.split(":")[0].casefold():
                                         receiver = microservices[m]["name"]
                         if receiver:
-                            try:
-                                id = max(information_flows.keys()) + 1
-                            except:
-                                id = 0
+                            id = max(information_flows.keys(), default=-1) + 1
                             information_flows[id] = dict()
                             information_flows[id]["sender"] = zuul_server
                             information_flows[id]["receiver"] = receiver

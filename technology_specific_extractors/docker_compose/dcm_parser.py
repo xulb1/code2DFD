@@ -639,10 +639,7 @@ def extract_information_flows(file_content, microservices, information_flows):
                         if microservices[m]["name"] == link:
                             found_service = True
                     if found_service and not link in {discovery_server, config_server}:
-                        try:
-                            id = max(information_flows.keys()) + 1
-                        except:
-                            id = 0
+                        id = max(information_flows.keys(), default=-1) + 1
                         information_flows[id] = dict()
                         information_flows[id]["sender"] = s
                         information_flows[id]["receiver"] = link
@@ -660,10 +657,7 @@ def extract_information_flows(file_content, microservices, information_flows):
                         if microservices[m]["name"] == link:
                             found_service = True
                     if found_service and not link in {discovery_server, config_server}:
-                        try:
-                            id = max(information_flows.keys()) + 1
-                        except:
-                            id = 0
+                        id = max(information_flows.keys(), default=-1) + 1
                         information_flows[id] = dict()
                         information_flows[id]["sender"] = s
                         information_flows[id]["receiver"] = link

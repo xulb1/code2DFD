@@ -61,10 +61,7 @@ def detect_eureka(microservices: dict, information_flows: dict, dfd) -> dict:
 
         for participant in participants:
             if not participant[0] == eureka_server:
-                try:
-                    id = max(information_flows.keys()) + 1
-                except:
-                    id = 0
+                id = max(information_flows.keys(), default=-1) + 1
                 information_flows[id] = dict()
                 information_flows[id]["sender"] = participant[0]
                 information_flows[id]["receiver"] = eureka_server

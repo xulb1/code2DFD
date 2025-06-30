@@ -114,10 +114,7 @@ def detect_token_server(microservices: dict, information_flows: dict, dfd) -> di
 
                             traceability.add_trace(trace)
 
-                    try:
-                        id = max(information_flows.keys()) + 1
-                    except:
-                        id = 0
+                    id = max(information_flows.keys(), default=-1) + 1
                     information_flows[id] = dict()
 
                     information_flows[id]["sender"] = token_server

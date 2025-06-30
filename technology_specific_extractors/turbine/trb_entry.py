@@ -78,10 +78,8 @@ def detect_turbineamqp(microservices: dict, information_flows: dict, dfd) -> dic
 
                     if ("Monitoring Dashboard", "Hystrix") in microservices[m]["tagged_values"]:
                         dashboard = microservices[m]["name"]
-                        try:
-                            id = max(information_flows.keys()) + 1
-                        except:
-                            id = 0
+
+                        id = max(information_flows.keys(), default=-1) + 1
                         information_flows[id] = dict()
                         information_flows[id]["sender"] = microservice
                         information_flows[id]["receiver"] = dashboard
@@ -97,10 +95,8 @@ def detect_turbineamqp(microservices: dict, information_flows: dict, dfd) -> dic
 
                     elif ("Message Broker", "RabbitMQ") in microservices[m]["tagged_values"]:
                         rabbitmq = microservices[m]["name"]
-                        try:
-                            id = max(information_flows.keys()) + 1
-                        except:
-                            id = 0
+
+                        id = max(information_flows.keys(), default=-1) + 1
                         information_flows[id] = dict()
                         information_flows[id]["sender"] = rabbitmq
                         information_flows[id]["receiver"] = microservice
@@ -178,10 +174,8 @@ def detect_turbine_stream(microservices: dict, information_flows: dict, dfd) -> 
 
                     if ("Monitoring Dashboard", "Hystrix") in microservices[id]["tagged_values"]:
                         dashboard = microservices[id]["name"]
-                        try:
-                            id = max(information_flows.keys()) + 1
-                        except:
-                            id = 0
+
+                        id = max(information_flows.keys(), default=-1) + 1
                         information_flows[id] = dict()
                         information_flows[id]["sender"] = microservice
                         information_flows[id]["receiver"] = dashboard
@@ -199,10 +193,8 @@ def detect_turbine_stream(microservices: dict, information_flows: dict, dfd) -> 
         for m in microservices.keys():
             if ("Message Broker", "RabbitMQ") in microservices[m]["tagged_values"]:
                 rabbitmq = microservices[m]["name"]
-                try:
-                    id = max(information_flows.keys()) + 1
-                except:
-                    id = 0
+
+                id = max(information_flows.keys(), default=-1) + 1
                 information_flows[id] = dict()
                 information_flows[id]["sender"] = rabbitmq
                 information_flows[id]["receiver"] = turbine_server
@@ -226,10 +218,8 @@ def detect_turbine_stream(microservices: dict, information_flows: dict, dfd) -> 
         results = fi.search_keywords("spring-cloud-netflix-hystrix-stream")     # content, name, path
         for r in results.keys():
             microservice = tech_sw.detect_microservice(results[r]["path"], dfd)
-            try:
-                id = max(information_flows.keys()) + 1
-            except:
-                id = 0
+            
+            id = max(information_flows.keys(), default=-1) + 1
             information_flows[id] = dict()
             information_flows[id]["sender"] = microservice
             information_flows[id]["receiver"] = rabbitmq

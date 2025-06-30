@@ -142,10 +142,7 @@ def detect_config_clients(microservices: dict, information_flows: dict, config_s
                 if "localhost:" + str(port) in config_uri:
                     config_connected = True
         if config_connected:
-            try:
-                id = max(information_flows.keys()) + 1
-            except:
-                id = 0
+            id = max(information_flows.keys(), default=-1) + 1
             information_flows[id] = dict()
             information_flows[id]["sender"] = config_server
             information_flows[id]["receiver"] = microservices[m]["name"]
@@ -284,19 +281,13 @@ def set_repo(information_flows: dict, external_components: dict, config_repo_uri
     """Adds a repo to the external components.
     """
 
-    try:
-        id = max(information_flows.keys()) + 1
-    except:
-        id = 0
+    id = max(information_flows.keys(), default=-1) + 1
     information_flows[id] = dict()
     information_flows[id]["sender"] = "github-repository"
     information_flows[id]["receiver"] = config_server
     information_flows[id]["stereotype_instances"] = ["restful_http"]
 
-    try:
-        id = max(external_components.keys()) + 1
-    except:
-        id = 0
+    id = max(external_components.keys(), default=-1) + 1
     external_components[id] = dict()
     external_components[id]["name"] = "github-repository"
     external_components[id]["type"] = "external_component"
