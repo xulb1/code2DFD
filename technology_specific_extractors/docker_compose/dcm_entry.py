@@ -198,8 +198,6 @@ def detect_microservice(file_path: str, dfd) -> str:
                         found_docker = True
         path = os.path.dirname(path)
 
-    if dockerfile_path:
-        dockerfile_location = os.path.dirname(dockerfile_path)
 
     # find docker-compose path
     try:
@@ -219,16 +217,16 @@ def detect_microservice(file_path: str, dfd) -> str:
     # path of dockerfile relative to docker-compose file
     # if dockerfile is in same branch in file structure as docker-compose-file:
     try:
-        docker_image = os.path.relpath(dockerfile_location, start=docker_compose_location).strip("/")
+        if dockerfile_path:
+            dockerfile_location = os.path.dirname(dockerfile_path)
+        
+            docker_image = os.path.relpath(dockerfile_location, start=docker_compose_location).strip("/")
+            # go through microservices to see if dockerfile_image fits an image
+            for m in microservices.keys():
+                if microservices[m]["image"] == docker_image:
+                    microservice = microservices[m]["name"]
     except Exception as e:
         print(e)
 
-    # go through microservices to see if dockerfile_image fits an image
-    try:
-        for m in microservices.keys():
-            if microservices[m]["image"] == docker_image:
-                microservice = microservices[m]["name"]
-    except Exception as e:
-        print(e)
 
     return microservice

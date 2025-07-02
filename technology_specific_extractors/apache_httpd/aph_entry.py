@@ -98,10 +98,10 @@ def mark_server(microservices: dict, microservice: str) -> dict:
         microservices[newKey]["stereotype_instances"] = ["web_server"]
         microservices[newKey]["tagged_values"] = [("Web Server", "Apache httpd")]
     else:
-        for m in microservices:
-            if microservices[m]["name"] == microservice: # this is the service
-                microservices[m].setdefault("stereotype_instances", []).append("web_server")
-                microservices[m].setdefault("tagged_values", []).append(("Web Server", "Apache httpd"))
+        for m in microservices.values():
+            if m["name"] == microservice: # this is the service
+                m.setdefault("stereotype_instances", []).append("web_server")
+                m.setdefault("tagged_values", []).append(("Web Server", "Apache httpd"))
                 
     return microservices
 

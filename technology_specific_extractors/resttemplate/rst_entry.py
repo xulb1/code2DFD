@@ -83,7 +83,6 @@ def get_incoming_endpoints(dfd) -> list:
                     complete_endpoint = "/" + ("".join(current_parts).strip("/"))
                     if not complete_endpoint in [a for (a, b, c, d, e, f) in endpoints if b == service]:
                         endpoints.add((complete_endpoint, service, method, files[file]["path"], files[file]["line_nr"], files[file]["span"]))
-
                     last_bc = bracket_count
 
                 bracket_count = adjust_bracket_count(bracket_count, line)

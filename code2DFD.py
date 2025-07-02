@@ -3,6 +3,7 @@
 # Author: Simon Schneider, 2023
 # Contact: simon.schneider@tuhh.de
 import os
+import time
 from configparser import ConfigParser
 from datetime import datetime
 import argparse
@@ -115,4 +116,6 @@ def cli_invocation():
 
 
 if __name__ == '__main__':
+    debut = time.time()
     cli_invocation()
+    print("TPS d'exécution :",(time.time()-debut))

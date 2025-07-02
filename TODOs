@@ -18,3 +18,36 @@ extraction2 vs dom_entry-3 inutile ?
 TODO
 simplify dcm_parser ...
 plein de truc inutile
+
+
+
+Aucun sens : dcm_parser : 
+line_number -1 et pas -1 ?
+
+TODO TODO TODO TODO TODO TODO TODO
+fixe port line number errrrrrrrorrorororororrorrorroor
+ex : blog-microservices
+vérif port pour clone-sample-spring-oauth2-microservices
+
+
+trop d'appel inutile à Resolve_env_var() dans environment_variables.py
+microservice-kafka
+piggymetrics
+
+
+
+
+
+
+
+
+Note : 
+Noir	\033[30m
+Rouge	\033[31m
+Vert	\033[32m
+Jaune	\033[33m
+Bleu	\033[34m
+Magenta	\033[35m
+Cyan	\033[36m
+Blanc	\033[37m
+Reset	\033[0m

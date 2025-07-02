@@ -216,6 +216,7 @@ def overwrite_port(microservices: dict) -> dict:
     for microservice in microservices.values():
         for prop in microservice.get("properties", []):
             if prop[0] == "port":
+                # print(prop)
                 port = None
                 if isinstance(prop[1], str):
                     if "port" in prop[1].casefold() and ":" in prop[1]:

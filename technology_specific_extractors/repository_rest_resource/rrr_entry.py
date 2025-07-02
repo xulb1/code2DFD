@@ -11,15 +11,11 @@ def detect_endpoints(microservices: dict, dfd) -> dict:
         endpoints = set()
         microservice = tech_sw.detect_microservice(results[r]["path"], dfd)
         for line in results[r]["content"]:
-            if "@RepositoryRestResource" in line:
-                if "path" in line:
-                    endpoint = line.split("path")[1].split(",")[0].strip().strip("=\"/()").strip()
-                    endpoint = "/" + endpoint
-                    endpoints.add(endpoint)
-                    for m in microservices.keys():
-                        if microservices[m]["name"] == microservice:
-                            try:
-                                microservices[m]["tagged_values"].append(("Endpoints", list(endpoints)))
-                            except:
-                                microservices[m]["tagged_values"] = [("Endpoints", list(endpoints))]
+            if ("@RepositoryRestResource" in line) and ("path" in line):
+                endpoint = line.split("path")[1].split(",")[0].strip().strip("=/()").strip().strip('"')
+                endpoint = f"/{endpoint}"
+                endpoints.add(endpoint)
+                for m in microservices.values():
+                    if m["name"] == microservice:
+                        m.setdefault("tagged_values", []).append(("Endpoints", list(endpoints)))
     return microservices

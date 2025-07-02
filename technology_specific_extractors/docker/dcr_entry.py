@@ -10,8 +10,7 @@ def detect_port(path: str) -> int:
     port = False
     local_repo_path = tmp.tmp_config["Repository"]["local_path"]
 
-    dirs = list()
-    dirs.append(os.scandir(os.path.join(local_repo_path, os.path.dirname(path))))
+    dirs = [os.scandir(os.path.join(local_repo_path, os.path.dirname(path)))]
 
     while dirs:
         dir = dirs.pop()

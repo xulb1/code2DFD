@@ -26,26 +26,21 @@ def detect_server_docker(microservices: dict, information_flows: dict, dfd) -> d
         found = False
         prometheus_server = tech_sw.detect_microservice(results[r]["path"], dfd) # check if any of the builds correspond to this path. If yes, that's the service
 
-        for m in microservices.keys():
-            if microservices[m]["name"] == prometheus_server:
-                if "stereotype_instances" in microservices[m]:
-                    microservices[m]["stereotype_instances"].append("metrics_server")
-                else:
-                    microservices[m]["stereotype_instances"] = ["metrics_server"]
-                if "tagged_values" in microservices[m]:
-                    microservices[m]["tagged_values"].append(("Metrics Server", "Prometheus"))
-                else:
-                    microservices[m]["tagged_values"] = [("Metrics Server", "Prometheus")]
+        for m in microservices.values():
+            if m["name"] == prometheus_server:
+                m.setdefault("stereotype_instances",[]).append("metrics_server")
+                m.setdefault("tagged_values",[]).append(("Metrics Server", "Prometheus"))
                 found = True
         if not found:
             prometheus_server = "prometheus_server"
             # add service
-            id = max(microservices.keys(), default=-1) + 1
-            microservices[id] = dict()
-            microservices[id]["name"] = "prometheus_server"
-            microservices[id]["image"] = results[r]["path"]
-            microservices[id]["stereotype_instances"] = ["metrics_server"]
-            microservices[id]["tagged_values"] = [("Metrics Server", "Prometheus")]
+            key = max(microservices.keys(), default=-1) + 1
+            microservices[key] = {
+                "name": "prometheus_server",
+                "image": results[r]["path"],
+                "stereotype_instances": ["metrics_server"],
+                "tagged_values": [("Metrics Server", "Prometheus")]
+            }
 
         information_flows = detect_connections(microservices, information_flows, results[r], prometheus_server)
 
@@ -64,52 +59,43 @@ def detect_connections(microservices: dict, information_flows: dict, dockerfile,
 
             ini_file_path = os.path.join(local_repo_path, os.path.dirname(dockerfile["path"]), ini_file_path)
 
+            ini_file = None
             if os.path.isfile(ini_file_path):
                 with open(ini_file_path, "r") as file:
                     ini_file = [l.strip() for l in file.readlines()]
-                    
-            else:
-                ini_file = False
 
             if ini_file:
-                line_nr = 0
-                for line in ini_file:
-                    target_service = False
+                for line_nr, line in enumerate(ini_file):
+                    target_service = None
 
                     if "targets" in line:
-                        if "localhost" in line:
-                            parts = line.split(":")
-                            for part in parts:
-                                part = part.strip().strip("[]\'\" ")
-                                for m in microservices.keys():
+                        parts = line.split(":")
+                        for part in parts:
+                            part = part.strip().strip("[]\'\" ")
+                            for m in microservices.values():
+                                if "localhost" in line:
                                     try:
-                                        for prop in microservices[m]["tagged_values"]:
-                                            if prop[0] == "Port":
-                                                if str(prop[1]) == str(part):
-                                                    target_service = microservices[m]["name"]
-                                    except:
-                                        print("failed tagged_values for" + microservices[m]["name"])
-                        else:
-                            parts = line.split(":")
-                            for part in parts:
-                                part = part.strip().strip("[]\'\" ")
-                                for m in microservices.keys():
-                                    if microservices[m]["name"] == part:
-                                        target_service = microservices[m]["name"]
+                                        for prop in m["tagged_values"]:
+                                            if prop[0] == "Port" and str(prop[1]) == str(part):
+                                                target_service = m["name"]
+                                    except Exception as e:
+                                        print(f"failed tagged_values for {m["name"]}")
+                                elif m["name"] == part:
+                                    target_service = m["name"]
+                    
                     if target_service:
-                        id = max(information_flows.keys(), default=-1) + 1
-                        information_flows[id] = dict()
-                        information_flows[id]["sender"] = target_service
-                        information_flows[id]["receiver"] = prometheus_server
-                        information_flows[id]["stereotype_instances"] = ["restful_http"]
+                        key = max(information_flows.keys(), default=-1) + 1
+                        information_flows[key] = {
+                            "sender": target_service,
+                            "receiver": prometheus_server,
+                            "stereotype_instances": ["restful_http"]
+                        }
 
-                        trace = dict()
-                        trace["item"] = target_service + " -> " + prometheus_server
-                        trace["file"] = dockerfile["path"]
-                        trace["line"] = line_nr
-                        trace["span"] = "span"
-                        traceability.add_trace(trace)
-
-                    line_nr += 1
+                        traceability.add_trace({
+                            "item": f"{target_service} -> {prometheus_server}",
+                            "file": dockerfile["path"],
+                            "line": line_nr,
+                            "span": "span"
+                        })
 
     return information_flows
