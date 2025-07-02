@@ -15,14 +15,13 @@ def detect_port(path: str) -> int:
     while dirs:
         dir = dirs.pop()
         for entry in dir:
-            if entry.is_file():
-                if entry.name.casefold() == "dockerfile":
-                    with open(entry.path, "r") as file:
-                        lines = file.readlines()
-                    for line in lines:
-                        line = line.casefold()
-                        if "expose" in line:
-                            port = line.split("expose")[1].split("/")[0].strip()
+            if entry.is_file() and entry.name.casefold() == "dockerfile":
+                with open(entry.path, "r") as file:
+                    lines = file.readlines()
+                for line in lines:
+                    line = line.casefold()
+                    if "expose" in line:
+                        port = line.split("expose")[1].split("/")[0].strip()
             elif entry.is_dir():
                 dirs.append(os.scandir(entry.path))
 

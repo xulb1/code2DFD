@@ -97,7 +97,6 @@ def extract_microservices(file_content, file_name) -> set:
 
 
 def extract_service_from_file(s, file_content, file_name, data, microservices_dict: dict, microservices_set: set, properties_dict: dict, image=False, build=False) -> tuple[set,dict]:
-    port = False
 
     # Traceability
     lines = file_content.splitlines()
@@ -109,9 +108,10 @@ def extract_service_from_file(s, file_content, file_name, data, microservices_di
         trace = (file_name, line_number + 1, span)
 
     properties = set()
-    exists = False
-
     correct_id = False
+    exists = False
+    port = False
+
     
     if s == "networks":
         exists = True
@@ -121,7 +121,9 @@ def extract_service_from_file(s, file_content, file_name, data, microservices_di
             correct_id = id_
 
     ports = data.get(s).get("ports")
-    if ports : 
+    print("___________________________________")
+    print(ports)
+    if ports :
         port_nr = ports[0].split(":")[0].strip("\" -")
         if type(port_nr) == list:
             port_nr = port_nr[0]
@@ -138,6 +140,7 @@ def extract_service_from_file(s, file_content, file_name, data, microservices_di
             length_tuple = length_tuple.span()
             span = "[" + str(length_tuple[0]) +  ":" + str(length_tuple[1]) + "]"
             port = (port_nr, file_name, line_number + 1, span)
+    print("\033[34m",port,"\033[0m")
     
     
     new_image = data.get(s).get("image")
@@ -163,7 +166,8 @@ def extract_service_from_file(s, file_content, file_name, data, microservices_di
 
     # Environment properties
     try:
-        port, properties = extract_environment_props(data, s, lines, properties, file_name)
+        port, properties = extract_environment_props(data, s, lines, port, properties, file_name)
+        print("\033[35m",port,"\033[0m")
     except Exception:
         print(f"\033[91m")
         traceback.print_exc()
@@ -186,7 +190,8 @@ def extract_service_from_file(s, file_content, file_name, data, microservices_di
                 length_tuple = length_tuple.span()
                 span = "[" + str(length_tuple[0]) +  ":" + str(length_tuple[1]) + "]"
                 port = (port_nr, file_name, line_number + 1, span)
-        print("\033[32mExtractservicefromfile - expose : ",port,"\033[0m")
+    
+    print("\033[32m",s,port,"\033[0m")
 
     if not image:
         image = build or "image"
@@ -195,12 +200,18 @@ def extract_service_from_file(s, file_content, file_name, data, microservices_di
         # Have to filter here and only add those with a known image.
         # Otherwise, many dublicates will occur when developers call the services different in docker-compose than in Spring.application.name
         known_images = ["elasticsearch","kibana","logstash","grafana","kafka","rabbit","zookeeper","postgres","zipkin","prometheus","mongo","consul","mysql","scope","postgres","apache","nginx"]
+        isImage = False
         for ki in known_images:
             if ki in image:
                 properties_dict[s] = properties
                 microservices_set.add((s, image, "type", port, trace))
-                print("\033[93m",s, image, port, trace,"\033[0m")
+                print("\033[31m",s, image, port, trace,"\033[0m")
+                isImage=True
                 break
+        if not isImage:
+            properties_dict[s] = properties
+            microservices_set.add((s, image, "type", port, trace))
+            print("\033[31m",s, image, port, trace,"----\033[0m")
 
     # add additional information
     if exists and correct_id:
@@ -209,14 +220,13 @@ def extract_service_from_file(s, file_content, file_name, data, microservices_di
     return microservices_set, microservices_dict
 
 
-def extract_environment_props(data, s, lines: list, properties: set,file_name: str) -> tuple[tuple,set]:
+def extract_environment_props(data, s, lines: list, port: tuple, properties: set,file_name: str) -> tuple[tuple,set]:
     """Extracts environment variable properties and port information from a service definition.
 
     This function scans the environment variables of a given service for database credentials and port settings,
     and adds relevant properties to the provided set along with their file location information.
     """
     
-    port = None
     value = None # password or username
     environment_entries = data.get(s).get("environment")
     
@@ -247,7 +257,6 @@ def extract_environment_props(data, s, lines: list, properties: set,file_name: s
             length_tuple = re.search(str(port_nr), lines[line_number]).span()
             span = f"[{str(length_tuple[0])}:{str(length_tuple[1])}]"
             port = (port_nr, file_name, line_number + 1, span)
-        print("___________________________________")
         print(value, port)
     
     return port, properties

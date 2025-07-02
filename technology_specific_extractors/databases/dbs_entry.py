@@ -5,34 +5,29 @@ def detect_databases(microservices: dict) -> dict:
     """Detects databases.
     """
 
-    for m in microservices.keys():
+    for indice, m in microservices.items():
         database = False
-        if "image" in microservices[m]:
-            if "mongo:" in microservices[m]["image"]:
+        if "image" in m:
+            if "mongo:" in m["image"]:
                 database = "MongoDB"
-            elif "mysql-server:" in microservices[m]["image"]:
+            elif "mysql-server:" in m["image"]:
                 database = "MySQL"
 
         if database:
-            microservices[m]["type"] == "database_component"
-            if "stereotype_instances" in microservices[m]:
-                microservices[m]["stereotype_instances"].append("database")
-            else:
-                microservices[m]["stereotype_instances"] = ["database"]
-            if "tagged_values" in microservices[m]:
-                microservices[m]["tagged_values"].append(("Database", database))
-            else:
-                microservices[m]["tagged_values"] = [("Database", database)]
+            m["type"] == "database_component"
+            print(microservices)
+            m.setdefault("stereotype_instances",[]).append("database")
+            m.setdefault("tagged_values",[]).append(("Database", database))
 
-            trace = dict()
-            trace["parent_item"] = microservices[m]["name"]
-            trace["item"] = "database"
-            trace["file"] = "heuristic, based on image"
-            trace["line"] = "heuristic, based on image"
-            trace["span"] = "heuristic, based on image"
-            traceability.add_trace(trace)
+            traceability.add_trace({
+                "parent_item": m["name"],
+                "item": "database",
+                "file": "heuristic, based on image",
+                "line": "heuristic, based on image",
+                "span": "heuristic, based on image"
+            })
         else:
-            microservices = detect_via_docker(microservices, m)
+            microservices = detect_via_docker(microservices, indice)
 
     return microservices
 
@@ -45,29 +40,29 @@ def detect_via_docker(microservices: dict, m: int) -> dict:
     dockerfile_lines = fi.check_dockerfile(path)
 
     database = False
-    if dockerfile_lines:
-        for line in dockerfile_lines:
-            if "FROM" in line:
-                if "mongo" in line:
-                    database = "MongoDB"
-                elif "postgres" in line:
-                    database = "PostgreSQL"
-    if database:
-        microservices[m]["type"] = "database_component"
-        try:
-            microservices[m]["stereotype_instances"].append("database")
-        except:
-            microservices[m]["stereotype_instances"] = ["database"]
-        try:
-            microservices[m]["tagged_values"].append(("Database", database))
-        except:
-            microservices[m]["tagged_values"] = [("Database", database)]
-        trace = dict()
-        trace["parent_item"] = microservices[m]["name"]
-        trace["item"] = "database"
-        trace["file"] = "heuristic, based on Dockerfile base image"
-        trace["line"] = "heuristic, based on Dockerfile base image"
-        trace["span"] = "heuristic, based on Dockerfile base image"
-        traceability.add_trace(trace)
+    if not dockerfile_lines:
+        return microservices
+    
+    for line in dockerfile_lines:
+        if "FROM" in line:
+            if "mongo" in line:
+                database = "MongoDB"
+            elif "postgres" in line:
+                database = "PostgreSQL"
+
+    if not database:
+        return microservices
+    
+    microservices[m]["type"] = "database_component"
+    microservices[m].setdefault("stereotype_instances",[]).append("database")
+    microservices[m].setdefault("tagged_values",[]).append(("Database", database))
+    
+    traceability.add_trace({
+        "parent_item": microservices[m]["name"],
+        "item": "database",
+        "file": "heuristic, based on Dockerfile base image",
+        "line": "heuristic, based on Dockerfile base image",
+        "span": "heuristic, based on Dockerfile base image"
+    })
 
     return microservices

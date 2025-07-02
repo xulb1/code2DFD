@@ -8,22 +8,16 @@ def detect_logstash(microservices: dict, information_flows: dict, external_compo
     # Service
     logstash = False
     trace_info = False
-    for m in microservices.keys():
-        if "logstash:" in microservices[m]["image"]:
-            logstash = microservices[m]["name"]
-            try:
-                microservices[m]["stereotype_instances"].append("logging_server")
-            except:
-                microservices[m]["stereotype_instances"] = ["logging_server"]
-            try:
-                microservices[m]["tagged_values"].append(("Logging Server", "Logstash"))
-            except:
-                microservices[m]["tagged_values"] = [("Logging Server", "Logstash")]
+    for m in microservices.values():
+        if "logstash:" in m["image"]:
+            logstash = m["name"]
+            m.setdefault("stereotype_instances",[]).append("logging_server")
+            m.setdefault("tagged_values",[]).append(("Logging Server", "Logstash"))
 
     if not logstash:
-        for m in microservices.keys():
-            if "properties" in microservices[m]:
-                for prop in microservices[m]["properties"]:
+        for m in microservices.values():
+            if "properties" in m:
+                for prop in m["properties"]:
                     if prop[0] == "logstash_server":
                         trace_info = dict()
                         trace_info[0] = prop[2][0]
@@ -34,115 +28,104 @@ def detect_logstash(microservices: dict, information_flows: dict, external_compo
                         if ":" in logstash_server:
                             # internal via name
                             logstash_host = logstash_server.split(":")[0]
-                            for mi in microservices.keys():
-                                if logstash_host == microservices[mi]["name"]:
-                                    logstash = microservices[mi]["name"]
-                                    if "stereotype_instances" in microservices[mi]:
-                                        microservices[mi]["stereotype_instances"].append("logging_server")
-                                    else:
-                                        microservices[mi]["stereotype_instances"] = ["logging_server"]
-                                    if "tagged_values" in microservices[mi]:
-                                        microservices[mi]["tagged_values"].append(("Logging Server", "Logstash"))
-                                    else:
-                                        microservices[mi]["tagged_values"] = [("Logging Server", "Logstash")]
+                            for mi in microservices.values():
+                                if logstash_host == mi["name"]:
+                                    logstash = mi["name"]
+                                    mi.setdefault("stereotype_instances",[]).append("logging_server")
+                                    mi.setdefault("tagged_values",[]).append(("Logging Server", "Logstash"))
 
                             # internal via port
                             if not logstash:
                                 logstash_port = int(logstash_server.split(":")[1].strip().strip(""))
-                                for mi in microservices.keys():
-                                    for prop2 in microservices[mi]["properties"]:
+                                for mi in microservices.values():
+                                    for prop2 in mi["properties"]:
                                         if prop2[0] == "Port" and int(prop2[1]) == logstash_port:
-                                            logstash = microservices[mi]["name"]
-                                            if "stereotype_instances" in microservices[mi]:
-                                                microservices[mi]["stereotype_instances"].append("logging_server")
-                                            else:
-                                                microservices[mi]["stereotype_instances"] = ["logging_server"]
-                                            if "tagged_values" in microservices[mi]:
-                                                microservices[mi]["tagged_values"].append(("Logging Server", "Logstash"))
-                                            else:
-                                                microservices[mi]["tagged_values"] = [("Logging Server", "Logstash")]
+                                            logstash = mi["name"]
+                                            mi.setdefault("stereotype_instances",[]).append("logging_server")
+                                            mi.setdefault("tagged_values",[]).append(("Logging Server", "Logstash"))
 
                             # external
                             if not logstash:
                                 logstash_port = int(logstash_server.split(":")[1].strip().strip(""))
 
-                                id = max(external_components.keys(), default=-1) + 1
+                                key = max(external_components.keys(), default=-1) + 1
 
-                                external_components[id] = dict()
-                                external_components[id]["name"] = "logstash"
-                                external_components[id]["type"] = "external_component"
-                                external_components[id]["stereotype_instances"] = ["logging_server", "exitpoint"]
-                                external_components[id]["tagged_values"] = [("Logging Server", "Logstash"), ("Port", logstash_port)]
+                                external_components[key] = {
+                                    "name": "logstash",
+                                    "type": "external_component",
+                                    "stereotype_instances": ["logging_server", "exitpoint"],
+                                    "tagged_values": [("Logging Server", "Logstash"), ("Port", logstash_port)]
+                                }
 
-                                trace = dict()
-                                trace["item"] = "logstash"
-                                trace["file"] = trace_info[0]
-                                trace["line"] = trace_info[1]
-                                trace["span"] = trace_info[2]
-                                traceability.add_trace(trace)
+                                traceability.add_trace({
+                                    "item": "logstash",
+                                    "file": trace_info[0],
+                                    "line": trace_info[1],
+                                    "span": trace_info[2]
+                                })
 
-                                id = max(information_flows.keys(), default=-1) + 1
-                                information_flows[id] = dict()
-                                information_flows[id]["sender"] = microservices[m]["name"]
-                                information_flows[id]["receiver"] = "logstash"
-                                information_flows[id]["stereotype_instances"] = ["restful_http"]
+                                key = max(information_flows.keys(), default=-1) + 1
+                                information_flows[key] = {
+                                    "sender": m["name"],
+                                    "receiver": "logstash",
+                                    "stereotype_instances": ["restful_http"]
+                                }
 
-                                trace = dict()
-                                trace["item"] = microservices[m]["name"] + " -> " + "logstash"
-                                trace["file"] = trace_info[0]
-                                trace["line"] = trace_info[1]
-                                trace["span"] = trace_info[2]
-
-                                traceability.add_trace(trace)
+                                traceability.add_trace({
+                                    "item": f"{m['name']} -> {logstash}",
+                                    "file": trace_info[0],
+                                    "line": trace_info[1],
+                                    "span": trace_info[2]
+                                })
 
 
 
         # Flow to elasticsearch
     if logstash:
         if trace_info:
-            trace = dict()
-            trace["item"] = logstash
-            trace["file"] = trace_info[0]
-            trace["line"] = trace_info[1]
-            trace["span"] = trace_info[2]
-            traceability.add_trace(trace)
+            traceability.add_trace({
+                "item": logstash,
+                "file": trace_info[0],
+                "line": trace_info[1],
+                "span": trace_info[2]
+            })
 
         elasticsearch = False
-        for m in microservices.keys():
-            if ("Search Engine", "Elasticsearch") in microservices[m]["tagged_values"]:
-                elasticsearch = microservices[m]["name"]
+        for m in microservices.values():
+            if ("Search Engine", "Elasticsearch") in m["tagged_values"]:
+                elasticsearch = m["name"]
         if elasticsearch:
-            id = max(information_flows.keys(), default=-1) + 1
-            information_flows[id] = dict()
-            information_flows[id]["sender"] = logstash
-            information_flows[id]["receiver"] = elasticsearch
-            information_flows[id]["stereotype_instances"] = ["restful_http"]
-
-            trace = dict()
-            trace["item"] = logstash + " -> " + elasticsearch
-            trace["file"] = "implicit"
-            trace["line"] = "implicit"
-            trace["span"] = "implicit"
-
-            traceability.add_trace(trace)
+            key = max(information_flows.keys(), default=-1) + 1
+            information_flows[key] = {
+                "sender": logstash,
+                "receiver": elasticsearch,
+                "stereotype_instances": ["restful_http"]
+            }
+            
+            traceability.add_trace({
+                "item": f"{logstash} -> {elasticsearch}",
+                "file": "implicit",
+                "line": "implicit",
+                "span": "implicit"
+            })
 
         # Flow from services
-        for m in microservices.keys():
-            for prop in microservices[m]["properties"]:
-                if prop[0] == "logstash_server":
-                    if logstash in prop[1]:
-                        id = max(information_flows.keys(), default=-1) + 1
-                        information_flows[id] = dict()
-                        information_flows[id]["sender"] = microservices[m]["name"]
-                        information_flows[id]["receiver"] = logstash
-                        information_flows[id]["stereotype_instances"] = ["restful_http"]
+        for m in microservices.values():
+            for prop in m["properties"]:
+                if (prop[0] == "logstash_server")  and  (logstash in prop[1]):
+                    key = max(information_flows.keys(), default=-1) + 1
+                    information_flows[key] = {
+                        "sender": m["name"],
+                        "receiver": logstash,
+                        "stereotype_instances": ["restful_http"]
+                    }
 
-                        trace = dict()
-                        trace["item"] = microservices[m]["name"] + " -> " + logstash
-                        trace["file"] = prop[2][0]
-                        trace["line"] = prop[2][1]
-                        trace["span"] = prop[2][2]
+                    traceability.add_trace({
+                        "item": m["name"] + " -> " + logstash,
+                        "file": prop[2][0],
+                        "line": prop[2][1],
+                        "span": prop[2][2]
+                    })
 
-                        traceability.add_trace(trace)
 
     return microservices, information_flows, external_components

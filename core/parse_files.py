@@ -65,25 +65,23 @@ def parse_properties_file(file_path: str) -> str:
 
     file = fi.file_as_lines(file_path)
 
-    i = 0
-    for line in file:
+    for i, line in enumerate(file):
         # Servicename
-        if "spring.application.name" in line:
-            if not "$" in line:
-                microservice[0] = line.split("=")[1].strip()
-
-                # Traceability
-                microservice[1] = create_trace(microservice[0], file_path, file, i)
+        if "spring.application.name" in line  and  not "$" in line:
+            microservice[0] = line.split("=")[1].strip()
+            # Traceability
+            microservice[1] = create_trace(microservice[0], file_path, file, i)
 
         # Port
         elif "server.port" in line:
             try:
                 port = int(line.split("=")[1].strip()) if "=" in line else None
+                print(port,"//////////////////\\\\\\\\\\\\\\\\\\\\\\\\\\\\")
                 if port:
                     span = re.search("server.port", line).span()
                     trace = (file_path, i, span)
                     properties.add(("port", port, trace))
-            except:
+            except Exception:
                 logger.debug(f"Port is not an integer in line {line}")
 
         # Datasource
@@ -163,15 +161,13 @@ def parse_properties_file(file_path: str) -> str:
             trace = (file_path, i, span)
             properties.add(("admin_server_url", line.split("=")[1].split(",")[0], trace))
 
-
-        i += 1
     return microservice, properties
 
 
+# FIXME -> beaucoup trop long ...
 def parse_yaml_file(file_path: str) -> str:
     """Extracts servicename from a .yml or .yaml file.
     """
-
 
     local_path = tmp.tmp_config.get("Repository", "local_path")
     file_path = os.path.join(local_path, file_path)
@@ -199,47 +195,36 @@ def parse_yaml_file(file_path: str) -> str:
         for document in documents:
             # Zuul routes
             if "zuul" in document and "routes" in document.get("zuul"):
-                    for route in document.get("zuul").get("routes"):
-                        if "serviceId" in document.get("zuul").get("routes", {}).get(route):
-                            serviceId = document.get("zuul").get("routes", {}).get(route).get("serviceId")
-                            if serviceId != None:
-                                for line_nr in range(len(lines)):
-                                    if str(serviceId) in lines[line_nr]:
-                                        span = re.search(re.escape(str(serviceId)), lines[line_nr]).span()
-                                        trace = (file_path, line_nr + 1, span)
-                                properties.add(("zuul_route_serviceId", serviceId, trace))
-                        elif "url" in document.get("zuul").get("routes", {}).get(route):
-                            url = document.get("zuul").get("routes", {}).get(route).get("url")
-                            if url != None:
-                                for line_nr in range(len(lines)):
-                                    if str(url) in lines[line_nr]:
-                                        span = re.search(re.escape(str(url)), lines[line_nr]).span()
-                                        trace = (file_path, line_nr + 1, span)
-                                properties.add(("zuul_route_url", url, trace))
+                for route in document.get("zuul").get("routes"):
+                    valeur = (None, None)
+                    trace = None
+                    if "serviceId" in document.get("zuul").get("routes", {}).get(route):
+                        valeur = ("serviceId",document.get("zuul").get("routes", {}).get(route).get("serviceId"))
+                    elif "url" in document.get("zuul").get("routes", {}).get(route):
+                        valeur = ("url",      document.get("zuul").get("routes", {}).get(route).get("url"))
+                    
+                    if valeur[1] != None:
+                        for line_nr in range(len(lines)):
+                            if str(valeur[1]) in lines[line_nr]:
+                                span = re.search(re.escape(str(valeur[1])), lines[line_nr]).span()
+                                trace = (file_path, line_nr + 1, span)
+                        properties.add((f"zuul_route_{valeur[0]}", valeur[1], trace))
 
             # Port
+            port = None
             if "server" in document and "port" in document.get("server"):
-                    port = document.get("server").get("port")
-                    trace = None
-
-                    for line_nr in range(len(lines)):
-                        if str(port) in lines[line_nr]:
-                            span = re.search(re.escape(str(port)), lines[line_nr]).span()
-                            trace = (file_path, line_nr + 1, span)
-
-                    if port != None:
-                        properties.add(("port", port, trace))
-
-            if "server.port" in document:
+                port = document.get("server").get("port")
+            elif "server.port" in document:
                 port = document.get("server.port")
+            if port:
                 trace = None
-
                 for line_nr in range(len(lines)):
                     if str(port) in lines[line_nr]:
                         span = re.search(re.escape(str(port)), lines[line_nr]).span()
                         trace = (file_path, line_nr + 1, span)
                 if port != None:
                     properties.add(("port", port, trace))
+                    print(port,"-------------------------------------")
 
             # Load Balancer
             if "ribbon" in document:
@@ -275,51 +260,51 @@ def parse_yaml_file(file_path: str) -> str:
 
             # External api rates service
             if "rates" in document and "url" in document.get("rates"):
-                    rates_url = document.get("rates").get("url")
-                    if rates_url != None:
-                        line_nr = document["rates"]["url"].lc.line
-                        span = re.search(re.escape(rates_url), lines[line_nr]).span()
-                        span = (span[0] + 1, span[1] + 1)
-                        trace = (file_path, line_nr + 1, span)
-                        properties.add(("rates_url", rates_url, trace))
+                rates_url = document.get("rates").get("url")
+                if rates_url != None:
+                    line_nr = document["rates"]["url"].lc.line
+                    span = re.search(re.escape(rates_url), lines[line_nr]).span()
+                    span = (span[0] + 1, span[1] + 1)
+                    trace = (file_path, line_nr + 1, span)
+                    properties.add(("rates_url", rates_url, trace))
 
             # OAuth
             if "security" in document and "oauth2" in document.get("security") and "client" in document.get("security").get("oauth2"):
                 if "accessTokenUri" in document.get("security").get("oauth2").get("client"):
-                            oauth_tokenuri = document.get("security").get("oauth2").get("client").get("accessTokenUri")
-                            if oauth_tokenuri != None:
-                                line_nr = document["security"]["oauth2"]["client"]["accessTokenUri"].lc.line
-                                span = re.search(re.escape(oauth_tokenuri), lines[line_nr]).span()
-                                span = (span[0] + 1, span[1] + 1)
-                                trace = (file_path, line_nr + 1, span)
-                                properties.add(("oauth_tokenuri", oauth_tokenuri, trace))
+                    oauth_tokenuri = document.get("security").get("oauth2").get("client").get("accessTokenUri")
+                    if oauth_tokenuri != None:
+                        line_nr = document["security"]["oauth2"]["client"]["accessTokenUri"].lc.line
+                        span = re.search(re.escape(oauth_tokenuri), lines[line_nr]).span()
+                        span = (span[0] + 1, span[1] + 1)
+                        trace = (file_path, line_nr + 1, span)
+                        properties.add(("oauth_tokenuri", oauth_tokenuri, trace))
 
                 if "access-token-uri" in document.get("security").get("oauth2").get("client"):
-                                oauth_tokenuri = document.get("security").get("oauth2").get("client").get("access-token-uri")
-                                if oauth_tokenuri != None:
-                                    line_nr = document["security"]["oauth2"]["client"]["access-token-uri"].lc.line
-                                    span = re.search(re.escape(oauth_tokenuri), lines[line_nr]).span()
-                                    span = (span[0] + 1, span[1] + 1)
-                                    trace = (file_path, line_nr + 1, span)
-                                    properties.add(("oauth_tokenuri", oauth_tokenuri, trace))
+                    oauth_tokenuri = document.get("security").get("oauth2").get("client").get("access-token-uri")
+                    if oauth_tokenuri != None:
+                        line_nr = document["security"]["oauth2"]["client"]["access-token-uri"].lc.line
+                        span = re.search(re.escape(oauth_tokenuri), lines[line_nr]).span()
+                        span = (span[0] + 1, span[1] + 1)
+                        trace = (file_path, line_nr + 1, span)
+                        properties.add(("oauth_tokenuri", oauth_tokenuri, trace))
 
                 if "clientSecret" in document.get("security").get("oauth2").get("client"):
-                                client_secret = document.get("security").get("oauth2").get("client").get("clientSecret")
-                                if client_secret != None:
-                                    line_nr = document["security"]["oauth2"]["client"]["clientSecret"].lc.line
-                                    span = re.search(re.escape(client_secret), lines[line_nr]).span()
-                                    span = (span[0] + 1, span[1] + 1)
-                                    trace = (file_path, line_nr + 1, span)
-                                    properties.add(("oauth_client_secret", client_secret, trace))
+                    client_secret = document.get("security").get("oauth2").get("client").get("clientSecret")
+                    if client_secret != None:
+                        line_nr = document["security"]["oauth2"]["client"]["clientSecret"].lc.line
+                        span = re.search(re.escape(client_secret), lines[line_nr]).span()
+                        span = (span[0] + 1, span[1] + 1)
+                        trace = (file_path, line_nr + 1, span)
+                        properties.add(("oauth_client_secret", client_secret, trace))
 
                 if "clientId" in document.get("security").get("oauth2").get("client"):
-                                client_id = document.get("security").get("oauth2").get("client").get("clientId")
-                                if client_id != None:
-                                    line_nr = document["security"]["oauth2"]["client"]["clientId"].lc.line
-                                    span = re.search(re.escape(client_id), lines[line_nr]).span()
-                                    span = (span[0] + 1, span[1] + 1)
-                                    trace = (file_path, line_nr + 1, span)
-                                    properties.add(("oauth_client_id", client_id, trace))
+                    client_id = document.get("security").get("oauth2").get("client").get("clientId")
+                    if client_id != None:
+                        line_nr = document["security"]["oauth2"]["client"]["clientId"].lc.line
+                        span = re.search(re.escape(client_id), lines[line_nr]).span()
+                        span = (span[0] + 1, span[1] + 1)
+                        trace = (file_path, line_nr + 1, span)
+                        properties.add(("oauth_client_id", client_id, trace))
 
             if "security.oauth2.client" in document:
                 if "clientId" in document.get("security.oauth2.client"):
@@ -343,10 +328,10 @@ def parse_yaml_file(file_path: str) -> str:
 
             # Feign
             if "feign" in document and "hystrix" in document.get("feign") and "enabled" in document.get("feign").get("hystrix"):
-                        feign_hystrix = document.get("feign").get("hystrix").get("enabled")
-                        if str(feign_hystrix).casefold() == "true":
-                            trace = (file_path, "no lc for boolean", "no lc for boolean")
-                            properties.add(("feign_hystrix", True, trace))
+                feign_hystrix = document.get("feign").get("hystrix").get("enabled")
+                if str(feign_hystrix).casefold() == "true":
+                    trace = (file_path, "no lc for boolean", "no lc for boolean")
+                    properties.add(("feign_hystrix", True, trace))
 
             if "spring" in document:
                 # spring.config
@@ -746,22 +731,20 @@ def create_trace(keyword: str, file_name: str, lines: list, line_number: int) ->
     if match:
         length_tuple = match.span()
         span = "(" + str(length_tuple[0]) +  ":" + str(length_tuple[1]) + ")"
-        trace = (file_name, line_number + 1, span)
+        trace = (file_name, line_number+1, span)
     else:
-        line_number += 1
-        match = re.search(re.escape(keyword), lines[line_number])
+        match = re.search(re.escape(keyword), lines[line_number+1])
         if match:
             length_tuple = match.span()
             span = "(" + str(length_tuple[0]) +  ":" + str(length_tuple[1]) + ")"
-            trace = (file_name, line_number + 1, span)
+            trace = (file_name, line_number+2, span)
         else:
-            line_number += 1
-            match = re.search(re.escape(keyword), lines[line_number])
+            match = re.search(re.escape(keyword), lines[line_number+2])
             if match:
                 length_tuple = match.span()
                 span = "(" + str(length_tuple[0]) +  ":" + str(length_tuple[1]) + ")"
-                trace = (file_name, line_number + 1, span)
+                trace = (file_name, line_number+3, span)
             else:
-                trace = (file_name, line_number, "(0:0)")
+                trace = (file_name, line_number+2, "(0:0)")
 
     return trace

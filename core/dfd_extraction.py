@@ -216,7 +216,7 @@ def overwrite_port(microservices: dict) -> dict:
     for microservice in microservices.values():
         for prop in microservice.get("properties", []):
             if prop[0] == "port":
-                # print(prop)
+                print(prop)
                 port = None
                 if isinstance(prop[1], str):
                     if "port" in prop[1].casefold() and ":" in prop[1]:
@@ -224,21 +224,21 @@ def overwrite_port(microservices: dict) -> dict:
                     else:
                         try:
                             port = int(prop[1].strip())
-                        except:
+                        except Exception:
                             port = None
                 else:
                     port = prop[1]
                 if port:
                     # Traceability
-                    trace = dict()
-                    trace["parent_item"] = microservice["name"]
-                    trace["item"] = "Port"
-                    trace["file"] = prop[2][0]
-                    trace["line"] = prop[2][1]
-                    trace["span"] = prop[2][2]
-
-                    traceability.add_trace(trace)
-                    microservice["tagged_values"] = microservice.get("tagged_values", list()) + [("Port", port)]
+                    traceability.add_trace({
+                        "parent_item": microservice["name"],
+                        "item": "Port",
+                        "file": prop[2][0],
+                        "line": prop[2][1],
+                        "span": prop[2][2]
+                    })
+                    
+                    microservice["tagged_values"] = microservice.get("tagged_values", []) + [("Port", port)]
 
     return microservices
 
@@ -269,110 +269,111 @@ def detect_miscellaneous(microservices: dict, information_flows: dict, external_
                 if mail_username:
                     external_components[id_]["tagged_values"].append(("Username", mail_username))
 
-                trace = dict()
-                trace["item"] = "mail-server"
-                trace["file"] = prop[2][0]
-                trace["line"] = prop[2][1]
-                trace["span"] = prop[2][2]
+                traceability.add_trace({
+                    "item": "mail-server",
+                    "file": prop[2][0],
+                    "line": prop[2][1],
+                    "span": prop[2][2]
+                })
 
-                traceability.add_trace(trace)
+                traceability.add_trace({
+                    "parent_item": "mail-server",
+                    "item": "entrypoint",
+                    "file": "heuristic",
+                    "line": "heuristic",
+                    "span": "heuristic"
+                })
 
-                trace["parent_item"] = "mail-server"
-                trace["item"] = "entrypoint"
-                trace["file"] = "heuristic"
-                trace["line"] = "heuristic"
-                trace["span"] = "heuristic"
+                traceability.add_trace({
+                    "parent_item": "mail-server",
+                    "item": "exitpoint",
+                    "file": "heuristic",
+                    "line": "heuristic",
+                    "span": "heuristic"
+                })
 
-                traceability.add_trace(trace)
 
-                trace["parent_item"] = "mail-server"
-                trace["item"] = "exitpoint"
-                trace["file"] = "heuristic"
-                trace["line"] = "heuristic"
-                trace["span"] = "heuristic"
-
-                traceability.add_trace(trace)
-
-                trace["parent_item"] = "mail-server"
-                trace["item"] = "mail_server"
-                trace["file"] = "heuristic"
-                trace["line"] = "heuristic"
-                trace["span"] = "heuristic"
-
-                traceability.add_trace(trace)
+                traceability.add_trace({
+                    "parent_item": "mail-server",
+                    "item": "mail_server",
+                    "file": "heuristic",
+                    "line": "heuristic",
+                    "span": "heuristic"
+                })
 
                 # create connection
-                id2 = max(information_flows.keys(), default=-1) + 1
-                information_flows[id2] = dict()
-                information_flows[id2]["sender"] = microservice["name"]
-                information_flows[id2]["receiver"] = "mail-server"
-                information_flows[id2]["stereotype_instances"] = ["restful_http"]
+                id_ = max(information_flows.keys(), default=-1) + 1
+                information_flows[id_] = {
+                    "sender": microservice["name"],
+                    "receiver": "mail-server",
+                    "stereotype_instances": ["restful_http"]
+                }
                 if mail_password:
                     information_flows[id2]["stereotype_instances"].append("plaintext_credentials_link")
 
-                trace = dict()
-                trace["item"] = microservice["name"] + " -> mail-server"
-                trace["file"] = prop[2][0]
-                trace["line"] = prop[2][1]
-                trace["span"] = prop[2][2]
-
-                traceability.add_trace(trace)
+                traceability.add_trace({
+                    "item": f"{microservice["name"]} -> mail-server",
+                    "file": prop[2][0],
+                    "line": prop[2][1],
+                    "span": prop[2][2]
+                })
 
             # external api rate website
             elif prop[0] == "rates_url":
                 # create external component
                 id_ = max(external_components.keys(), default=-1) + 1
-                external_components[id_] = dict()
-                external_components[id_]["name"] = "external-website"
-                external_components[id_]["stereotype_instances"] = ["external_website", "entrypoint", "exitpoint"]
-                external_components[id_]["tagged_values"] = [("URL", prop[1])]
+                external_components[id_] = {
+                    "name": "external-website",
+                    "stereotype_instances": ["external_website", "entrypoint", "exitpoint"],
+                    "tagged_values": [("URL", prop[1])]
+                }
+                
+                traceability.add_trace({
+                    "item": "external-website",
+                    "file": prop[2][0],
+                    "line": prop[2][1],
+                    "span": prop[2][2]
+                })
 
-                trace = dict()
-                trace["item"] = "external-website"
-                trace["file"] = prop[2][0]
-                trace["line"] = prop[2][1]
-                trace["span"] = prop[2][2]
+                traceability.add_trace({
+                    "parent_item": "external-website",
+                    "item": "entrypoint",
+                    "file": "heuristic",
+                    "line": "heuristic",
+                    "span": "heuristic"
+                })
 
-                traceability.add_trace(trace)
+                traceability.add_trace({
+                    "parent_item": "external-website",
+                    "item": "exitpoint",
+                    "file": "heuristic",
+                    "line": "heuristic",
+                    "span": "heuristic"
+                })
 
-                trace["parent_item"] = "external-website"
-                trace["item"] = "entrypoint"
-                trace["file"] = "heuristic"
-                trace["line"] = "heuristic"
-                trace["span"] = "heuristic"
-
-                traceability.add_trace(trace)
-
-                trace["parent_item"] = "external-website"
-                trace["item"] = "exitpoint"
-                trace["file"] = "heuristic"
-                trace["line"] = "heuristic"
-                trace["span"] = "heuristic"
-
-                traceability.add_trace(trace)
-
-                trace["parent_item"] = "external-website"
-                trace["item"] = "external_website"
-                trace["file"] = "heuristic"
-                trace["line"] = "heuristic"
-                trace["span"] = "heuristic"
-
-                traceability.add_trace(trace)
+                traceability.add_trace({
+                    "parent_item": "external-website",
+                    "item": "external_website",
+                    "file": "heuristic",
+                    "line": "heuristic",
+                    "span": "heuristic"
+                })
 
                 # create connection
                 id2 = max(information_flows.keys(), default=-1) + 1
-                information_flows[id2] = dict()
-                information_flows[id2]["sender"] = "external-website"
-                information_flows[id2]["receiver"] = microservice["name"]
-                information_flows[id2]["stereotype_instances"] = ["restful_http"]
+                information_flows[id2] = {
+                    "sender": "external-website",
+                    "receiver": microservice["name"],
+                    "stereotype_instances": ["restful_http"]
+                }
 
-                trace = dict()
-                trace["item"] = "external-website -> " + microservice["name"]
-                trace["file"] = prop[2][0]
-                trace["line"] = prop[2][1]
-                trace["span"] = prop[2][2]
+                traceability.add_trace({
+                    "item": f"external-website -> {microservice["name"]}",
+                    "file": prop[2][0],
+                    "line": prop[2][1],
+                    "span": prop[2][2]
+                })
 
-                traceability.add_trace(trace)
 
             # connection config to services
             elif prop[0] == "config_connected":
@@ -380,18 +381,19 @@ def detect_miscellaneous(microservices: dict, information_flows: dict, external_
                     for stereotype in m2.get("stereotype_instances", []):
                         if stereotype == "configuration_server":
                             id_ = max(information_flows.keys(), default=-1) + 1
-                            information_flows[id_] = dict()
-                            information_flows[id_]["sender"] = m2["name"]
-                            information_flows[id_]["receiver"] = microservice["name"]
-                            information_flows[id_]["stereotype_instances"] = ["restful_http"]
+                            information_flows[id_] = {
+                                "sender": m2["name"],
+                                "receiver": microservice["name"],
+                                "stereotype_instances": ["restful_http"]
+                            }
+                            
+                            traceability.add_trace({
+                                "item": f"{m2["name"]} -> {microservice["name"]}",
+                                "file": prop[2][0],
+                                "line": prop[2][1],
+                                "span": prop[2][2]
+                            })
 
-                            trace = dict()
-                            trace["item"] = m2["name"] + " -> " + microservice["name"]
-                            trace["file"] = prop[2][0]
-                            trace["line"] = prop[2][1]
-                            trace["span"] = prop[2][2]
-
-                            traceability.add_trace(trace)
 
     return microservices, information_flows, external_components
 

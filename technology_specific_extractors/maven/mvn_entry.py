@@ -154,25 +154,23 @@ def parse_properties_file(pom_path: str):
     while dirs:
         dir = dirs.pop()
         for entry in dir:
-            if entry.is_file():
-                if not "test" in entry.path:
-                    filename = os.path.basename(entry.path)
-                    if filename in ["application.properties", "bootstrap.properties"]:
-                        logger.info("Found application.properties here: " + str(entry.path))
-                        file_path = entry.path
-                        new_microservice, new_properties = parse.parse_properties_file(file_path)
-                        if new_microservice[0]:
-                            microservice = new_microservice
-                        if new_properties:
-                            properties = properties.union(new_properties)
-                    elif filename in ["application.yaml", "application.yml", "bootstrap.yml", "bootstrap.yaml", "filebeat.yml", "filebeat.yaml"]:
-                        logger.info("Found properties file here: " + str(entry.path))
-                        file_path = entry.path
-                        new_microservice, new_properties = parse.parse_yaml_file(file_path)
-                        if new_microservice[0]:
-                            microservice = new_microservice
-                        if new_properties:
-                            properties = properties.union(new_properties)
+            if entry.is_file() and "test" not in entry.path:
+                filename = os.path.basename(entry.path)
+                new_microservice, new_properties = None, None
+                if filename in ["application.properties", "bootstrap.properties"]:
+                    logger.info(f"Found application.properties here: {entry.path}")
+                    file_path = entry.path
+                    new_microservice, new_properties = parse.parse_properties_file(file_path)
+                elif filename in ["application.yaml", "application.yml", "bootstrap.yml", "bootstrap.yaml", "filebeat.yml", "filebeat.yaml"]:
+                    logger.info(f"Found properties file here: {entry.path}")
+                    file_path = entry.path
+                    new_microservice, new_properties = parse.parse_yaml_file(file_path)
+
+                if new_microservice and new_microservice[0]:
+                    microservice = new_microservice
+                if new_properties:
+                    properties = properties.union(new_properties)
+
             elif entry.is_dir():
                 dirs.append(os.scandir(entry.path))
 

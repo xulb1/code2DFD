@@ -270,8 +270,7 @@ def find_instances(class_of_interest: str) -> set:
     for file in files.keys():
         f = files[file]
         for line in range(len(f["content"])):
-            match = re.search(regex, f["content"][line])
-            if match:
+            if re.search(regex, f["content"][line]):
                 obj = f["content"][line].split(class_of_interest)[1].split(">")[-1].strip().strip(";").strip()
                 instances.add(obj)
 
@@ -300,6 +299,7 @@ def resolve_url(url: str, microservice: str, dfd) -> str:
                             if prop[0] == "Port":
                                 if port == prop[1]:
                                     target_service = microservices[m]["name"]
+                print("\033[34mResolve_url",port,"////////////////////\033[9m")
         else:
             for m in microservices.keys():
                 url_parts = url.split("/")

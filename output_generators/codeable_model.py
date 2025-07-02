@@ -20,35 +20,36 @@ def output_codeable_model(microservices, information_flows, external_components)
     allComponents = str()
 
     # Microservices
-    for m in microservices.keys():
+    for m in microservices.values():
         # Tagged Values
         tagged_values = dict()
-        if "tagged_values" in microservices[m]:
-            for t in microservices[m]["tagged_values"]:
+        if "tagged_values" in m:
+            for t in m["tagged_values"]:
                 if t[0] == "Port" and isinstance(t[1], int):
                     tagged_values[t[0]] = int(t[1])
+                    print(m,t,"------------------------12")
                 else:
                     tagged_values[t[0]] = t[1]
 
         # Stereotypes
         stereotypes = set()
-        if "stereotype_instances" in microservices[m]:
-            for s in microservices[m]["stereotype_instances"]:
+        if "stereotype_instances" in m:
+            for s in m["stereotype_instances"]:
                 stereotypes.add(s)
 
             if stereotypes:
                 stereotypes = str(list(stereotypes))
                 stereotypes = stereotypes.replace("'", "")
 
-        name = str(microservices[m]["name"]).replace("-", "_")
+        name = str(m["name"]).replace("-", "_")
 
         # Create entry
         if stereotypes and tagged_values:
-            new_line = "\n" + name + " = CClass(service, \"" + str(microservices[m]["name"]) + "\", stereotype_instances = " + str(stereotypes) + ", tagged_values = " + str(tagged_values) + ")"
+            new_line = f"\n{name} = CClass(service, \"{m["name"]}\", stereotype_instances = {stereotypes}, tagged_values = {tagged_values})"
         elif stereotypes:
-            new_line = "\n" + name + " = CClass(service, \"" + str(microservices[m]["name"]) + "\", stereotype_instances = " + str(stereotypes) + ")"
+            new_line = f"\n{name} = CClass(service, \"{m["name"]}\", stereotype_instances = {stereotypes})"
         else:
-            new_line = "\n" + name + " = CClass(service, \"" + str(microservices[m]["name"]) + "\")"
+            new_line = f"\n{name} = CClass(service, \"{m["name"]}\")"
 
         file_content += new_line
         last_node = name
