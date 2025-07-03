@@ -29,15 +29,16 @@ fixe port line number errrrrrrrorrorororororrorrorroor
 ex : blog-microservices
 vérif port pour clone-sample-spring-oauth2-microservices
 
-
+TODO 
 trop d'appel inutile à Resolve_env_var() dans environment_variables.py
 microservice-kafka
 piggymetrics
 
+TODO issue : 
+dupplication de service avec nom différents, oublile de "_"
 
-
-
-
+TODO =
+endpoint ['../ et rien après ... pourquoi ?
 
 
 

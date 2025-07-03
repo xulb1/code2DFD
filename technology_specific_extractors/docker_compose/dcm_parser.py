@@ -124,30 +124,33 @@ def extract_service_from_file(s, file_content, file_name, data, microservices_di
     print("___________________________________")
     print(ports)
     if ports :
-        port_nr = ports[0].split(":")[0].strip("\" -")
+        try:
+            port_nr = ports[0].split(":")[0].strip("\" -")
+        except AttributeError:
+            port_nr = str(ports[0])
+            
         if type(port_nr) == list:
             port_nr = port_nr[0]
         
         line_number = data[s]["ports"].lc.line - 1
         length_tuple = re.search(port_nr, lines[line_number])
-        if length_tuple:
-            length_tuple = length_tuple.span()
-            span = "[" + str(length_tuple[0]) +  ":" + str(length_tuple[1]) + "]"
-            port = (port_nr, file_name, line_number + 1, span)
-        else:
+        if not length_tuple:
             line_number = line_number + 1
             length_tuple = re.search(port_nr, lines[line_number])
-            length_tuple = length_tuple.span()
-            span = "[" + str(length_tuple[0]) +  ":" + str(length_tuple[1]) + "]"
-            port = (port_nr, file_name, line_number + 1, span)
+        length_tuple = length_tuple.span()
+        span = f"[{length_tuple[0]}:{length_tuple[1]}]"
+        port = (port_nr, file_name, line_number + 1, span)
     print("\033[34m",port,"\033[0m")
     
     
     new_image = data.get(s).get("image")
     new_build = data.get(s).get("build")
     if new_image or new_build:
-        image = new_image
-        build = new_build
+        try:
+            new_build = f"{new_build['context']}"
+        except TypeError:
+            pass
+        
         for m in microservices_dict.values():
             try:
                 pom_path = Path(m["pom_path"])

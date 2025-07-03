@@ -16,23 +16,24 @@ def set_information_flows(dfd) -> set:
     """Connects incoming endpoints, outgoing endpoints, and routings to information flows
     """
 
+    information_flows = dict()
     if tmp.tmp_config.has_option("DFD", "information_flows"):
         information_flows = ast.literal_eval(tmp.tmp_config["DFD"]["information_flows"])
-    else:
-        information_flows = dict()
-
 
     microservices = tech_sw.get_microservices(dfd)
 
     incoming_endpoints = get_incoming_endpoints(dfd)
     outgoing_endpoints = get_outgoing_endpoints(dfd)
-
+    if incoming_endpoints or outgoing_endpoints:
+        print("((((((((((((((((((((((((((()))))))))))))))))))))))))))")
+        print("in:",incoming_endpoints)
+        print("out:",incoming_endpoints)
     new_information_flows = match_incoming_to_outgoing_endpoints(microservices, incoming_endpoints, outgoing_endpoints)
 
     # merge old and new flows
     for ni in new_information_flows.keys():
-        id = max(information_flows.keys(), default=-1) + 1
-        information_flows[id] = new_information_flows[ni]
+        key = max(information_flows.keys(), default=-1) + 1
+        information_flows[key] = new_information_flows[ni]
 
     information_flows = detect_stream_binders(microservices, information_flows, dfd)
 
@@ -78,12 +79,9 @@ def get_incoming_endpoints(dfd) -> set:
 
 
 def is_list(variable: str) -> bool:
-    try:
-        var_type = ast.literal_eval(variable)
-        if var_type == set or var_type == list or var_type == tuple:
-            return True
-    except:
-        return False
+    var_type = ast.literal_eval(variable)
+    
+    return var_type in  [set, list, tuple]
 
 
 def get_outgoing_endpoints(dfd) -> set:
@@ -99,26 +97,21 @@ def get_outgoing_endpoints(dfd) -> set:
             files = fi.search_keywords(f"{template}.{command}")
             for file in files.keys():
                 f = files[file]
-                if "README" in f["name"]:
-                    pass
-                else:
+                if "README" not in f["name"]:
                     microservice = tech_sw.detect_microservice(f["path"], dfd)
                     for line in range(len(f["content"])):
-                        if (template + "." + command) in f["content"][line]:    #found correct (starting) line
+                        if (f"{template}.{command}") in f["content"][line]:    #found correct (starting) line
                             topic = str()
 
                             # look for semicolon indicating end of command -> ´complete_call´ contains whole command
-                            if not ";" in f["content"][line]:
-                                complete_call = f["content"][line]
-                                found_semicolon = False
+                            complete_call = f["content"][line]
+                            if ";" not in f["content"][line]:
                                 i = line + 1
-                                while not found_semicolon and i < len(f["content"]):
+                                while i < len(f["content"]):
                                     if ";" in f["content"][i]:
-                                        found_semicolon = True
+                                        break
                                     complete_call += f["content"][i]
                                     i += 1
-                            else:
-                                complete_call = f["content"][line]
 
                             # extract topic
                             topic = complete_call.split(command)[1].strip().strip("(").split(",")[0].strip()
@@ -127,7 +120,7 @@ def get_outgoing_endpoints(dfd) -> set:
                             # extract data / asset
                             asset = extract_asset(complete_call, command)
                             if asset_is_input(asset, f, line):
-                                asset = "Function input " + asset
+                                asset = f"Function input {asset}"
                             else:
                                 asset = fi.find_variable(asset, f)
 
@@ -159,18 +152,18 @@ def asset_is_input(variable: str, file, line_nr: int) -> bool:
     open_curly_brackets = 0
     while open_curly_brackets != 1 and line_nr > 0:
         line = file["content"][line_nr]
-        if "}" in line:
-            open_curly_brackets -= 1
         if "{" in line:
             open_curly_brackets += 1
+        if "}" in line:
+            open_curly_brackets -= 1
         if open_curly_brackets == 1:
             if "if" in line or "else" in line or "else if" in line:
                 open_curly_brackets -= 1
-        if open_curly_brackets == 1:
-            inputs = line.split("{")[0].strip().split("(")[-1].strip().strip(")").strip().split(",")
-            for i in inputs:
-                if variable in i:
-                    return True
+            else:
+                inputs = line.split("{")[0].strip().split("(")[-1].strip().strip(")").strip().split(",")
+                for i in inputs:
+                    if variable in i:
+                        return True
         line_nr -= 1
     return False
 
@@ -181,71 +174,65 @@ def match_incoming_to_outgoing_endpoints(microservices: dict, incoming_endpoints
     # incoming: (topic, microservice, (file, line, span))
     # outgoing: (topic, microservice, asset, (file, line, span))
 
+    information_flows = dict()
     if tmp.tmp_config.has_option("DFD", "information_flows"):
         information_flows = ast.literal_eval(tmp.tmp_config["DFD"]["information_flows"])
-    else:
-        information_flows = dict()
 
     kafka_server = False
-    for id in microservices.keys():
-        if ("Message Broker", "Kafka") in microservices[id]["tagged_values"]:
-            kafka_server = microservices[id]["name"]
+    for m in microservices.values():
+        if ("Message Broker", "Kafka") in m["tagged_values"]:
+            kafka_server = m["name"]
 
     if kafka_server:
         for i in incoming_endpoints:
-            id = max(information_flows.keys(), default=-1) + 1
-            information_flows[id] = dict()
-
-            information_flows[id]["sender"] = kafka_server
-            information_flows[id]["receiver"] = i[1]
-            information_flows[id]["stereotype_instances"] = ["message_consumer_kafka", "restful_http"]
-            information_flows[id]["tagged_values"] = [("Consumer Topic", str(i[0]))]
+            key = max(information_flows.keys(), default=-1) + 1
+            information_flows[key] = {
+                "sender": kafka_server,
+                "receiver": i[1],
+                "stereotype_instances": ["message_consumer_kafka", "restful_http"],
+                "tagged_values": [("Consumer Topic", str(i[0]))]
+            }
 
             # Traceability
-            trace = dict()
-            trace["item"] = str(kafka_server) + " -> " + str(i[1])
-            trace["file"] = i[2][0]
-            trace["line"] = i[2][1]
-            trace["span"] = i[2][2]
+            traceability.add_trace({
+                "item": f"{kafka_server} -> {i[1]}",
+                "file": i[2][0],
+                "line": i[2][1],
+                "span": i[2][2]
+            })
 
-            traceability.add_trace(trace)
-
-            trace = dict()
-            trace["parent_item"] = str(kafka_server) + " -> " + str(i[1])
-            trace["item"] = "message_consumer_kafka"
-            trace["file"] = i[2][0]
-            trace["line"] = i[2][1]
-            trace["span"] = i[2][2]
-
-            traceability.add_trace(trace)
+            traceability.add_trace({
+                "parent_item": f"{kafka_server} -> {i[1]}",
+                "item": "message_consumer_kafka",
+                "file": i[2][0],
+                "line": i[2][1],
+                "span": i[2][2]
+            })
 
         for o in outgoing_endpoints:
-            id = max(information_flows.keys(), default=-1) + 1
-            information_flows[id] = dict()
-
-            information_flows[id]["sender"] = o[1]
-            information_flows[id]["receiver"] = kafka_server
-            information_flows[id]["stereotype_instances"] = ["message_producer_kafka", "restful_http"]
-            information_flows[id]["tagged_values"] = [("Producer Topic", str(o[0]))]
+            key = max(information_flows.keys(), default=-1) + 1
+            information_flows[key] = {
+                "sender": o[1],
+                "receiver": kafka_server,
+                "stereotype_instances": ["message_producer_kafka", "restful_http"],
+                "tagged_values": [("Producer Topic", str(o[0]))]
+            }
 
             # Traceability
-            trace = dict()
+            traceability.add_trace({
+                "item": f"{o[1]} -> {kafka_server}",
+                "file": o[3][0],
+                "line": o[3][1],
+                "span": o[3][2]
+            })
 
-            trace["item"] = str(o[1]) + " -> " + str(kafka_server)
-            trace["file"] = o[3][0]
-            trace["line"] = o[3][1]
-            trace["span"] = o[3][2]
-
-            traceability.add_trace(trace)
-
-            trace = dict()
-            trace["parent_item"] = str(o[1]) + " -> " + str(kafka_server)
-            trace["item"] = "message_producer_kafka"
-            trace["file"] = o[3][0]
-            trace["line"] = o[3][1]
-            trace["span"] = o[3][2]
-
-            traceability.add_trace(trace)
+            traceability.add_trace({
+                "parent_item": f"{o[1]} -> {kafka_server}",
+                "item": "message_producer_kafka",
+                "file": o[3][0],
+                "line": o[3][1],
+                "span": o[3][2]
+            })
 
     else:
         information_flows_set = set()
@@ -270,30 +257,29 @@ def match_incoming_to_outgoing_endpoints(microservices: dict, incoming_endpoints
 
         # turn it into a dictionary
         for i in information_flows_set:
-            id = max(information_flows.keys(), default=-1) + 1
-            information_flows[id] = dict()
-
-            information_flows[id]["sender"] = i[0]
-            information_flows[id]["receiver"] = i[1]
-            information_flows[id]["topic"] = i[2]
-            information_flows[id]["asset"] = i[3]
+            key = max(information_flows.keys(), default=-1) + 1
+            information_flows[key] = {
+                "sender": i[0],
+                "receiver": i[1],
+                "topic": i[2],
+                "asset": i[3]
+            }
 
             # Traceability
-            trace = dict()
-            trace["item"] = str(i[0]) + " -> " + str(i[1])
-            trace["file"] = i[4][0]
-            trace["line"] = i[4][1]
-            trace["span"] = i[4][2]
-
-            traceability.add_trace(trace)
+            traceability.add_trace({
+                "item": f"{i[0]} -> {i[1]}",
+                "file": i[4][0],
+                "line": i[4][1],
+                "span": i[4][2]
+            })
 
             ## Twice because there are two evidences
-            trace["item"] = str(i[0]) + " -> " + str(i[1])
-            trace["file"] = i[5][0]
-            trace["line"] = i[5][1]
-            trace["span"] = i[5][2]
-
-            traceability.add_trace(trace)
+            traceability.add_trace({
+                "item": f"{i[0]} -> {i[1]}",
+                "file": i[5][0],
+                "line": i[5][1],
+                "span": i[5][2]
+            })
 
     return information_flows
 
@@ -304,69 +290,50 @@ def detect_kafka_server(microservices: dict) -> dict:
 
     global kafka_server
 
-    raw_files = fi.get_file_as_yaml("docker-compose.yml")
-    if len(raw_files) == 0:
-        raw_files = fi.get_file_as_yaml("docker-compose.yaml")
-    if len(raw_files) == 0:
-        raw_files = fi.get_file_as_yaml("docker-compose*")
+    possible_filenames = ["docker-compose.yml", "docker-compose.yaml", "docker-compose*"]
+
+    for filename in possible_filenames:
+        raw_files = fi.get_file_as_yaml(filename)
+        if raw_files:
+            break
     if len(raw_files) == 0:
         return microservices
+    
     file = yaml.load(raw_files[0]["content"], Loader = yaml.FullLoader)
 
     if "services" in file:
         for s in file.get("services"):
             try:
                 image = file.get("services", {}).get(s).get("image")
-                if "kafka" in image.split("/")[-1].casefold():
-                    for id in microservices.keys():
-                        if microservices[id]["name"] == s:
-                            kafka_server = microservices[id]["name"]
-                            try:
-                                microservices[id]["stereotype_instances"].append("message_broker")
-                            except:
-                                microservices[id]["stereotype_instances"] = ["message_broker"]
-                            try:
-                                microservices[id]["tagged_values"].append(("Message Broker", "Kafka"))
-                            except:
-                                microservices[id]["tagged_values"] = [("Message Broker", "Kafka")]
-
-                            trace = dict()
-                            trace["parent_item"] = microservices[id]["name"]
-                            trace["item"] = "message_broker"
-                            trace["file"] = "heuristic, based on image in Docker Compose"
-                            trace["line"] = "heuristic, based on image in Docker Compose"
-                            trace["span"] = "heuristic, based on image in Docker Compose"
-
-                            traceability.add_trace(trace)
-            except:
-                pass
+                microservices = check_and_tag_kafka_microservice(image, microservices)
+            except Exception:
+                continue
     else:
         for s in file.keys():
             try:
                 image = file.get(s).get("image")
-                if "kafka" in image.split("/")[-1].casefold():
-                    for id in microservices.keys():
-                        if microservices[id]["name"] == s:
-                            kafka_server = microservices[id]["name"]
-                            try:
-                                microservices[id]["stereotype_instances"].append("message_broker")
-                            except:
-                                microservices[id]["stereotype_instances"] = ["message_broker"]
-                            try:
-                                microservices[id]["tagged_values"].append(("Message Broker", "Kafka"))
-                            except:
-                                microservices[id]["tagged_values"] = [("Message Broker", "Kafka")]
+                microservices = check_and_tag_kafka_microservice(image, microservices)
+            except Exception:
+                continue
+    return microservices
 
-                            trace = dict()
-                            trace["parent_item"] = microservices[id]["name"]
-                            trace["item"] = "message_broker"
-                            trace["file"] = "heuristic, based on image in Docker Compose"
-                            trace["line"] = "heuristic, based on image in Docker Compose"
-                            trace["span"] = "heuristic, based on image in Docker Compose"
+def check_and_tag_kafka_microservice(image, microservices: dict) -> dict:
+    global kafka_server
+    
+    if "kafka" in image.split("/")[-1].casefold():
+        for m in microservices.values():
+            if m["name"] == s:
+                kafka_server = m["name"]
+                m.setdefault("stereotype_instances",[]).append("message_broker")
+                m.setdefault("tagged_values",[]).append(("Message Broker", "Kafka"))
 
-                            traceability.add_trace(trace)
-            except:
-                pass
+                traceability.add_trace({
+                    "parent_item": m["name"],
+                    "item": "message_broker",
+                    "file": "heuristic, based on image in Docker Compose",
+                    "line": "heuristic, based on image in Docker Compose",
+                    "span": "heuristic, based on image in Docker Compose"
+                })
     return microservices
 
 
@@ -376,12 +343,12 @@ def detect_stream_binders(microservices: dict, information_flows: dict, dfd) -> 
 
     global kafka_server
 
-    for m in microservices.keys():
+    for m in microservices.values():
         connected = False
         out_topic = False
         in_topic = False
 
-        for prop in microservices[m]["properties"]:
+        for prop in m["properties"]:
             if prop[0] == "kafka_stream_binder" and prop[1] == kafka_server:
                 connected = True
             elif prop[0] == "kafka_stream_topic_out":
@@ -391,67 +358,58 @@ def detect_stream_binders(microservices: dict, information_flows: dict, dfd) -> 
 
         if connected:
             # Outgoing
-            results = fi.search_keywords("@SendTo")
-            for r in results.keys():
-                if tech_sw.detect_microservice(results[r]["path"], dfd) == microservices[m]["name"]:
-                    id = max(information_flows.keys(), default=-1) + 1
-                    information_flows[id] = dict()
-
-                    information_flows[id]["sender"] = microservices[m]["name"]
-                    information_flows[id]["receiver"] = kafka_server
-                    information_flows[id]["stereotype_instances"] = ["message_producer_kafka", "restful_http"]
-                    if out_topic:
-                        information_flows[id]["tagged_values"] = {("Producer Topic", out_topic)}
-
-                    # Traceability
-                    trace = dict()
-                    trace["item"] = str(microservices[m]["name"]) + " -> " + str(kafka_server)
-                    trace["file"] = results[r]["path"]
-                    trace["line"] = results[r]["line_nr"]
-                    trace["span"] = results[r]["span"]
-
-                    traceability.add_trace(trace)
-
-                    trace = dict()
-                    trace["parent_item"] = str(microservices[m]["name"]) + " -> " + str(kafka_server)
-                    trace["item"] = "message_producer_kafka"
-                    trace["file"] = results[r]["path"]
-                    trace["line"] = results[r]["line_nr"]
-                    trace["span"] = results[r]["span"]
-
-                    traceability.add_trace(trace)
+            topic = out_topic
+            information_flows = add_kafka_information_flow(True, topic, m, information_flows, dfd)
 
             # Incoming
-            results = fi.search_keywords("@StreamListener")
-            for r in results.keys():
-                if tech_sw.detect_microservice(results[r]["path"], dfd) == microservices[m]["name"]:
+            topic = in_topic
+            information_flows = add_kafka_information_flow(False, topic, m, information_flows, dfd)
 
-                    id = max(information_flows.keys(), default=-1) + 1
-                    information_flows[id] = dict()
-
-                    information_flows[id]["sender"] = kafka_server
-                    information_flows[id]["receiver"] = microservices[m]["name"]
-                    information_flows[id]["stereotype_instances"] = ["message_consumer_kafka", "restful_http"]
-                    if in_topic:
-                        information_flows[id]["tagged_values"] = {("Consumer Topic", in_topic)}
-
-                    # Traceability
-                    trace = dict()
-                    trace["item"] = str(kafka_server) + " -> " + str(microservices[m]["name"])
-                    trace["file"] = results[r]["path"]
-                    trace["line"] = results[r]["line_nr"]
-                    trace["span"] = results[r]["span"]
-
-                    traceability.add_trace(trace)
-
-                    trace = dict()
-                    trace["parent_item"] = str(kafka_server) + " -> " + str(microservices[m]["name"])
-                    trace["item"] = "message_consumer_kafka"
-                    trace["file"] = results[r]["path"]
-                    trace["line"] = results[r]["line_nr"]
-                    trace["span"] = results[r]["span"]
-
-                    traceability.add_trace(trace)
+    return information_flows
 
 
+def add_kafka_information_flow(isProducer: bool, topic, m: dict, information_flows: dict, dfd) -> dict:
+    """Adds information flow entries for Kafka producer or consumer microservices.
+
+    Depending on whether the microservice is a producer or consumer, this function updates the information flows dictionary with the appropriate sender, receiver, and stereotype information. It also records traceability data for each detected flow.
+    """
+
+    if isProducer :
+        sender = m["name"]
+        receiver = kafka_server
+        keyword = "@SendTo"
+        texte = "producer"
+    else :
+        sender = kafka_server
+        receiver = m["name"]
+        keyword = "@StreamListener"
+        texte = "consumer"
+    
+    results = fi.search_keywords(keyword)
+    for r in results.keys():
+        if tech_sw.detect_microservice(results[r]["path"], dfd) == m["name"]:
+            key = max(information_flows.keys(), default=-1) + 1
+            information_flows[key] = {
+                "sender": sender,
+                "receiver": receiver,
+                "stereotype_instances": [f"message_{texte}_kafka", "restful_http"]
+            }
+            if topic:
+                information_flows[key]["tagged_values"] = {(f"{texte.capitalize()} Topic", topic)}
+
+            # Traceability
+            traceability.add_trace({
+                "item": f"{sender} -> {receiver}",
+                "file": results[r]["path"],
+                "line": results[r]["line_nr"],
+                "span": results[r]["span"]
+            })
+            
+            traceability.add_trace({
+                "parent_item": f"{sender} -> {receiver}",
+                "item": f"message_{texte}_kafka",
+                "file": results[r]["path"],
+                "line": results[r]["line_nr"],
+                "span": results[r]["span"]
+            })
     return information_flows

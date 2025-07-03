@@ -183,7 +183,7 @@ def check_properties(microservices: dict, information_flows: dict, external_comp
             tmp.tmp_config.set("DFD", "external_components", str(external_components).replace("%", "%%"))
 
             traceability.add_trace({
-                "item": f"database-{[m]['name']}) -> {m['name']}",
+                "item": f"database-{m['name']}) -> {m['name']}",
                 "file": trace_info[0],
                 "line": trace_info[1],
                 "span": trace_info[2]
