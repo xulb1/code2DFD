@@ -94,21 +94,29 @@ def DFD_extraction():
 
     # Parse internal and external configuration files
     microservices, information_flows, external_components = detect_spring_config(microservices, information_flows, external_components, dfd)
+    print("a")
     microservices = detect_eureka_server_only(microservices, dfd)
+    print("b")
     microservices = overwrite_port(microservices)
-
+    print("c")
     # Classify brokers (needed for information flows)
     microservices = classify_brokers(microservices)
-
+    print("d")
+    
     # Check authentication information of services
     microservices = detect_authentication_scopes(microservices, dfd)
+    print("e")
     tmp.tmp_config.set("DFD", "microservices", str(microservices).replace("%", "%%"))
+    print("f")
 
     # Get information flows
     tmp.tmp_config.set("DFD", "external_components", str(external_components).replace("%", "%%"))
+    print("g")
 
     new_information_flows = tech_sw.get_information_flows(dfd)
+    print("h")
     external_components = ast.literal_eval(tmp.tmp_config["DFD"]["external_components"])
+    print("i")
 
     # Merge old and new
     for new_flow in new_information_flows.keys():
@@ -120,22 +128,31 @@ def DFD_extraction():
     # Detect everything else / execute all technology implementations
     print("Classifying all services")
     microservices = tech_sw.get_microservices(dfd)
+    print("k")
     # microservice
     # s1 = microservices
     
     # FIXME
     microservices, information_flows, external_components = classify_microservices(microservices, information_flows, external_components, dfd)
+    print("l")
     # assert microservices1 != microservices, "Egalité"
     
     # Merging
     print("Merging duplicate items")
     merge_duplicate_flows(information_flows)
+    print("m")
     merge_duplicate_nodes(microservices)
+    print("n")
     merge_duplicate_nodes(external_components)
+    print("o")
     merge_duplicate_annotations(microservices)
+    print("p")
     merge_duplicate_annotations(information_flows)
+    print("q")
     merge_duplicate_annotations(external_components)
-
+    print("r")
+    
+    
     print("Cleaning database connections")
     clean_database_connections(microservices, information_flows)
 
@@ -178,32 +195,58 @@ def classify_microservices(microservices: dict, information_flows: dict, externa
     """
 
     microservices, information_flows = detect_eureka(microservices, information_flows, dfd)
+    print("aa")
     microservices, information_flows, external_components = detect_zuul(microservices, information_flows, external_components, dfd)
+    print("ab")
     microservices, information_flows, external_components = detect_spring_cloud_gateway(microservices, information_flows, external_components, dfd)
+    print("ac")
     microservices, information_flows = detect_spring_oauth(microservices, information_flows, dfd)
+    print("ad")
     microservices, information_flows = detect_consul(microservices, information_flows, dfd)
+    print("ae")
     microservices, information_flows = detect_hystrix_dashboard(microservices, information_flows, dfd)
+    print("af")
     microservices, information_flows = detect_turbine(microservices, information_flows, dfd)
+    print("ag")
     microservices, information_flows = detect_local_logging(microservices, information_flows, dfd)
+    print("ah")
     microservices, information_flows = detect_zipkin_server(microservices, information_flows, dfd)
+    print("ai")
     microservices, information_flows = detect_spring_admin_server(microservices, information_flows, dfd)
+    print("aj")
     microservices, information_flows = detect_prometheus_server(microservices, information_flows, dfd)
+    print("ak")
     microservices, information_flows = detect_circuit_breakers(microservices, information_flows, dfd)
+    print("al")
     microservices, information_flows = detect_load_balancers(microservices, information_flows, dfd)
+    print("aù")
     microservices, information_flows = detect_ribbon_load_balancers(microservices, information_flows, dfd)
+    print("an")
     microservices, information_flows = detect_hystrix_circuit_breakers(microservices, information_flows, dfd)
+    print("ao")
     microservices, information_flows = detect_zookeeper(microservices, information_flows, dfd)
+    print("ap")
     microservices, information_flows = detect_kibana(microservices, information_flows, dfd)
+    print("aq")
     microservices, information_flows = detect_elasticsearch(microservices, information_flows, dfd)
+    print("ar")
     microservices, information_flows, external_components = detect_logstash(microservices, information_flows, external_components, dfd)
+    print("as")
     microservices, information_flows, external_components = detect_nginx(microservices, information_flows, external_components, dfd)
+    print("at")
     microservices, information_flows = detect_grafana(microservices, information_flows, dfd)
+    print("au")
     microservices, information_flows = detect_spring_encryption(microservices, information_flows, dfd)
+    print("av")
     microservices = detect_endpoints(microservices, dfd)
+    print("aw")
 
     microservices, information_flows, external_components = detect_miscellaneous(microservices, information_flows, external_components)
+    print("ax")
     microservices, information_flows, external_components = detect_apachehttpd_webserver(microservices, information_flows, external_components, dfd)
+    print("ay")
     microservices = classify_internal_infrastructural(microservices)
+    print("az")
     microservices = set_plaintext_credentials(microservices)
 
     return microservices, information_flows, external_components
@@ -426,9 +469,9 @@ def merge_duplicate_flows(information_flows: dict):
             for field, j_value in flow_j.items():
                 if field not in ["sender", "receiver"]:
                     try:
-                        flow_i[field] = flow_i.get(field, list()) + list(j_value)
+                        flow_i[field] = flow_i.get(field, []) + list(j_value)
                     except:
-                        flow_i[field] = list(j_value).append(flow_i.get(field, list()))
+                        flow_i[field] = list(j_value).append(flow_i.get(field, []))
             to_delete.add(j)
     for k in to_delete:
         del information_flows[k]
@@ -440,6 +483,7 @@ def merge_duplicate_nodes(nodes: dict):
 
     # Microservices
     to_delete = set()
+    print("@@@@@@@@@@@@@@@@@@@@@@DuplicatNode@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     for i, j in combinations(nodes.keys(), 2):
         node_i = nodes[i]
         node_i["name"] = node_i["name"].casefold()
@@ -448,14 +492,15 @@ def merge_duplicate_nodes(nodes: dict):
         node_j = nodes[j]
         node_j["name"] = node_j["name"].casefold()
 
-        if node_i["name"] == node_j["name"]:
+        if node_i["name"].replace("-","").replace("_","") == node_j["name"].replace("-","").replace("_",""):
+            print(node_i['name'],node_j['name'])
             # merge
             for field, j_value in node_j.items():
                 if field not in ["name", "type"]:
                     try:
-                        node_i[field] = node_i.get(field, list()) + list(j_value)
+                        node_i[field] = node_i.get(field, []) + list(j_value)
                     except:
-                        node_i[field] = list(j_value).append(node_i.get(field, list()))
+                        node_i[field] = list(j_value).append(node_i.get(field, []))
             to_delete.add(j)
     for k in to_delete:
         del nodes[k]

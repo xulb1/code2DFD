@@ -1,3 +1,4 @@
+import ast
 import os.path
 from pathlib import Path
 
@@ -136,17 +137,32 @@ def add_service(line: str):
     tagged_values = set()
     name = line.split("=")[0].strip()
     if "stereotype_instances" in line:
-        stereotypes = line.split("stereotype_instances =")[1].split("]")[0].split("[")[1].split(",")
+        r = line.split("stereotype_instances =")[1].split("tagged_values")[0].strip().strip(",").strip(")")
+        v = [item.strip() for item in r.strip("[]").split(",") if item.strip()]
+        stereotypes = line.split("stereotype_instances =")[1].split("]")[0].split("[")[1].split(", ")
+        for a,b in zip (v,stereotypes):
+            if a not in b:
+                print("(((((((((((((((((((((VérificatioN)))))))))))))))))))))")
+                print(v)
+                print(stereotypes)
+    
     if "tagged_values" in line:
-        tagged_values = line.split("tagged_values =")[1].split("}")[0].split("{")[1].split(",")
+        tagged_values = line.split("tagged_values =")[1].strip().strip(")")
+        try:
+            data = ast.literal_eval(tagged_values)
+            tagged_values = [f"{repr(k)}: {repr(v).replace("{","\\{").replace("}","\\}")}" for k, v in data.items()]
+        except Exception as e:
+            tagged_values = tagged_values.split("}")[0].split("{")[1].split(",")
+            print("ERROR",e)
+
 
     # Create new line
-    new_line = "        " + name + " [label = \"{Service: " + name + " | "
+    new_line = f'        {name} [label = \"{{Service: {name} | '
     for stereotype in stereotypes:
-        new_line += "--" + stereotype.strip() + "--\\n"
+        new_line += f"--{stereotype.strip()}--\\n"
     for tagged_value in tagged_values:
         if ":" in tagged_value:
-            new_line += tagged_value.split(":")[0].strip() + ": " + tagged_value.split(":")[1].strip().strip("\"") + "\\n"
+            new_line += f"{tagged_value.split(":")[0].strip()}: {tagged_value.split(":")[1].strip().strip("\"")}\\n"
     new_line += "}\" shape = Mrecord];\n"
 
     # Append new line
@@ -174,12 +190,12 @@ def add_flow(line: str):
         tagged_values = line.split("tagged_values =")[1].split("}")[0].split("{")[1].split(",")
 
     # Create new line
-    new_line = "        " + sender + " -> " + receiver + " [label = \" "
+    new_line = f"        {sender} -> {receiver} [label = \" "
     for stereotype in stereotypes:
-        new_line += "--" + stereotype.strip() + "--\\n"
+        new_line += f"--{stereotype.strip()}--\\n"
     if tagged_values:
         for tagged_value in tagged_values:
-            new_line += tagged_value.replace("\"", "") + "\\n"
+            new_line += f"{tagged_value.replace("\"", "")}\\n"
     new_line += "\"]\n"
 
     # Append new line

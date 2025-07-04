@@ -37,9 +37,11 @@ piggymetrics
 TODO issue : 
 dupplication de service avec nom différents, oublile de "_"
 
-TODO =
-endpoint ['../ et rien après ... pourquoi ?
+DONE
+pb avec endpoint -> endpoint ['../ et rien après ... pourquoi ?
 
+
+detection of external entity : external_website
 
 
 Note : 
