@@ -27,7 +27,6 @@ def output_codeable_model(microservices, information_flows, external_components)
             for t in m["tagged_values"]:
                 if t[0] == "Port" and isinstance(t[1], int):
                     tagged_values[t[0]] = int(t[1])
-                    print(m,t,"------------------------12")
                 else:
                     tagged_values[t[0]] = t[1]
 

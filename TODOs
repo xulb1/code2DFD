@@ -20,9 +20,9 @@ simplify dcm_parser ...
 plein de truc inutile
 
 
+Aucun sens : dcm_parser :
 
-Aucun sens : dcm_parser : 
-line_number -1 et pas -1 ?
+
 
 TODO TODO TODO TODO TODO TODO TODO
 fixe port line number errrrrrrrorrorororororrorrorroor
@@ -37,11 +37,21 @@ piggymetrics
 TODO issue : 
 dupplication de service avec nom différents, oublile de "_"
 
+detection of external entity : external_website
+
+TODO
+Reetudier les flows
+
+
+TODO=
+pb aver url: 'http...
+
+
+pb avec proxy vs web_app
+
 DONE
 pb avec endpoint -> endpoint ['../ et rien après ... pourquoi ?
 
-
-detection of external entity : external_website
 
 
 Note : 

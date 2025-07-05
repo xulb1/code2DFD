@@ -32,11 +32,11 @@ def detect_server_docker(microservices: dict, information_flows: dict, dfd) -> d
                 m.setdefault("tagged_values",[]).append(("Metrics Server", "Prometheus"))
                 found = True
         if not found:
-            prometheus_server = "prometheus_server"
+            prometheus_server = "prometheus-server"
             # add service
             key = max(microservices.keys(), default=-1) + 1
             microservices[key] = {
-                "name": "prometheus_server",
+                "name": "prometheus-server",
                 "image": results[r]["path"],
                 "stereotype_instances": ["metrics_server"],
                 "tagged_values": [("Metrics Server", "Prometheus")]

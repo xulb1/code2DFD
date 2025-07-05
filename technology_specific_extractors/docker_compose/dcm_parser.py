@@ -97,6 +97,10 @@ def extract_microservices(file_content, file_name) -> set:
 
 
 def extract_service_from_file(s, file_content, file_name, data, microservices_dict: dict, microservices_set: set, properties_dict: dict, image=False, build=False) -> tuple[set,dict]:
+    properties = set()
+    correct_id = False
+    exists = False
+    port = False
 
     # Traceability
     lines = file_content.splitlines()
@@ -107,10 +111,6 @@ def extract_service_from_file(s, file_content, file_name, data, microservices_di
         span = f"[{str(length_tuple[0])}:{str(length_tuple[1])}]"
         trace = (file_name, line_number + 1, span)
 
-    properties = set()
-    correct_id = False
-    exists = False
-    port = False
 
     
     if s == "networks":
@@ -151,6 +151,9 @@ def extract_service_from_file(s, file_content, file_name, data, microservices_di
         except TypeError:
             pass
         
+        image = new_image
+        build = new_build
+        
         for m in microservices_dict.values():
             try:
                 pom_path = Path(m["pom_path"])
@@ -182,17 +185,13 @@ def extract_service_from_file(s, file_content, file_name, data, microservices_di
         port_nr = ports[0].split(":")[0].strip("\" -")
         line_number = data[s]["expose"].lc.line - 1
         length_tuple = re.search(port_nr, lines[line_number])
-        if length_tuple:
-            length_tuple = length_tuple.span()
-            span = "[" + str(length_tuple[0]) +  ":" + str(length_tuple[1]) + "]"
-            port = (port_nr, file_name, line_number + 1, span)
-        else:
+        if not length_tuple:
             line_number = line_number + 1
             length_tuple = re.search(port_nr, lines[line_number])
-            if length_tuple:
-                length_tuple = length_tuple.span()
-                span = "[" + str(length_tuple[0]) +  ":" + str(length_tuple[1]) + "]"
-                port = (port_nr, file_name, line_number + 1, span)
+        if length_tuple:
+            length_tuple = length_tuple.span()
+            span = f"[{length_tuple[0]}:{length_tuple[1]}]"
+            port = (port_nr, file_name, line_number + 1, span)
     
     print("\033[32m",s,port,"\033[0m")
 
@@ -211,10 +210,11 @@ def extract_service_from_file(s, file_content, file_name, data, microservices_di
                 print("\033[31m",s, image, port, trace,"\033[0m")
                 isImage=True
                 break
+        
         if not isImage:
             properties_dict[s] = properties
             microservices_set.add((s, image, "type", port, trace))
-            print("\033[31m",s, image, port, trace,"----\033[0m")
+            print("\033[31m",s, image, port, trace,"--------->>>>>\033[0m")
 
     # add additional information
     if exists and correct_id:
@@ -266,7 +266,7 @@ def extract_environment_props(data, s, lines: list, port: tuple, properties: set
 
 
 def extract_information_flows(file_content:  str, microservices: dict, information_flows: dict) -> dict:
-    """Adds information flows based on "links".
+    """Adds information flows based on "links" and on "depends_on".
     """
     
     yaml = ruamel.yaml.YAML()
@@ -296,6 +296,24 @@ def extract_information_flows(file_content:  str, microservices: dict, informati
                 information_flows = get_flows(s,links, microservices, information_flows, discovery_server, config_server)
             except:
                 pass
+    
+    if "services" in file:
+        for s in file.get("services"):
+            try:
+                depends_on = file.get("services", {}).get(s).get("depends_on")
+                # print("((((((((((((((((((((",list(depends_on.keys()),"))))))))))))))))))))")
+                information_flows = get_flows(s,depends_on, microservices, information_flows, discovery_server, config_server)
+            except:
+                pass
+    else:
+        for s in file.keys():
+            try:
+                depends_on = file.get(s).get("depends_on")
+                # print("((((((((((((((((((((",list(depends_on.keys()),"))))))))))))))))))))")
+                information_flows = get_flows(s,depends_on, microservices, information_flows, discovery_server, config_server)
+            except:
+                pass
+    
     return information_flows
 
 def get_flows(s: str, links: str, microservices: dict, information_flows: dict, discovery_server: bool, config_server: bool) -> dict:
@@ -304,12 +322,13 @@ def get_flows(s: str, links: str, microservices: dict, information_flows: dict, 
     
     for link in links:
         for m in microservices.values():
-            if  m["name"] == link  and  not link in {discovery_server, config_servers}:
-                newKey = max(information_flows.keys(), default=-1) + 1
-                information_flows[newKey] = {
-                    "sender": s,
-                    "receiver": link,
-                    "stereotype_instances": ["restful_http"]
-                }
+            if  m["name"] == link:
+                if link not in {discovery_server, config_server}:
+                    newKey = max(information_flows.keys(), default=-1) + 1
+                    information_flows[newKey] = {
+                        "sender": s,
+                        "receiver": link,
+                        "stereotype_instances": ["restful_http"]
+                    }
     
     return information_flows

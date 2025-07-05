@@ -136,14 +136,14 @@ def DFD_extraction():
     microservices, information_flows, external_components = classify_microservices(microservices, information_flows, external_components, dfd)
     print("l")
     # assert microservices1 != microservices, "Egalité"
-    
+
     # Merging
     print("Merging duplicate items")
-    merge_duplicate_flows(information_flows)
+    merge_duplicate_nodes(microservices, information_flows)
     print("m")
-    merge_duplicate_nodes(microservices)
+    merge_duplicate_nodes(external_components, information_flows)
     print("n")
-    merge_duplicate_nodes(external_components)
+    merge_duplicate_flows(information_flows)
     print("o")
     merge_duplicate_annotations(microservices)
     print("p")
@@ -301,14 +301,15 @@ def detect_miscellaneous(microservices: dict, information_flows: dict, external_
                     elif prop2[0] == "mail_username":
                         mail_username = prop2[1]
                 # create external mail server
-                id_ = max(external_components.keys(), default=-1) + 1
-                external_components[id_] = dict()
-                external_components[id_]["name"] = "mail-server"
-                external_components[id_]["stereotype_instances"] = ["mail_server", "entrypoint", "exitpoint"]
-                external_components[id_]["tagged_values"] = [("Host", prop[1])]
+                key = max(external_components.keys(), default=-1) + 1
+                external_components[key] = {
+                    "name": "mail-server",
+                    "stereotype_instances": ["mail_server", "entrypoint", "exitpoint"],
+                    "tagged_values": [("Host", prop[1])]
+                }
                 if mail_password:
-                    external_components[id_]["tagged_values"].append(("Password", mail_password))
-                    external_components[id_]["stereotype_instances"].append("plaintext_credentials")
+                    external_components[key]["tagged_values"].append(("Password", mail_password))
+                    external_components[key]["stereotype_instances"].append("plaintext_credentials")
                 if mail_username:
                     external_components[id_]["tagged_values"].append(("Username", mail_username))
 
@@ -352,7 +353,7 @@ def detect_miscellaneous(microservices: dict, information_flows: dict, external_
                     "stereotype_instances": ["restful_http"]
                 }
                 if mail_password:
-                    information_flows[id2]["stereotype_instances"].append("plaintext_credentials_link")
+                    information_flows[id_]["stereotype_instances"].append("plaintext_credentials_link")
 
                 traceability.add_trace({
                     "item": f"{microservice["name"]} -> mail-server",
@@ -403,8 +404,8 @@ def detect_miscellaneous(microservices: dict, information_flows: dict, external_
                 })
 
                 # create connection
-                id2 = max(information_flows.keys(), default=-1) + 1
-                information_flows[id2] = {
+                key = max(information_flows.keys(), default=-1) + 1
+                information_flows[key] = {
                     "sender": "external-website",
                     "receiver": microservice["name"],
                     "stereotype_instances": ["restful_http"]
@@ -423,8 +424,8 @@ def detect_miscellaneous(microservices: dict, information_flows: dict, external_
                 for m2 in microservices.values():
                     for stereotype in m2.get("stereotype_instances", []):
                         if stereotype == "configuration_server":
-                            id_ = max(information_flows.keys(), default=-1) + 1
-                            information_flows[id_] = {
+                            key = max(information_flows.keys(), default=-1) + 1
+                            information_flows[key] = {
                                 "sender": m2["name"],
                                 "receiver": microservice["name"],
                                 "stereotype_instances": ["restful_http"]
@@ -444,9 +445,12 @@ def detect_miscellaneous(microservices: dict, information_flows: dict, external_
 def merge_duplicate_flows(information_flows: dict):
     """Multiple flows with the same sender and receiver might occur. They are merged here.
     """
-
+    print("@@@@@@@@@@@@@@@@@@@@@@DuplicatFlow@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     to_delete = set()
     for i, j in combinations(information_flows.keys(), 2):
+        if i == j:
+            continue
+        
         flow_i = information_flows[i]
         if flow_i["sender"] and flow_i["receiver"]:
             flow_i["sender"] = flow_i["sender"].casefold()
@@ -454,8 +458,7 @@ def merge_duplicate_flows(information_flows: dict):
         else:
             to_delete.add(i)
             continue
-        if i == j:
-            continue
+
         flow_j = information_flows[j]
         if flow_j["sender"] and flow_j["receiver"]:
             flow_j["sender"] = flow_j["sender"].casefold()
@@ -464,20 +467,20 @@ def merge_duplicate_flows(information_flows: dict):
             to_delete.add(j)
             continue
 
-        if flow_i["sender"] == flow_j["sender"] and flow_i["receiver"] == flow_j["receiver"]:
+        if (flow_i["sender"],flow_i["receiver"]) == (flow_j["sender"],flow_j["receiver"]):
             # merge
             for field, j_value in flow_j.items():
                 if field not in ["sender", "receiver"]:
                     try:
                         flow_i[field] = flow_i.get(field, []) + list(j_value)
-                    except:
+                    except Exception:
                         flow_i[field] = list(j_value).append(flow_i.get(field, []))
             to_delete.add(j)
     for k in to_delete:
         del information_flows[k]
 
 
-def merge_duplicate_nodes(nodes: dict):
+def merge_duplicate_nodes(nodes: dict, information_flows: dict):
     """Merge duplicate nodes
     """
 
@@ -493,7 +496,6 @@ def merge_duplicate_nodes(nodes: dict):
         node_j["name"] = node_j["name"].casefold()
 
         if node_i["name"].replace("-","").replace("_","") == node_j["name"].replace("-","").replace("_",""):
-            print(node_i['name'],node_j['name'])
             # merge
             for field, j_value in node_j.items():
                 if field not in ["name", "type"]:
@@ -502,9 +504,60 @@ def merge_duplicate_nodes(nodes: dict):
                     except:
                         node_i[field] = list(j_value).append(node_i.get(field, []))
             to_delete.add(j)
+
+        # FIXME 
+        # TODO
+        required_substrings = ["image_placeholder", "docker", ".", ":"]
+        duplicate = False
+        
+        try:
+            if not all(sub in node_i["image"] for sub in required_substrings) \
+                or not all(sub in node_j["image"] for sub in required_substrings):
+                if node_i["name"] in node_i["image"] \
+                    and node_i["name"].split("/")[-1].replace("-","").replace("_","") \
+                        in node_j["name"].replace("-","").replace("_",""):
+                            print(node_i['name'],node_j['name'],node_i["image"])
+                            duplicate=True
+                if node_j["name"] in node_j["image"] \
+                    and node_j["name"].split("/")[-1].replace("-","").replace("_","") \
+                        in node_i["name"].replace("-","").replace("_",""):
+                            print(node_i['name'],node_j['name'],node_i["image"])
+                            duplicate=True
+        except Exception :#KeyError or TypeError:
+            continue
+        
+        if duplicate:
+            if len(node_i["name"])>len(node_j["name"]):
+                keep = node_i
+                delete = node_j
+                to_delete.add(j)
+            else:
+                keep = node_j
+                delete = node_i
+                to_delete.add(i)
+                
+            
+            for field, j_value in delete.items():
+                if field not in ["name", "type"]:
+                    try:
+                        keep[field] = keep.get(field, []) + list(j_value)
+                    except:
+                        keep[field] = list(j_value).append(keep.get(field, []))
+                        
+            rename_information_flow_services(keep["name"],delete["name"], information_flows)
+        
     for k in to_delete:
         del nodes[k]
 
+def rename_information_flow_services(keep: str, delete: str, information_flows: dict):
+    for i in information_flows.keys():
+        
+        flow_i = information_flows[i]
+        if flow_i["sender"] == delete:
+            flow_i["sender"] = keep
+        
+        if flow_i["receiver"] == delete:
+            flow_i["receiver"] = keep
 
 def merge_duplicate_annotations(collection: dict):
     """Merge annotations of all items

@@ -12,7 +12,7 @@ def detect_endpoints(microservices: dict, dfd) -> dict:
         microservice = tech_sw.detect_microservice(results[r]["path"], dfd)
         for line in results[r]["content"]:
             if ("@RepositoryRestResource" in line) and ("path" in line):
-                endpoint = line.split("path")[1].split(",")[0].strip().strip("=/()").strip().strip('"')
+                endpoint = line.split("path")[1].split(",")[0].strip().strip("=\"/() ")
                 endpoint = f"/{endpoint}"
                 endpoints.add(endpoint)
                 print("===============--------------------------===============")

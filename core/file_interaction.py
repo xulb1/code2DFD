@@ -299,7 +299,7 @@ def resolve_url(url: str, microservice: str, dfd) -> str:
                             if prop[0] == "Port":
                                 if port == prop[1]:
                                     target_service = microservices[m]["name"]
-                print("\033[34mResolve_url",port,"////////////////////\033[9m")
+                print("\033[34mResolve_url",port,"////////////////////\033[0m")
         else:
             for m in microservices.keys():
                 url_parts = url.split("/")
