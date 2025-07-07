@@ -14,46 +14,41 @@ def detect_zuul(microservices: dict, information_flows: dict, external_component
     new_results = fi.search_keywords("@EnableZuulProxy")
 
     for r in new_results.keys():
-        id = max(results.keys(), default=-1) + 1
-        results[id] = dict()
-        results[id] = new_results[r]
+        key = max(results.keys(), default=-1) + 1
+        results[key] = dict()
+        results[key] = new_results[r]
+    
     zuul_server = str()
     for r in results.keys():
         zuul_server = tech_sw.detect_microservice(results[r]["path"], dfd)
-        for m in microservices.keys():
-            if microservices[m]["name"] == zuul_server:    # this is the Zuul server
-                try:
-                    microservices[m]["stereotype_instances"] += ["gateway", "load_balancer"]
-                except:
-                    microservices[m]["stereotype_instances"] = ["gateway", "load_balancer"]
-                try:
-                    microservices[m]["tagged_values"] += [("Gateway", "Zuul"), ("Load Balancer", "Ribbon")]
-                except:
-                    microservices[m]["tagged_values"] = [("Gateway", "Zuul"), ("Load Balancer", "Ribbon")]
+        for m in microservices.values():
+            if m["name"] == zuul_server:    # this is the Zuul server
+                # FIXME insertion un peu étrange
+                m["stereotype_instances"] = m.get("stereotype_instances", []) + ["gateway", "load_balancer"]
+                m["tagged_values"] = m.get("tagged_values", []) + [("Gateway", "Zuul"), ("Load Balancer", "Ribbon")]
 
                 # Traceability
-                trace = dict()
-                trace["parent_item"] = zuul_server
-                trace["item"] = "gateway"
-                trace["file"] = results[r]["path"]
-                trace["line"] = results[r]["line_nr"]
-                trace["span"] = results[r]["span"]
-
-                traceability.add_trace(trace)
+                traceability.add_trace({
+                    "parent_item": zuul_server,
+                    "item": "gateway",
+                    "file": results[r]["path"],
+                    "line": results[r]["line_nr"],
+                    "span": results[r]["span"]
+                })
 
                 # Reverting direction of flow to service discovery, if found
                 discovery_server = False
-                for m2 in microservices.keys():
-                    for s in microservices[m2]["stereotype_instances"]:
+                for m2 in microservices.values():
+                    for s in m2["stereotype_instances"]:
                         if s == "service_discovery":
-                            discovery_server = microservices[m2]["name"]
+                            discovery_server = m2["name"]
                             break
                 if discovery_server:
                     traceability.revert_flow(zuul_server, discovery_server)
-                    for i in information_flows.keys():
-                        if information_flows[i]["sender"] == zuul_server and information_flows[i]["receiver"] == discovery_server:
-                            information_flows[i]["sender"] = discovery_server
-                            information_flows[i]["receiver"] = zuul_server
+                    for flow in information_flows.values():
+                        if flow["sender"] == zuul_server and flow["receiver"] == discovery_server:
+                            flow["sender"] = discovery_server
+                            flow["receiver"] = zuul_server
 
                 # Adding user
                 external_components = ext.add_user(external_components)
@@ -64,47 +59,45 @@ def detect_zuul(microservices: dict, information_flows: dict, external_component
                 # Adding flows to other services if routes are in config
                 load_balancer = False
                 circuit_breaker = False
-                for prop in microservices[m]["properties"]:
+                for prop in m["properties"]:
                     if prop[0] == "load_balancer":
                         load_balancer = prop[1]
                     elif prop[0] == "circuit_breaker":
                         circuit_breaker = prop[1]
-                for prop in microservices[m]["properties"]:
-                    if prop[0] == "zuul_route" or prop[0] == "zuul_route_serviceId" or prop[0] == "zuul_route_url":
+                for prop in m["properties"]:
+                    if prop[0] in ["zuul_route", "zuul_route_serviceId", "zuul_route_url"]:
                         receiver = False
-                        if prop[0] == "zuul_route" or prop[0] == "zuul_route_serviceId":
-                            for m in microservices.keys():
+                        if prop[0] in ["zuul_route","zuul_route_serviceId"]:
+                            for m2 in microservices.values():
                                 for part in prop[1].split("/"):
-                                    if microservices[m]["name"] in part.casefold():
-                                        receiver = microservices[m]["name"]
+                                    if m2["name"] in part.casefold():
+                                        receiver = m2["name"]
                         else:
-                            for m in microservices.keys():
+                            for m2 in microservices.values():
                                 for part in prop[1].split("://"):
-                                    if microservices[m]["name"] in part.split(":")[0].casefold():
-                                        receiver = microservices[m]["name"]
+                                    if m2["name"] in part.split(":")[0].casefold():
+                                        receiver = m2["name"]
                         if receiver:
-                            id = max(information_flows.keys(), default=-1) + 1
-                            information_flows[id] = dict()
-                            information_flows[id]["sender"] = zuul_server
-                            information_flows[id]["receiver"] = receiver
-                            information_flows[id]["stereotype_instances"] = ["restful_http"]
+                            key = max(information_flows.keys(), default=-1) + 1
+                            information_flows[key] = {
+                                "sender": zuul_server,
+                                "receiver": receiver,
+                                "stereotype_instances": ["restful_http"]
+                            }
 
-                            trace = dict()
-                            trace["item"] = zuul_server + " -> " + receiver
-                            trace["file"] = prop[2][0]
-                            trace["line"] = prop[2][1]
-                            trace["span"] = prop[2][2]
-                            traceability.add_trace(trace)
+                            traceability.add_trace({
+                                "item": f"{zuul_server} -> {receiver}",
+                                "file": prop[2][0],
+                                "line": prop[2][1],
+                                "span": prop[2][2]
+                            })
 
                             if circuit_breaker:
-                                information_flows[id]["stereotype_instances"].append("circuit_breaker_link")
-                                information_flows[id]["tagged_values"] = [("Circuit Breaker", circuit_breaker)]
+                                information_flows[key]["stereotype_instances"].append("circuit_breaker_link")
+                                information_flows[key].setdefault("tagged_values",[]).append(("Circuit Breaker", circuit_breaker))
                             if load_balancer:
-                                information_flows[id]["stereotype_instances"].append("load_balanced_link")
-                                try:
-                                    information_flows[id]["tagged_values"].append(("Load Balancer", load_balancer))
-                                except:
-                                    information_flows[id]["tagged_values"] = [("Load Balancer", load_balancer)]
+                                information_flows[key]["stereotype_instances"].append("load_balanced_link")
+                                information_flows[key].setdefault("tagged_values",[]).append(("Load Balancer", load_balancer))
 
     tmp.tmp_config.set("DFD", "external_components", str(external_components).replace("%", "%%"))
     return microservices, information_flows, external_components

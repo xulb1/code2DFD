@@ -33,9 +33,7 @@ def set_information_flows(dfd) -> dict:
 
 
 def used_in_application():
-    if len(fi.search_keywords("RestTemplate")) > 0:
-        return True
-    return False
+    return len(fi.search_keywords("RestTemplate")) > 0
 
 
 def get_incoming_endpoints(dfd) -> list:
@@ -183,21 +181,21 @@ def find_rst_variable(parameter: str, file: dict, line_nr: int, information_flow
 
     # check if service name in parameter, if yes, add flow directly
     microservices = tech_sw.get_microservices(dfd)
-    for m in microservices.keys():
-        if microservices[m]["name"] in parameter:
-            id = max(information_flows.keys(), default=-1) + 1
-            information_flows[id] = dict()
-
-            information_flows[id]["sender"] = microservice
-            information_flows[id]["receiver"] = microservices[m]["name"]
-            information_flows[id]["stereotype_instances"] = ["restful_http"]
-
-            trace = dict()
-            trace["item"] = microservice + " -> " + microservices[m]["name"]
-            trace["file"] = file["path"]
-            trace["line"] = file["line_nr"]
-            trace["span"] = file["span"]
-            traceability.add_trace(trace)
+    for m in microservices.values():
+        if m["name"] in parameter:
+            key = max(information_flows.keys(), default=-1) + 1
+            information_flows[key] = {
+                "sender": microservice,
+                "receiver": m["name"],
+                "stereotype_instances": ["restful_http"]
+            }
+            
+            traceability.add_trace({
+                "item": f"{microservice} -> {m["name"]}",
+                "file": file["path"],
+                "line": file["line_nr"],
+                "span": file["span"]
+            })
 
     variable = False
     if "+" in parameter:    # string consisting of multiple parts
@@ -213,12 +211,12 @@ def find_rst_variable(parameter: str, file: dict, line_nr: int, information_flow
         elif check_if_variable_is_input(parameters[p], file, line_nr):
             parameters[p] = "{" + parameters[p] + "}"
         elif parameters[p][0] == "\"" and parameters[p][-1] == "\"" and parameters[p].count("\"") == 2:     # it's a string, no change needed
-            parameters[p] = parameters[p].strip().strip("\"")
+            parameters[p] = parameters[p].strip("\" ")
         elif "." in parameters[p]:               # means that it refers to some other file or class -> look for that file, then go through lines
             try:
                 parameter_variable = parameters[p].split(".")[-1]
                 parameter_class = parameters[p].split(".")[-2]
-                files_containing_class = fi.search_keywords("class " + str(parameter_class))
+                files_containing_class = fi.search_keywords(f"class {parameter_class}")
                 correct_file = None
                 for filec in files_containing_class.keys():
                     fc = files_containing_class[filec]
@@ -248,13 +246,13 @@ def find_rst_variable(parameter: str, file: dict, line_nr: int, information_flow
             while found == False and line < len(file["content"]):
                 # Assignment of var
                 if parameter_variable in file["content"][line] and "=" in file["content"][line]:
-                    parameters[p] = file["content"][line].split("=")[1].strip().strip(";").strip()
-                    if parameters[p].strip("\"").strip() != "":
+                    parameters[p] = file["content"][line].split("=")[1].strip("; ")
+                    if parameters[p].strip("\" ") != "":
                         if parameters[p][0] != "\"" or parameters[p][-1] != "\"":
                             if count < 50:
                                 parameters[p], x = find_rst_variable(parameters[p], file, line, information_flows, microservice, dfd, count + 1)      # recursive step
                         if parameters[p] != False:
-                            parameters[p] = parameters[p].strip("\"").strip()
+                            parameters[p] = parameters[p].strip("\" ")
                             logger.info("\t\tFound " + str(parameters[p]) + " in this file.")
                         found = True
                 # Var injection via @Value
@@ -288,14 +286,15 @@ def check_if_variable_is_input(variable: str, file, line_nr: int) -> bool:
             open_curly_brackets -= 1
         if "{" in line:
             open_curly_brackets += 1
+        
         if open_curly_brackets == 1:
             if "if" in line or "else" in line or "else if" in line:
                 open_curly_brackets -= 1
-        if open_curly_brackets == 1:
-            inputs = line.split("{")[0].strip().split("(")[-1].strip().strip(")").strip().split(",")
-            for i in inputs:
-                if variable in i:
-                    return True
+            else:
+                inputs = line.split("{")[0].split("(")[-1].strip(" ),")
+                for i in inputs:
+                    if variable in i:
+                        return True
         line_nr -= 1
     return False
 
@@ -312,46 +311,44 @@ def match_incoming_to_outgoing_endpoints(incoming_endpoints: list, outgoing_endp
             if i[0] in o[0] and i[1] in o[0]:
                 information_flows_set.add((o[1], i[1], i[0]))       # (sending service, receiving service, receving endpoint)
 
-                trace = dict()
-                trace["item"] = o[0] + " -> " + i[1]
-                trace["file"] = o[2]
-                trace["line"] = o[3]
-                trace["span"] = o[4]
-                traceability.add_trace(trace)
+                traceability.add_trace({
+                    "item": f"{o[0]} -> {i[1]}",
+                    "file": o[2],
+                    "line": o[3],
+                    "span": o[4]
+                })
 
     # turn it into dict
     for i in information_flows_set:
-
         # check for load balancer, circuit breaker, authentication, and SSL
-        stereotype_instances = list()
-        stereotype_instances.append("restful_http")
-        tagged_values = list()
-        for m in microservices.keys():
-            if microservices[m]["name"] == i[0]:
-                for prop in microservices[m]["properties"]:
+        stereotype_instances = ["restful_http"]
+        tagged_values = []
+        for m in microservices.values():
+            if m["name"] == i[0]:
+                for prop in m["properties"]:
                     if prop[0] == "load_balancer":
                         stereotype_instances.append("load_balanced_link")
                         tagged_values.append(("Load Balancer", prop[1]))
                     elif prop[0] == "circuit_breaker":
                         stereotype_instances.append("circuit_breaker_link")
                         tagged_values.append(("Circuit Breaker", prop[1]))
-                for s in microservices[m]["stereotype_instances"]:
+                for s in m["stereotype_instances"]:
                     if s == "authentication_scope_all_requests":
                         stereotype_instances.append("authenticated_request")
                     elif s == "ssl_enabled":
                         stereotype_instances.append("ssl_secured")
 
         # set flow
-        id = max(information_flows.keys(), default=-1) + 1
-        information_flows[id] = dict()
-
-        information_flows[id]["sender"] = i[0]
-        information_flows[id]["receiver"] = i[1]
-        information_flows[id]["endpoint"] = i[2]
+        key = max(information_flows.keys(), default=-1) + 1
+        information_flows[key] = {
+            "sender": i[0],
+            "receiver": i[1],
+            "endpoint": i[2]
+        }
 
         if stereotype_instances:
-            information_flows[id]["stereotype_instances"] = stereotype_instances
-            information_flows[id]["tagged_values"] = tagged_values
+            information_flows[key]["stereotype_instances"] = stereotype_instances
+            information_flows[key]["tagged_values"] = tagged_values
 
 
 

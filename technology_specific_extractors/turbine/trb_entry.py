@@ -22,28 +22,22 @@ def detect_turbine_server(microservices: dict, dfd) -> dict:
     """
 
     results = fi.search_keywords("@EnableTurbine")     # content, name, path
-    for r in results.keys():
-        microservice = tech_sw.detect_microservice(results[r]["path"], dfd)
-        for line in results[r]["content"]:
+    for r in results.values():
+        microservice = tech_sw.detect_microservice(r["path"], dfd)
+        for line in r["content"]:
             if "@EnableTurbine" in line:
-                for m in microservices.keys():
-                    if microservices[m]["name"] == microservice:
-                        try:
-                            microservices[m]["stereotype_instances"].append("monitoring_server")
-                        except:
-                            microservices[m]["stereotype_instances"] = ["monitoring_server"]
-                        try:
-                            microservices[m]["tagged_values"].append(("Monitoring Server", "Turbine"))
-                        except:
-                            microservices[m]["tagged_values"] = [("Monitoring Server", "Turbine")]
+                for m in microservices.values():
+                    if m["name"] == microservice:
+                        m.setdefault("stereotype_instances",[]).append("monitoring_server")
+                        m.setdefault("tagged_values",[]).append(("Monitoring Server", "Turbine"))
 
-                        trace = dict()
-                        trace["parent_item"] = microservices[m]["name"]
-                        trace["item"] = "monitoring_server"
-                        trace["file"] = results[r]["path"]
-                        trace["line"] = results[r]["line_nr"]
-                        trace["span"] = results[r]["span"]
-                        traceability.add_trace(trace)
+                        traceability.add_trace({
+                            "parent_item": m["name"],
+                            "item": "monitoring_server",
+                            "file": r["path"],
+                            "line": r["line_nr"],
+                            "span": r["span"]
+                        })
 
     return microservices
 
@@ -53,62 +47,56 @@ def detect_turbineamqp(microservices: dict, information_flows: dict, dfd) -> dic
     """
 
     results = fi.search_keywords("@EnableTurbineAmqp")     # content, name, path
-    for r in results.keys():
-        microservice = tech_sw.detect_microservice(results[r]["path"], dfd)
-        for line in results[r]["content"]:
+    for r in results.values():
+        microservice = tech_sw.detect_microservice(r["path"], dfd)
+        for line in r["content"]:
             if "@EnableTurbineAmqp" in line:
-                for m in microservices.keys():
-                    if microservices[m]["name"] == microservice:
-                        try:
-                            microservices[m]["stereotype_instances"].append("monitoring_server")
-                        except:
-                            microservices[m]["stereotype_instances"] = "monitoring_server"
-                        try:
-                            microservices[m]["tagged_values"].append(("Monitoring Server", "Turbine"))
-                        except:
-                            microservices[m]["tagged_values"] = ("Monitoring Server", "Turbine")
+                for m in microservices.values():
+                    if m["name"] == microservice:
+                        m.setdefault("stereotype_instances",[]).append("monitoring_server")
+                        m.setdefault("tagged_values",[]).append(("Monitoring Server", "Turbine"))
 
-                        trace = dict()
-                        trace["parent_item"] = microservices[m]["name"]
-                        trace["item"] = "monitoring_server"
-                        trace["file"] = results[r]["path"]
-                        trace["line"] = results[r]["line_nr"]
-                        trace["span"] = results[r]["span"]
-                        traceability.add_trace(trace)
+                        traceability.add_trace({
+                            "parent_item": m["name"],
+                            "item": "monitoring_server",
+                            "file": r["path"],
+                            "line": r["line_nr"],
+                            "span": r["span"]
+                        })
 
-                    if ("Monitoring Dashboard", "Hystrix") in microservices[m]["tagged_values"]:
-                        dashboard = microservices[m]["name"]
+                    if ("Monitoring Dashboard", "Hystrix") in m["tagged_values"]:
+                        dashboard = m["name"]
 
-                        id = max(information_flows.keys(), default=-1) + 1
-                        information_flows[id] = dict()
-                        information_flows[id]["sender"] = microservice
-                        information_flows[id]["receiver"] = dashboard
-                        information_flows[id]["stereotype_instances"] = ["restful_http"]
+                        key = max(information_flows.keys(), default=-1) + 1
+                        information_flows[key] = {
+                            "sender": microservice,
+                            "receiver": dashboard,
+                            "stereotype_instances": ["restful_http"]
+                        }
+                        
+                        traceability.add_trace({
+                            "item": f"{microservice} -> {dashboard}",
+                            "file": r["path"],
+                            "line": r["line_nr"],
+                            "span": r["span"]
+                        })
 
-                        trace = dict()
-                        trace["item"] = microservice + " -> " + dashboard
-                        trace["file"] = results[r]["path"]
-                        trace["line"] = results[r]["line_nr"]
-                        trace["span"] = results[r]["span"]
+                    elif ("Message Broker", "RabbitMQ") in m["tagged_values"]:
+                        rabbitmq = m["name"]
 
-                        traceability.add_trace(trace)
+                        key = max(information_flows.keys(), default=-1) + 1
+                        information_flows[key] = {
+                            "sender": rabbitmq,
+                            "receiver": microservice,
+                            "stereotype_instances": ["restful_http"]
+                        }
 
-                    elif ("Message Broker", "RabbitMQ") in microservices[m]["tagged_values"]:
-                        rabbitmq = microservices[m]["name"]
-
-                        id = max(information_flows.keys(), default=-1) + 1
-                        information_flows[id] = dict()
-                        information_flows[id]["sender"] = rabbitmq
-                        information_flows[id]["receiver"] = microservice
-                        information_flows[id]["stereotype_instances"] = ["restful_http"]
-
-                        trace = dict()
-                        trace["item"] = rabbitmq + " -> " + microservice
-                        trace["file"] = results[r]["path"]
-                        trace["line"] = results[r]["line_nr"]
-                        trace["span"] = results[r]["span"]
-
-                        traceability.add_trace(trace)
+                        traceability.add_trace({
+                            "item": f"{rabbitmq} -> {microservice}",
+                            "file": r["path"],
+                            "line": r["line_nr"],
+                            "span": r["span"]
+                        })
 
     return microservices, information_flows
 
@@ -121,116 +109,105 @@ def detect_turbine_stream(microservices: dict, information_flows: dict, dfd) -> 
     rabbitmq = False
     turbine_server = False
     results = fi.search_keywords("EnableTurbineStream")     # content, name, path
-    for r in results.keys():
+    for r in results.values():
         trace_info = (False, False, False)
-        microservice = tech_sw.detect_microservice(results[r]["path"], dfd)
-        for line in results[r]["content"]:
+        microservice = tech_sw.detect_microservice(r["path"], dfd)
+        for line in r["content"]:
             if "@EnableTurbineStream" in line:
-                for id in microservices.keys():
-                    if microservices[id]["name"] == microservice:
-                        turbine_server = microservices[id]["name"]
-                        try:
-                            microservices[id]["stereotype_instances"].append("monitoring_server")
-                        except:
-                            microservices[id]["stereotype_instances"] = "monitoring_server"
-                        try:
-                            microservices[id]["tagged_values"].append(("Monitoring Server", "Turbine"))
-                        except:
-                            microservices[id]["tagged_values"] = ("Monitoring Server", "Turbine")
+                for m in microservices.values():
+                    if m["name"] == microservice:
+                        turbine_server = m["name"]
+                        m.setdefault("stereotype_instances",[]).append("monitoring_server")
+                        m.setdefault("tagged_values",[]).append(("Monitoring Server", "Turbine"))
 
-                        trace = dict()
-                        trace["parent_item"] = microservices[id]["name"]
-                        trace["item"] = "monitoring_server"
-                        trace["file"] = results[r]["path"]
-                        trace["line"] = results[r]["line_nr"]
-                        trace["span"] = results[r]["span"]
-                        traceability.add_trace(trace)
+                        traceability.add_trace({
+                            "parent_item": m["name"],
+                            "item": "monitoring_server",
+                            "file": r["path"],
+                            "line": r["line_nr"],
+                            "span": r["span"]
+                        })
 
                         # find pom_file and check which broker there is a dependency for
-                        path = results[r]["path"]
-
+                        path = r["path"]
                         found_pom = False
-
                         local_repo_path = tmp.tmp_config["Repository"]["local_path"]
-
                         dirs = list()
-
                         path = os.path.dirname(path)
                         dirs.append(os.scandir(os.path.join(local_repo_path, path)))
 
                         while path != "" and not found_pom:
-                            dir = dirs.pop()
-                            for entry in dir:
-                                if entry.is_file():
-                                    if entry.name.casefold() == "pom.xml":
-                                        with open(entry.path, "r") as file:
-                                            lines = file.readlines()
-                                        for line in lines:
-                                            if "<artifactId>spring-cloud-starter-stream-rabbit</artifactId>" in line:
-                                                uses_rabbit = True
-                                                trace_info = (results[r]["path"], results[r]["line_nr"], results[r]["span"])
+                            directory = dirs.pop()
+                            for entry in directory:
+                                if entry.is_file() and entry.name.casefold() == "pom.xml":
+                                    with open(entry.path, "r") as file:
+                                        lines = file.readlines()
+                                    for line in lines:
+                                        if "<artifactId>spring-cloud-starter-stream-rabbit</artifactId>" in line:
+                                            uses_rabbit = True
+                                            trace_info = (r["path"], r["line_nr"], r["span"])
                             path = os.path.dirname(path)
                             dirs.append(os.scandir(os.path.join(local_repo_path, path)))
 
-                    if ("Monitoring Dashboard", "Hystrix") in microservices[id]["tagged_values"]:
-                        dashboard = microservices[id]["name"]
+                    if ("Monitoring Dashboard", "Hystrix") in m["tagged_values"]:
+                        dashboard = m["name"]
 
-                        id = max(information_flows.keys(), default=-1) + 1
-                        information_flows[id] = dict()
-                        information_flows[id]["sender"] = microservice
-                        information_flows[id]["receiver"] = dashboard
-                        information_flows[id]["stereotype_instances"] = ["restful_http"]
+                        key = max(information_flows.keys(), default=-1) + 1
+                        information_flows[key] = {
+                            "sender": microservice,
+                            "receiver": dashboard,
+                            "stereotype_instances": ["restful_http"]
+                        }
 
-                        trace = dict()
-                        trace["item"] = microservice + " -> " + dashboard
-                        trace["file"] = results[r]["path"]
-                        trace["line"] = results[r]["line_nr"]
-                        trace["span"] = results[r]["span"]
+                        traceability.add_trace({
+                            "item": f"{microservice} -> {dashboard}",
+                            "file": r["path"],
+                            "line": r["line_nr"],
+                            "span": r["span"]
+                        })
 
-                        traceability.add_trace(trace)
+                    if turbine_server and uses_rabbit:
+                        if ("Message Broker", "RabbitMQ") in m["tagged_values"]:
+                            rabbitmq = m["name"]
 
-    if turbine_server and uses_rabbit:
-        for m in microservices.keys():
-            if ("Message Broker", "RabbitMQ") in microservices[m]["tagged_values"]:
-                rabbitmq = microservices[m]["name"]
+                            key = max(information_flows.keys(), default=-1) + 1
+                            information_flows[key] = {
+                                "sender": rabbitmq,
+                                "receiver": turbine_server,
+                                "stereotype_instances": ["restful_http"]
+                            }
 
-                id = max(information_flows.keys(), default=-1) + 1
-                information_flows[id] = dict()
-                information_flows[id]["sender"] = rabbitmq
-                information_flows[id]["receiver"] = turbine_server
-                information_flows[id]["stereotype_instances"] = ["restful_http"]
+                            traceability.add_trace({
+                                "item": f"{rabbitmq} -> {turbine_server}",
+                                "file": trace_info[0],
+                                "line": trace_info[1],
+                                "span": trace_info[2]
+                            })
 
-                trace = dict()
-                trace["item"] = rabbitmq + " -> " + turbine_server
-                trace["file"] = trace_info[0]
-                trace["line"] = trace_info[1]
-                trace["span"] = trace_info[2]
-
-                traceability.add_trace(trace)
-
-                # check if flow in other direction exists (can happen faultely in docker compse)
-                for i in information_flows.keys():
-                    if information_flows[i]["sender"] == turbine_server and information_flows[i]["receiver"] == rabbitmq:
-                        information_flows.pop(i)
+                            # check if flow in other direction exists (can happen faultely in docker compse)
+                            for i in information_flows:
+                                if information_flows[i]["sender"] == turbine_server and information_flows[i]["receiver"] == rabbitmq:
+                                    information_flows.pop(i)
+            
 
     # clients:
     if uses_rabbit and rabbitmq:
         results = fi.search_keywords("spring-cloud-netflix-hystrix-stream")     # content, name, path
-        for r in results.keys():
-            microservice = tech_sw.detect_microservice(results[r]["path"], dfd)
+        for r in results.values():
+            microservice = tech_sw.detect_microservice(r["path"], dfd)
             
-            id = max(information_flows.keys(), default=-1) + 1
-            information_flows[id] = dict()
-            information_flows[id]["sender"] = microservice
-            information_flows[id]["receiver"] = rabbitmq
-            information_flows[id]["stereotype_instances"] = ["restful_http"]
+            key = max(information_flows.keys(), default=-1) + 1
+            information_flows[key] = {
+                "sender": microservice,
+                "receiver": rabbitmq,
+                "stereotype_instances": ["restful_http"]
+            }
 
-            trace = dict()
-            trace["item"] = microservice + " -> " + rabbitmq
-            trace["file"] = trace_info[0]
-            trace["line"] = trace_info[1]
-            trace["span"] = trace_info[2]
-
-            traceability.add_trace(trace)
+            traceability.add_trace({
+                "item": f"{microservice} -> {rabbitmq}",
+                "file": trace_info[0],
+                "line": trace_info[1],
+                "span": trace_info[2]
+            })
 
     return microservices, information_flows

@@ -220,7 +220,7 @@ def classify_microservices(microservices: dict, information_flows: dict, externa
     print("al")
     microservices, information_flows = detect_load_balancers(microservices, information_flows, dfd)
     print("aù")
-    microservices, information_flows = detect_ribbon_load_balancers(microservices, information_flows, dfd)
+    microservices = detect_ribbon_load_balancers(microservices, dfd)
     print("an")
     microservices, information_flows = detect_hystrix_circuit_breakers(microservices, information_flows, dfd)
     print("ao")

@@ -10,45 +10,37 @@ def detect_spring_cloud_gateway(microservices: dict, information_flows: dict, ex
 
     server = False
     results = fi.search_keywords("spring-cloud-starter-gateway")
-    for r in results.keys():
-        microservice = tech_sw.detect_microservice(results[r]["path"], dfd)
+    for r in results.values():
+        microservice = tech_sw.detect_microservice(r["path"], dfd)
         if microservice:
-            for m in microservices.keys():
-                if microservices[m]["name"] == microservice:
+            for m in microservices.values():
+                if m["name"] == microservice:
                     server = microservice
-                    try:
-                        microservices[m]["stereotype_instances"].append("gateway")
-                    except:
-                        microservices[m]["stereotype_instances"] = "gateway"
-                    try:
-                        microservices[m]["tagged_values"].append(("Gateway", "Spring Cloud Gateway"))
-                    except:
-                        microservices[m]["tagged_values"] = ("Gateway", "Spring Cloud Gateway")
+                    m.setdefault("stereotype_instances",[]).append("gateway")
+                    m.setdefault("tagged_values",[]).append(("Gateway", "Spring Cloud Gateway"))
 
                     # Traceability
-                    trace = dict()
-                    trace["parent_item"] = microservice
-                    trace["item"] = "gateway"
-                    trace["file"] = results[r]["path"]
-                    trace["line"] = results[r]["line_nr"]
-                    trace["span"] = results[r]["span"]
-
-                    traceability.add_trace(trace)
+                    traceability.add_trace({
+                        "parent_item": microservice,
+                        "item": "gateway",
+                        "file": r["path"],
+                        "line": r["line_nr"],
+                        "span": r["span"]
+                    })
 
     if server:
-
         # Reverting direction of flow to service discovery, if found
         discovery_server = False
-        for m2 in microservices.keys():
-            for s in microservices[m2]["stereotype_instances"]:
+        for m in microservices.values():
+            for s in m["stereotype_instances"]:
                 if s == "service_discovery":
-                    discovery_server = microservices[m2]["name"]
+                    discovery_server = m["name"]
                     break
         if discovery_server:
-            for i in information_flows.keys():
-                if information_flows[i]["sender"] == server and information_flows[i]["receiver"] == discovery_server:
-                    information_flows[i]["sender"] = discovery_server
-                    information_flows[i]["receiver"] = server
+            for flow in information_flows.values():
+                if flow["sender"] == server and flow["receiver"] == discovery_server:
+                    flow["sender"] = discovery_server
+                    flow["receiver"] = server
 
                     traceability.revert_flow(server, discovery_server)
 
@@ -58,27 +50,27 @@ def detect_spring_cloud_gateway(microservices: dict, information_flows: dict, ex
         # Adding connection user to gateway
         information_flows = ext.add_user_connections(information_flows, server)
 
-    # clients
-    if server:
-        for m in microservices.keys():
-            for prop in microservices[m]["properties"]:
+        # Clients
+        for m in microservices.values():
+            for prop in m["properties"]:
                 target_service = False
                 if prop[0] == "spring_cloud_gateway_route":
-                    for m2 in microservices.keys():
-                        if microservices[m2]["name"] == prop[1]:
+                    for m2 in microservices.values():
+                        if m2["name"] == prop[1]:
                             target_service = prop[1]
                 if target_service:
-                    id = max(information_flows.keys(), default=-1) + 1
-                    information_flows[id] = dict()
-                    information_flows[id]["sender"] = server
-                    information_flows[id]["receiver"] = target_service
-                    information_flows[id]["stereotype_instances"] = ["restful_http"]
-
-                    trace = dict()
-                    trace["item"] = server + " -> " + target_service
-                    trace["file"] = prop[2][0]
-                    trace["line"] = prop[2][1]
-                    trace["span"] = prop[2][2]
-                    traceability.add_trace(trace)
+                    key = max(information_flows.keys(), default=-1) + 1
+                    information_flows[key] = {
+                        "sender": server,
+                        "receiver": target_service,
+                        "stereotype_instances": ["restful_http"]
+                    }
+                    
+                    traceability.add_trace({
+                        "item": f"{server} -> {target_service}",
+                        "file": prop[2][0],
+                        "line": prop[2][1],
+                        "span": prop[2][2]
+                    })
 
     return microservices, information_flows, external_components

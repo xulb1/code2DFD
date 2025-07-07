@@ -26,39 +26,40 @@ def classify_internal_infrastructural(microservices: dict) -> dict:
                                     "proxy"
                                     ]
 
-    for m in microservices.keys():
+    for m in microservices.values():
         infrastructural = False
-        if not "database" in microservices[m]["stereotype_instances"]:
+        if "database" not in m["stereotype_instances"]:
             deciding_stereotype = None
-            for s in microservices[m]["stereotype_instances"]:
+            for s in m["stereotype_instances"]:
                 if s in infrastructural_stereotypes:
                     infrastructural = True
                     deciding_stereotype = s
+            
             if infrastructural:
-                microservices[m]["stereotype_instances"].append("infrastructural")
-                microservices[m]["type"] = "service"
+                m["stereotype_instances"].append("infrastructural")
+                m["type"] = "service"
                 if deciding_stereotype:
-                    trace = dict()
-                    trace["parent_item"] = microservices[m]["name"]
-                    trace["item"] = "infrastructural"
-                    trace["file"] = "heuristic, based on stereotype " + deciding_stereotype
-                    trace["line"] = "heuristic, based on stereotype " + deciding_stereotype
-                    trace["span"] = "heuristic, based on stereotype " + deciding_stereotype
-                    traceability.add_trace(trace)
+                    traceability.add_trace({
+                        "parent_item": m["name"],
+                        "item": "infrastructural",
+                        "file": f"heuristic, based on stereotype {deciding_stereotype}",
+                        "line": f"heuristic, based on stereotype {deciding_stereotype}",
+                        "span": f"heuristic, based on stereotype {deciding_stereotype}"
+                    })
             else:
-                microservices[m]["type"] = "service"
-                if "stereotype_instances" in microservices[m]:
-                    microservices[m]["stereotype_instances"].append("internal")
+                m["type"] = "service"
+                if "stereotype_instances" in m:
+                    m["stereotype_instances"].append("internal")
                 else:
-                    microservices[m]["stereotype_instances"] = ["internal"]
+                    m["stereotype_instances"] = ["internal"]
 
-                trace = dict()
-                trace["parent_item"] = microservices[m]["name"]
-                trace["item"] = "internal"
-                trace["file"] = "heuristic"
-                trace["line"] = "heuristic"
-                trace["span"] = "heuristic"
-                traceability.add_trace(trace)
+                traceability.add_trace({
+                    "parent_item": m["name"],
+                    "item": "internal",
+                    "file": "heuristic",
+                    "line": "heuristic",
+                    "span": "heuristic"
+                })
 
 
     return microservices

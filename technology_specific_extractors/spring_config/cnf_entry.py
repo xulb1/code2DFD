@@ -30,61 +30,45 @@ def detect_config_server(microservices: dict, dfd):
     config_path = False
     config_file_path = False
     config_repo_uri = False
-    config_server_ports = list()
+    config_server_ports = []
     config_file_path_local = False
 
     if len(results) > 1:
         print("More than one config server. Picking first one found.")
-    for r in results.keys():
-        config_server = tech_sw.detect_microservice(results[r]["path"], dfd)
+    for r in results.values():
+        config_server = tech_sw.detect_microservice(r["path"], dfd)
 
-        for m in microservices.keys():
-            if microservices[m]["name"] == config_server:
-                try:
-                    microservices[m]["stereotype_instances"].append("configuration_server")
-                except:
-                    microservices[m]["stereotype_instances"] = ["configuration_server"]
-                try:
-                    microservices[m]["tagged_values"].append(("Configuration Server", "Spring Cloud Config"))
-                except:
-                    microservices[m]["tagged_values"] = [("Configuration Server", "Spring Cloud Config")]
+        for m in microservices.values():
+            if m["name"] == config_server:
+                m.setdefault("stereotype_instances",[]).append("configuration_server")
+                m.setdefault("tagged_values",[]).append(("Configuration Server", "Spring Cloud Config"))
 
                 # Traceability
-                trace = dict()
-                trace["parent_item"] = config_server
-                trace["item"] = "configuration_server"
-                trace["file"] = results[r]["path"]
-                trace["line"] = results[r]["line_nr"]
-                trace["span"] = results[r]["span"]
-
-                traceability.add_trace(trace)
+                traceability.add_trace({
+                    "parent_item": config_server,
+                    "item": "configuration_server",
+                    "file": r["path"],
+                    "line": r["line_nr"],
+                    "span": r["span"]
+                })
 
                 try:
-                    config_path = os.path.dirname(microservices[m]["pom_path"])
-                except:
+                    config_path = os.path.dirname(m["pom_path"])
+                except Exception:
                     pass
 
-                for prop in microservices[m]["properties"]:
+                for prop in m["properties"]:
                     if prop[0] == "config_file_path":
                         config_file_path = prop[1]
                     elif prop[0] == "config_repo_uri":
                         config_repo_uri = prop[1]
 
-                        trace = dict()
-                        trace["item"] = "github-repository"
-                        trace["file"] = prop[2][0]
-                        trace["line"] = prop[2][1]
-                        trace["span"] = prop[2][2]
-
-                        traceability.add_trace(trace)
-
-                        trace = dict()
-                        trace["item"] = "github-repository -> " + config_server
-                        trace["file"] = prop[2][0]
-                        trace["line"] = prop[2][1]
-                        trace["span"] = prop[2][2]
-
-                        traceability.add_trace(trace)
+                        traceability.add_trace({
+                            "item": f"github-repository -> {config_server}",
+                            "file": prop[2][0],
+                            "line": prop[2][1],
+                            "span": prop[2][2]
+                        })
 
                     elif prop[0] == "config_file_path_local":
                         config_file_path_local = prop[1]
@@ -105,26 +89,19 @@ def detect_config_clients(microservices: dict, information_flows: dict, config_s
             config_id = m
         config_uri, config_connected, config_username, config_password = False, False, False, False
         for prop in microservices[m]["properties"]:
+            trace_file = prop[2][0]
+            trace_line = prop[2][1]
+            trace_span = prop[2][2]
             if prop[0] == "config_uri":
                 config_uri = prop[1]
-                trace_file = prop[2][0]
-                trace_line = prop[2][1]
-                trace_span = prop[2][2]
             elif prop[0] == "config_connected":
                 config_connected = True
-                trace_file = prop[2][0]
-                trace_line = prop[2][1]
-                trace_span = prop[2][2]
             elif prop[0] == "config_username":
                 config_username = env.resolve_env_var(prop[1])
-                trace_file = prop[2][0]
-                trace_line = prop[2][1]
-                trace_span = prop[2][2]
             elif prop[0] == "config_password":
                 config_password = env.resolve_env_var(prop[1])
-                trace_file = prop[2][0]
-                trace_line = prop[2][1]
-                trace_span = prop[2][2]
+            else:
+                trace_file = False
         # pw & user
 
         if not config_connected and config_uri:
@@ -142,64 +119,50 @@ def detect_config_clients(microservices: dict, information_flows: dict, config_s
                 if "localhost:" + str(port) in config_uri:
                     config_connected = True
         if config_connected:
-            id = max(information_flows.keys(), default=-1) + 1
-            information_flows[id] = dict()
-            information_flows[id]["sender"] = config_server
-            information_flows[id]["receiver"] = microservices[m]["name"]
-            information_flows[id]["stereotype_instances"] = ["restful_http"]
+            key = max(information_flows.keys(), default=-1) + 1
+            information_flows[key] = {
+                "sender": config_server,
+                "receiver": microservices[m]["name"],
+                "stereotype_instances": ["restful_http"]
+            }
 
-            if trace_file:
-                trace = dict()
-                if config_server:
-                    trace["item"] = config_server + " -> " + microservices[m]["name"]
-                    trace["file"] = trace_file
-                    trace["line"] = trace_line
-                    trace["span"] = trace_span
-                    traceability.add_trace(trace)
+            if trace_file and config_server:
+                traceability.add_trace({
+                    "item": config_server + " -> " + microservices[m]["name"],
+                    "file": trace_file,
+                    "line": trace_line,
+                    "span": trace_span
+                })
 
             if config_username:
-                information_flows[id]["stereotype_instances"].append("plaintext_credentials_link")
+                information_flows[key]["stereotype_instances"].append("plaintext_credentials_link")
                 if config_id:
-                    if "stereotype_instances" in microservices[config_id]:
-                        microservices[config_id]["stereotype_instances"].append("plaintext_credentials")
-                    else:
-                        microservices[config_id]["stereotype_instances"] = ["plaintext_credentials"]
-
-                    if "tagged_values" in microservices[config_id]:
-                        microservices[config_id]["tagged_values"].append(("Username", config_username))
-                    else:
-                        microservices[config_id]["tagged_values"] = [("Username", config_username)]
+                    microservices[config_id].setdefault("stereotype_instances",[]).append("plaintext_credentials")
+                    microservices[config_id].setdefault("tagged_values",[]).append(("Username", config_username))
 
                     if trace_file:
-                        trace = dict()
-                        trace["parent_item"] = microservices[config_id]["name"]
-                        trace["item"] = "plaintext_credentials"
-                        trace["file"] = trace_file
-                        trace["line"] = trace_line
-                        trace["span"] = trace_span
-                        traceability.add_trace(trace)
+                        traceability.add_trace({
+                            "parent_item": microservices[config_id]["name"],
+                            "item": "plaintext_credentials",
+                            "file": trace_file,
+                            "line": trace_line,
+                            "span": trace_span
+                        })
 
             if config_password:
-                information_flows[id]["stereotype_instances"].append("plaintext_credentials_link")
+                information_flows[key]["stereotype_instances"].append("plaintext_credentials_link")
                 if config_id:
-                    if "stereotype_instances" in microservices[config_id]:
-                        microservices[config_id]["stereotype_instances"].append("plaintext_credentials")
-                    else:
-                        microservices[config_id]["stereotype_instances"] = ["plaintext_credentials"]
-
-                    if "tagged_values" in microservices[config_id]:
-                        microservices[config_id]["tagged_values"].append(("Password", config_password))
-                    else:
-                        microservices[config_id]["tagged_values"] = [("Password", config_password)]
+                    microservices[config_id].setdefault("stereotype_instances",[]).append("plaintext_credentials")
+                    microservices[config_id].setdefault("tagged_values",[]).append(("Password", config_password))
 
                     if trace_file:
-                        trace = dict()
-                        trace["parent_item"] = microservices[config_id]["name"]
-                        trace["item"] = "plaintext_credentials"
-                        trace["file"] = trace_file
-                        trace["line"] = trace_line
-                        trace["span"] = trace_span
-                        traceability.add_trace(trace)
+                        traceability.add_trace({
+                            "parent_item": microservices[config_id]["name"],
+                            "item": "plaintext_credentials",
+                            "file": trace_file,
+                            "line": trace_line,
+                            "span": trace_span
+                        })
 
     return microservices, information_flows
 
@@ -261,18 +224,17 @@ def parse_config_files(config_server: str, config_file_path: str, config_file_pa
                         if "." in file[0]:
                             ending = file[0].split(".")[1]
                         break
-            if microservice:
-                if ending:
-                    if ending == "yml" or ending == "yaml":
-                        name, properties = parse.parse_yaml_file(file[1])
-                        name = name[0]
-                    elif ending == "properties":
-                        name, properties = parse.parse_properties_file(file[1])
-                        name = name[0]
-                    if "properties" in microservices[correct_id]:
-                        microservices[correct_id]["properties"] |= properties
-                    else:
-                        microservices[correct_id]["properties"] = properties
+            if microservice and ending:
+                if ending in ["yml", "yaml"]:
+                    name, properties = parse.parse_yaml_file(file[1])
+                    name = name[0]
+                elif ending == "properties":
+                    name, properties = parse.parse_properties_file(file[1])
+                    name = name[0]
+                if "properties" in microservices[correct_id]:
+                    microservices[correct_id]["properties"] |= properties
+                else:
+                    microservices[correct_id]["properties"] = properties
 
     return microservices, information_flows, external_components
 
@@ -281,17 +243,19 @@ def set_repo(information_flows: dict, external_components: dict, config_repo_uri
     """Adds a repo to the external components.
     """
 
-    id = max(information_flows.keys(), default=-1) + 1
-    information_flows[id] = dict()
-    information_flows[id]["sender"] = "github-repository"
-    information_flows[id]["receiver"] = config_server
-    information_flows[id]["stereotype_instances"] = ["restful_http"]
+    key = max(information_flows.keys(), default=-1) + 1
+    information_flows[key] = {
+        "sender": "github-repository",
+        "receiver": config_server,
+        "stereotype_instances": ["restful_http"]
+    }
 
-    id = max(external_components.keys(), default=-1) + 1
-    external_components[id] = dict()
-    external_components[id]["name"] = "github-repository"
-    external_components[id]["type"] = "external_component"
-    external_components[id]["stereotype_instances"] = ["github_repository", "entrypoint"]
-    external_components[id]["tagged_values"] = [("URL", config_repo_uri)]
+    key = max(external_components.keys(), default=-1) + 1
+    external_components[key] = {
+        "name": "github-repository",
+        "type": "external_component",
+        "stereotype_instances": ["github_repository", "entrypoint"],
+        "tagged_values": [("URL", config_repo_uri)]
+    }
 
     return information_flows, external_components

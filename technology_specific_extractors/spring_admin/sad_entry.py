@@ -9,36 +9,30 @@ def detect_spring_admin_server(microservices: dict, information_flows: dict, dfd
 
     results = fi.search_keywords("@EnableAdminServer")
     admin_server = False
-    for r in results.keys():
-        admin_server = tech_sw.detect_microservice(results[r]["path"], dfd)
-        for m in microservices.keys():
-            if microservices[m]["name"] == admin_server:
-                try:
-                    microservices[m]["stereotype_instances"].append("administration_server")
-                except:
-                    microservices[m]["stereotype_instances"] = "administration_server"
-                try:
-                    microservices[m]["tagged_values"].append(("Administration Server", "Spring Boot Admin"))
-                except:
-                    microservices[m]["tagged_values"] = ("Administration Server", "Spring Boot Admin")
-                admin_server = microservices[m]["name"]
+    for r in results.values():
+        admin_server = tech_sw.detect_microservice(r["path"], dfd)
+        for m in microservices.values():
+            if m["name"] == admin_server:
+                m.setdefault("stereotype_instances",[]).append("administration_server")
+                m.setdefault("tagged_values",[]).append(("Administration Server", "Spring Boot Admin"))
+                
+                admin_server = m["name"]
 
                 # Traceability
-                trace = dict()
-                trace["parent_item"] = admin_server
-                trace["item"] = "administration_server"
-                trace["file"] = results[r]["path"]
-                trace["line"] = results[r]["line_nr"]
-                trace["span"] = results[r]["span"]
+                traceability.add_trace({
+                    "parent_item": admin_server,
+                    "item": "administration_server",
+                    "file": r["path"],
+                    "line": r["line_nr"],
+                    "span": r["span"]
+                })
 
-                traceability.add_trace(trace)
 
-
-    for m in microservices.keys():
+    for m in microservices.values():
         host = False
         reverse = False
         config_reverse = False
-        for prop in microservices[m]["properties"]:
+        for prop in m["properties"]:
             if prop[0] == "admin_server_url":
                 trace_info = dict()
                 trace_info[0] = prop[2][0]
@@ -46,91 +40,73 @@ def detect_spring_admin_server(microservices: dict, information_flows: dict, dfd
                 trace_info[2] = prop[2][2]
                 if "://" in prop[1]:
                     host = prop[1].split("://")[1].split(":")[0]
-        if "stereotype_instances" in microservices[m] and "service_discovery" in microservices[m]["stereotype_instances"]:
+        if "stereotype_instances" in m and "service_discovery" in m["stereotype_instances"]:
             reverse = True
-        if "stereotype_instances" in microservices[m] and "configuration_server" in microservices[m]["stereotype_instances"]:
+        if "stereotype_instances" in m and "configuration_server" in m["stereotype_instances"]:
             config_reverse = True
         if host and host == admin_server:
             if reverse: # flow admin -> service-discovery
-                found = False
-                for i in information_flows.keys():
-                    if information_flows[i]["sender"] == admin_server and information_flows[i]["receiver"] == microservices[m]["name"]:
-                        found = True
-                        information_flows[i]["sender"] = microservices[m]["name"]
-                        information_flows[i]["receiver"] = admin_server
-
-                        trace = dict()
-                        trace["item"] = microservices[m]["name"] + " -> " + admin_server
-                        trace["file"] = trace_info[0]
-                        trace["line"] = trace_info[1]
-                        trace["span"] = trace_info[2]
-
-                        traceability.add_trace(trace)
-
-                if not found:
-                    id = max(information_flows.keys(), default=-1) + 1
-                    information_flows[id] = dict()
-
-                    information_flows[id]["sender"] = microservices[m]["name"]
-                    information_flows[id]["receiver"] = admin_server
-                    information_flows[id]["stereotype_instances"] = ["restful_http"]
-
-                    trace = dict()
-                    trace["item"] = microservices[m]["name"] + " -> " + admin_server
-                    trace["file"] = trace_info[0]
-                    trace["line"] = trace_info[1]
-                    trace["span"] = trace_info[2]
-
-                    traceability.add_trace(trace)
-
-
+                information_flows = ensure_flow_server_to_service(True ,admin_server, trace_info, m, information_flows)
             elif config_reverse:
-                found = False
-                for i in information_flows.keys():
-                    if information_flows[i]["sender"] == microservices[m]["name"] and information_flows[i]["receiver"] == admin_server:
-                        found = True
-                        information_flows[i]["sender"] = admin_server
-                        information_flows[i]["receiver"] = microservices[m]["name"]
-
-                        trace = dict()
-                        trace["item"] = admin_server + " -> " + microservices[m]["name"]
-                        trace["file"] = trace_info[0]
-                        trace["line"] = trace_info[1]
-                        trace["span"] = trace_info[2]
-
-                        traceability.add_trace(trace)
-
-                if not found:
-                    id = max(information_flows.keys(), default=-1) + 1
-                    information_flows[id] = dict()
-
-                    information_flows[id]["sender"] = admin_server
-                    information_flows[id]["receiver"] = microservices[m]["name"]
-                    information_flows[id]["stereotype_instances"] = ["restful_http"]
-
-                    trace = dict()
-                    trace["item"] = admin_server + " -> " + microservices[m]["name"]
-                    trace["file"] = trace_info[0]
-                    trace["line"] = trace_info[1]
-                    trace["span"] = trace_info[2]
-
-                    traceability.add_trace(trace)
-
+                information_flows = ensure_flow_server_to_service(False,admin_server, trace_info, m, information_flows)
             else:
-                id = max(information_flows.keys(), default=-1) + 1
-
-                information_flows[id] = dict()
-                information_flows[id]["sender"] = admin_server
-                information_flows[id]["receiver"] = microservices[m]["name"]
-                information_flows[id]["stereotype_instances"] = ["restful_http"]
-
-                trace = dict()
-                trace["item"] = admin_server + " -> " + microservices[m]["name"]
-                trace["file"] = trace_info[0]
-                trace["line"] = trace_info[1]
-                trace["span"] = trace_info[2]
-
-                traceability.add_trace(trace)
+                key = max(information_flows.keys(), default=-1) + 1
+                information_flows[key] = {
+                    "sender": admin_server,
+                    "receiver": m["name"],
+                    "stereotype_instances": ["restful_http"]
+                }
+                traceability.add_trace({
+                    "item": f"{admin_server} -> {m["name"]}",
+                    "file": trace_info[0],
+                    "line": trace_info[1],
+                    "span": trace_info[2]
+                })
 
 
     return microservices, information_flows
+
+
+def ensure_flow_server_to_service(reverse, admin_server, trace_info, microservice: dict, information_flows: dict)-> dict:
+    """Ensures an information flow exists from the admin server to the microservice or vice versa.
+
+    If a matching flow exists, its direction is reversed. Otherwise, a new flow is created in the desired direction and the change is traced.
+    """
+
+    if reverse : 
+        sender = admin_server
+        receiver = microservice["name"]
+    else:
+        sender = microservice["name"]
+        receiver = admin_server
+    
+    found = False
+    for flow in information_flows.values():
+        if flow["sender"] == sender and flow["receiver"] == receiver:
+            found = True
+            flow["sender"] = receiver
+            flow["receiver"] = sender
+
+            traceability.add_trace({
+                "item": f"{receiver} -> {sender}",
+                "file": trace_info[0],
+                "line": trace_info[1],
+                "span": trace_info[2]
+            })
+
+    if not found:
+        key = max(information_flows.keys(), default=-1) + 1
+        information_flows[key] = {
+            "sender": receiver,
+            "receiver": sender,
+            "stereotype_instances": ["restful_http"]
+        }
+
+        traceability.add_trace({
+            "item": f"{receiver} -> {sender}",
+            "file": trace_info[0],
+            "line": trace_info[1],
+            "span": trace_info[2]
+        })
+        
+    return information_flows
