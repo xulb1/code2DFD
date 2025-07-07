@@ -488,76 +488,81 @@ def merge_duplicate_nodes(nodes: dict, information_flows: dict):
     to_delete = set()
     print("@@@@@@@@@@@@@@@@@@@@@@DuplicatNode@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     for i, j in combinations(nodes.keys(), 2):
-        node_i = nodes[i]
-        node_i["name"] = node_i["name"].casefold()
         if i == j:
             continue
+        
+        keep = None
+        delete = None
+        
+        node_i = nodes[i]
+        node_i["name"] = node_i["name"].casefold()
         node_j = nodes[j]
         node_j["name"] = node_j["name"].casefold()
-
-        if node_i["name"].replace("-","").replace("_","") == node_j["name"].replace("-","").replace("_",""):
-            # merge
-            for field, j_value in node_j.items():
-                if field not in ["name", "type"]:
-                    try:
-                        node_i[field] = node_i.get(field, []) + list(j_value)
-                    except:
-                        node_i[field] = list(j_value).append(node_i.get(field, []))
-            to_delete.add(j)
-
-        # FIXME 
-        # TODO
-        required_substrings = ["image_placeholder", "docker", ".", ":"]
-        duplicate = False
         
-        try:
-            if not all(sub in node_i["image"] for sub in required_substrings) \
-                or not all(sub in node_j["image"] for sub in required_substrings):
-                if node_i["name"] in node_i["image"] \
-                    and node_i["name"].split("/")[-1].replace("-","").replace("_","") \
-                        in node_j["name"].replace("-","").replace("_",""):
-                            print(node_i['name'],node_j['name'],node_i["image"])
-                            duplicate=True
-                if node_j["name"] in node_j["image"] \
-                    and node_j["name"].split("/")[-1].replace("-","").replace("_","") \
-                        in node_i["name"].replace("-","").replace("_",""):
-                            print(node_i['name'],node_j['name'],node_i["image"])
-                            duplicate=True
-        except Exception :#KeyError or TypeError:
-            continue
+        node_i_clean = node_i["name"].replace("-","").replace("_","")
+        node_j_clean = node_j["name"].replace("-","").replace("_","")
         
-        if duplicate:
-            if len(node_i["name"])>len(node_j["name"]):
+        if node_i_clean == node_j_clean:
+            if len(node_i)>len(node_j):
+                print("1.1",node_i['name'],node_j['name'],image_i)
                 keep = node_i
                 delete = node_j
                 to_delete.add(j)
             else:
+                print("1.2",node_i['name'],node_j['name'],image_i)
                 keep = node_j
                 delete = node_i
                 to_delete.add(i)
-                
-            
+
+
+        # FIXME
+        required_substrings = ["image_placeholder", "docker", ".", ":", "None"]
+        
+        try:
+            image_i = node_i["image"].split("/")[-1] or "None"
+        except Exception:
+            image_i = "None"
+        try:
+            image_j = node_j["image"].split("/")[-1] or "None"
+        except Exception:
+            image_j = "None"
+        
+        # print(node_i['name'],node_j['name'],image_i, image_j)
+        if all(sub not in image_i for sub in required_substrings) \
+            or all(sub not in image_j for sub in required_substrings):
+            if node_i["name"] == image_j \
+                and node_j_clean in node_i_clean:
+                    print("2.1",node_i['name'],node_j['name'],image_i)
+                    keep=node_i
+                    delete=node_j
+                    to_delete.add(j)
+            if node_j["name"] == image_i \
+                and node_i_clean in node_j_clean:
+                    print("2.2",node_i['name'],node_j['name'],image_j)
+                    keep=node_j
+                    delete=node_i
+                    to_delete.add(i)
+        
+        if keep and delete:
             for field, j_value in delete.items():
                 if field not in ["name", "type"]:
                     try:
                         keep[field] = keep.get(field, []) + list(j_value)
-                    except:
+                    except Exception:
                         keep[field] = list(j_value).append(keep.get(field, []))
-                        
             rename_information_flow_services(keep["name"],delete["name"], information_flows)
         
     for k in to_delete:
         del nodes[k]
 
 def rename_information_flow_services(keep: str, delete: str, information_flows: dict):
-    for i in information_flows.keys():
+    for flow in information_flows.values():
+        if flow["sender"] == delete:
+            flow["sender"] = keep
         
-        flow_i = information_flows[i]
-        if flow_i["sender"] == delete:
-            flow_i["sender"] = keep
-        
-        if flow_i["receiver"] == delete:
-            flow_i["receiver"] = keep
+        if flow["receiver"] == delete:
+            flow["receiver"] = keep
+
 
 def merge_duplicate_annotations(collection: dict):
     """Merge annotations of all items
