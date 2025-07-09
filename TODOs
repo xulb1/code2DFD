@@ -1,9 +1,9 @@
 TODO
 avoid multiple time invocation (at different stages...) of
-- get_microservices
+- get_microservices -> DONE
 - technology-specific classifiers
 
-TODO
+TODO ->
 move hardcoded pattern keyword in a central configuration file
 
 TODO
@@ -15,12 +15,10 @@ R6-7-8-11-12-17-18
 TODO
 extraction2 vs dom_entry-3 inutile ?
 
-TODO
+DONE
 simplify dcm_parser ...
 plein de truc inutile
-
-
-Aucun sens : dcm_parser :
+Aucun sens
 
 
 
@@ -34,7 +32,7 @@ trop d'appel inutile à Resolve_env_var() dans environment_variables.py
 microservice-kafka
 piggymetrics
 
-TODO issue : 
+TODO issue -> DONE
 dupplication de service avec nom différents, oublile de "_"
 
 detection of external entity : external_website
@@ -43,7 +41,7 @@ TODO
 Reetudier les flows
 
 
-TODO=
+DONE
 pb aver url: 'http...
 
 TODO :
