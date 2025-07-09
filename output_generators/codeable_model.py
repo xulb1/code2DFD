@@ -6,21 +6,37 @@ import tmp.tmp as tmp
 
 # the used metamodel is microservice_dfds_metamodel.py
 
-def output_codeable_model(microservices, information_flows, external_components):
+def output_codeable_model(microservices: dict, information_flows: dict, external_components: dict):
     """Entry function to creation of codeable models. Calls all necessary helper functions and outputs the codeable model"""
 
     parts = Path(tmp.tmp_config["Analysis Settings"]["output_path"]).parts
     model_name = f"{parts[-2]}_{parts[-1]}"
 
-    file_content = header()
-    file_content += "\"" + str(model_name) + "\""
+    file_content = f"{header()}\"{model_name}\""
 
     # CodeableModels needs the name of one of the nodes for its final invocation, is written into this var
     last_node = str()
     allComponents = str()
 
     # Microservices
-    for m in microservices.values():
+    file_content, last_node, allComponents = output_uml_entities(microservices, "microservices", file_content, allComponents)
+    # External Components
+    file_content, last_node, allComponents = output_uml_entities(external_components, "external_components", file_content, allComponents)
+    # Information Flows
+    file_content, last_node, _ = output_uml_entities(information_flows, "information_flows", file_content, allComponents=None)
+
+    file_content += f"allComponents = [{allComponents[:-2]}]"
+    file_content += footer()
+
+    output_path = str()
+    output_path = create_file(model_name, file_content)
+    return file_content, output_path
+
+def output_uml_entities(entities: dict, entity_type: str, file_content, allComponents: str):
+    last_node = str()
+    new_line = ""
+    
+    for m in entities.values():
         # Tagged Values
         tagged_values = dict()
         if "tagged_values" in m:
@@ -29,104 +45,51 @@ def output_codeable_model(microservices, information_flows, external_components)
                     tagged_values[t[0]] = int(t[1])
                 else:
                     tagged_values[t[0]] = t[1]
-
+        
         # Stereotypes
         stereotypes = set()
         if "stereotype_instances" in m:
-            for s in m["stereotype_instances"]:
-                stereotypes.add(s)
-
-            if stereotypes:
-                stereotypes = str(list(stereotypes))
-                stereotypes = stereotypes.replace("'", "")
-
-        name = str(m["name"]).replace("-", "_")
-
-        # Create entry
-        if stereotypes and tagged_values:
-            new_line = f"\n{name} = CClass(service, \"{m["name"]}\", stereotype_instances = {stereotypes}, tagged_values = {tagged_values})"
-        elif stereotypes:
-            new_line = f"\n{name} = CClass(service, \"{m["name"]}\", stereotype_instances = {stereotypes})"
-        else:
-            new_line = f"\n{name} = CClass(service, \"{m["name"]}\")"
-
-        file_content += new_line
-        last_node = name
-        allComponents += f"{name}, "
-
-
-    # External Components
-    for e in external_components.keys():
-        # Tagged Values
-        tagged_values = dict()
-        if "tagged_values" in external_components[e]:
-            for t in external_components[e]["tagged_values"]:
-                if t[0] == "Port":
-                    tagged_values[t[0]] = int(t[1])
-                else:
-                    tagged_values[t[0]] = t[1]
-
-        # Stereotypes
-        stereotypes = set()
-        if "stereotype_instances" in external_components[e]:
-            for s in external_components[e]["stereotype_instances"]:
-                stereotypes.add(s)
-            if stereotypes:
-                stereotypes = str(list(stereotypes))
-                stereotypes = stereotypes.replace("'", "")
-
-        name = str(external_components[e]["name"]).replace("-", "_")
-
-
-        if stereotypes and tagged_values:
-            new_line = "\n" + name + " = CClass(external_component, \"" + str(external_components[e]["name"]) + "\", stereotype_instances = " + str(stereotypes) + ", tagged_values = " + str(tagged_values) + ")"
-        elif stereotypes:
-            new_line = "\n" + name + " = CClass(external_component, \"" + str(external_components[e]["name"]) + "\", stereotype_instances = " + str(stereotypes) + ")"
-        else:
-            new_line = "\n" + name + " = CClass(external_component, \"" + str(external_components[e]["name"]) + ")"
-        file_content += new_line
-        allComponents += f"{name}, "
-
-
-    # Information Flows
-    for i in information_flows.keys():
-        # Tagged Values
-        tagged_values = dict()
-        if "tagged_values" in information_flows[i]:
-            for t in information_flows[i]["tagged_values"]:
-                if t[0] == "Port":
-                    t[1] = int(t[1])
-                tagged_values[t[0]] = t[1]
-
-        # Stereotypes
-        stereotypes = set()
-        if "stereotype_instances" in information_flows[i]:
-            if type(information_flows[i]["stereotype_instances"]) == set or type(information_flows[i]["stereotype_instances"]) == list:
-                for s in information_flows[i]["stereotype_instances"]:
+            if type(m["stereotype_instances"]) in [set, list]:
+                for s in m["stereotype_instances"]:
                     stereotypes.add(s)
             else:
-                stereotypes.add(information_flows[i]["stereotype_instances"])
+                stereotypes.add(m["stereotype_instances"])
+                
             if stereotypes:
-                stereotypes = str(list(stereotypes))
-                stereotypes = stereotypes.replace("'", "")
+                stereotypes = str(list(stereotypes)).replace("'", "")
 
-        sender = str(information_flows[i]["sender"]).replace("-", "_")
-        receiver = str(information_flows[i]["receiver"]).replace("-", "_")
+        if entity_type=="information_flows":
+            sender = str(m["sender"]).replace("-", "_")
+            receiver = str(m["receiver"]).replace("-", "_")
 
-        if stereotypes and tagged_values:
-            new_line = "\nadd_links({" + sender + ": " + receiver + "}, stereotype_instances = " + str(stereotypes) + ", tagged_values = " + str(tagged_values) + ")"
-        elif stereotypes:
-            new_line = "\nadd_links({" + sender + ": " + receiver + "}, stereotype_instances = " + str(stereotypes) + ")"
+            if stereotypes and tagged_values:
+                new_line = "\nadd_links({" + sender + ": " + receiver + "}, stereotype_instances = " + str(stereotypes) + ", tagged_values = " + str(tagged_values) + ")"
+            elif stereotypes:
+                new_line = "\nadd_links({" + sender + ": " + receiver + "}, stereotype_instances = " + str(stereotypes) + ")"
+            else:
+                new_line = "\nadd_links({" + sender + ": " + receiver + "})"
+        
         else:
-            new_line = "\nadd_links({" + sender + ": " + receiver + "})"
+            name = str(m["name"]).replace("-", "_")
+            
+            if entity_type=="external_components":
+                entity = "external_component"
+            elif entity_type=="microservices":
+                entity = "service"
+                last_node = name
+                
+            # Create entry
+            if stereotypes and tagged_values:
+                new_line = f"\n{name} = CClass({entity}, \"{m["name"]}\", stereotype_instances = {stereotypes}, tagged_values = {tagged_values})"
+            elif stereotypes:
+                new_line = f"\n{name} = CClass({entity}, \"{m["name"]}\", stereotype_instances = {stereotypes})"
+            else:
+                new_line = f"\n{name} = CClass({entity}, \"{m["name"]}\")"
+            allComponents += f"{name}, "
+        
         file_content += new_line
-
-    file_content += f"allComponents = [{allComponents[:-2]}]"
-    file_content += footer()
-
-    output_path = str()
-    output_path = create_file(model_name, file_content)
-    return file_content, output_path
+    
+    return file_content, last_node, allComponents
 
 
 def create_file(model_name: str, content: str):
