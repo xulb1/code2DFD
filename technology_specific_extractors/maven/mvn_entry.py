@@ -32,9 +32,9 @@ def set_microservices(dfd) -> dict:
     pom_files = fi.get_file_as_lines("pom.xml")
     module_dict = dict()
 
+    image = "image_placeholder"
     for pf in pom_files.keys():
         pom_file = pom_files[pf]
-        image = "image_placeholder"
         modules = extract_modules(pom_file)
         if modules:
             module_dict[(pom_file["name"])] = modules
@@ -44,29 +44,26 @@ def set_microservices(dfd) -> dict:
             if microservice[0]:
                 port = dcr.detect_port(pom_file["path"])
                 # create microservice in dict
-                id_ = max(microservices.keys(), default=-1) + 1
-                microservices[id_] = dict()
-                microservices[id_]["name"] = microservice[0]
-                microservices[id_]["image"] = image
-                microservices[id_]["type"] = "internal"
-                microservices[id_]["pom_path"] = pom_file["path"]
-                microservices[id_]["properties"] = properties
-                microservices[id_]["stereotype_instances"] = list()
+                key = max(microservices.keys(), default=-1) + 1
+                microservices[key] = {
+                    "name": microservice[0],
+                    "image": image,
+                    "type": "internal",
+                    "pom_path": pom_file["path"],
+                    "properties": properties,
+                    "stereotype_instances": list()
+                }
                 if port:
-                    microservices[id_]["tagged_values"] = [("Port", port)]
+                    microservices[key]["tagged_values"] = [("Port", port)]
                 else:
-                    microservices[id_]["tagged_values"] = list()
-                try:
-                    trace = dict()
-                    name = microservice[0]
-                    name = name.replace("pom_", "")
-                    trace["item"] = name
-                    trace["file"] = microservice[1][0]
-                    trace["line"] = microservice[1][1]
-                    trace["span"] = microservice[1][2]
-                    traceability.add_trace(trace)
-                except:
-                    pass
+                    microservices[key]["tagged_values"] = list()
+                
+                traceability.add_trace({
+                    "item": microservice[0].replace("pom_", ""),
+                    "file": microservice[1][0],
+                    "line": microservice[1][1],
+                    "span": microservice[1][2]
+                })
 
     nested_microservices = check_nested_modules(module_dict)
     microservices_set.update(nested_microservices)
@@ -219,13 +216,13 @@ def detect_microservice(file_path, dfd):
     microservice = [False, False]
     microservices = tech_sw.get_microservices(dfd)
 
-    path = file_path
     found_pom = False
 
     local_repo_path = tmp.tmp_config["Repository"]["local_path"]
-
-    dirs = list()
+    dirs = []
+    path = file_path
     path = os.path.dirname(path)
+    
     while not found_pom and path != "":
         dirs.append(os.scandir(os.path.join(local_repo_path, path)))
         while dirs and not found_pom:

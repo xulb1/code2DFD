@@ -27,17 +27,17 @@ def convert(codeable_models_path: str) -> str:
     # Call appropriate conversion functions for each line
     for line in codeable_models:
         if "CClass(external_component" in line:
-            add_external_entity(line)
+            add_entity(line, "external_entity")
         elif "CClass(service" in line:
             if "stereotype_instances" in line:
                 if "database" in line.split("stereotype_instances")[1].split(",")[0]:
-                    add_database(line)
+                    add_entity(line, "database")
                 else:
-                    add_service(line)
+                    add_entity(line, "service")
             else:
-                add_service(line)
+                add_entity(line, "service")
         elif "add_links(" in line:
-            add_flow(line)
+            add_entity(line, "flow")
 
     add_footer()
 
@@ -67,8 +67,8 @@ digraph dfd2{
     return 0
 
 
-def add_external_entity(line: str):
-    """Takes line for external entity from old format, parses it, creates line in new format, and appends it to output string.
+def add_entity(line: str, entity_type: str):
+    """Takes line for flows, services, external entities or databases from old format, parses it, creates line in new format, and appends it to output string.
     """
 
     global plantuml_new
@@ -76,127 +76,58 @@ def add_external_entity(line: str):
     # Parse old line
     stereotypes = set()
     tagged_values = set()
-    name = line.split("=")[0].strip()
-    if "stereotype_instances" in line:
-        stereotypes = line.split("stereotype_instances =")[1].split("]")[0].split("[")[1].split(",")
-    if "tagged_values" in line:
-        tagged_values = line.split("tagged_values =")[1].split("}")[0].split("{")[1].split(",")
-
-    # Create new line
-    new_line = "        " + name + " [label = \"{External Entity: " + name + " | "
-    for stereotype in stereotypes:
-        new_line += "--" + stereotype.strip() + "--\\n"
-    if tagged_values:
-        for tagged_value in tagged_values:
-            new_line += tagged_value.split(":")[0].strip() + ": " + tagged_value.split(":")[1].strip().strip("\"") + "\\n"
-    new_line += "}\"];\n"
-
-    # Append new line
-    plantuml_new += new_line
-
-    return
-
-
-def add_database(line: str):
-    """Takes line for database from old format, parses it, creates line in new format, and appends it to output string.
-    """
-
-    global plantuml_new
-
-    # Parse old line
-    stereotypes = set()
-    tagged_values = set()
-    name = line.split("=")[0].strip()
-    if "stereotype_instances" in line:
-        stereotypes = line.split("stereotype_instances =")[1].split("]")[0].split("[")[1].split(",")
-    if "tagged_values" in line:
-        tagged_values = line.split("tagged_values =")[1].split("}")[0].split("{")[1].split(",")
-
-    # Create new line
-    new_line = "        " + name + " [label = \"|{Service: " + name + " | "
-    for stereotype in stereotypes:
-        new_line += "--" + stereotype.strip() + "--\\n"
-    for tagged_value in tagged_values:
-        new_line += tagged_value.split(":")[0].strip() + ": " + tagged_value.split(":")[1].strip().strip("\"") + "\\n"
-    new_line += "}\"]\n"
-
-    # Append new line
-    plantuml_new += new_line
-
-    return
-
-
-def add_service(line: str):
-    """Takes line for services from old format, parses it, creates line in new format, and appends it to output string.
-    """
-
-    global plantuml_new
-
-    # Parse old line
-    stereotypes = set()
-    tagged_values = set()
-    name = line.split("=")[0].strip()
-    if "stereotype_instances" in line:
-        r = line.split("stereotype_instances =")[1].split("tagged_values")[0].strip().strip(",").strip(")")
-        v = [item.strip() for item in r.strip("[]").split(",") if item.strip()]
-        stereotypes = line.split("stereotype_instances =")[1].split("]")[0].split("[")[1].split(", ")
-        for a,b in zip (v,stereotypes):
-            if a not in b:
-                print("(((((((((((((((((((((VérificatioN)))))))))))))))))))))")
-                print(v)
-                print(stereotypes)
     
-    if "tagged_values" in line:
-        tagged_values = line.split("tagged_values =")[1].strip().strip(")")
-        try:
-            data = ast.literal_eval(tagged_values)
-            tagged_values = [f"{repr(k)}: {repr(v).replace("{","\\{").replace("}","\\}")}" for k, v in data.items()]
-        except Exception as e:
-            tagged_values = tagged_values.split("}")[0].split("{")[1].split(",")
-            print("ERROR",e)
-
-
-    # Create new line
-    new_line = f'        {name} [label = \"{{Service: {name} | '
-    for stereotype in stereotypes:
-        new_line += f"--{stereotype.strip()}--\\n"
-    for tagged_value in tagged_values:
-        if ":" in tagged_value:
-            new_line += f"{tagged_value.split(":")[0].strip()}: {tagged_value.split(":")[1].strip().strip("\"")}\\n"
-    new_line += "}\" shape = Mrecord];\n"
-
-    # Append new line
-    plantuml_new += new_line
-
-    return
-
-
-def add_flow(line: str):
-    """Takes line for flows from old format, parses it, creates line in new format, and appends it to output string.
-    """
-
-    global plantuml_new
-
-    stereotypes = set()
-    tagged_values = set()
-
-    # Parse old line
-    sender = line.split("}")[0].split(":")[0].split("{")[1].strip()
-    receiver = line.split("}")[0].split(":")[1].strip()
-
+    if entity_type=="flow":
+        sender = line.split("}")[0].split(":")[0].split("{")[1].strip()
+        receiver = line.split("}")[0].split(":")[1].strip()
+    else:
+        name = line.split("=")[0].strip()
+    
     if "stereotype_instances" in line:
         stereotypes = line.split("stereotype_instances =")[1].split("]")[0].split("[")[1].split(",")
     if "tagged_values" in line:
-        tagged_values = line.split("tagged_values =")[1].split("}")[0].split("{")[1].split(",")
-
+        if entity_type=="service":
+            tagged_values = line.split("tagged_values =")[1].strip().strip(")")
+            try:
+                data = ast.literal_eval(tagged_values)
+                tagged_values = [f"{repr(k)}: {repr(v).replace("{","\\{").replace("}","\\}")}" for k, v in data.items()]
+            except Exception as e:
+                tagged_values = tagged_values.split("}")[0].split("{")[1].split(",")
+                print("ERROR",e)
+        else:
+            tagged_values = line.split("tagged_values =")[1].split("}")[0].split("{")[1].split(",")
+    
     # Create new line
-    new_line = f"        {sender} -> {receiver} [label = \" "
+    if entity_type=="flow":
+        new_line = f"        {sender} -> {receiver} [label = \" "
+    elif entity_type=="service":
+        new_line = f"        {name} [label = \"{{Service: {name} | "
+    elif entity_type=="database":
+        new_line = f"        {name} [label = \"|{{Service: {name} | "
+    else:
+        new_line = f"        {name} [label = \"{{External Entity: {name} | "
+    
     for stereotype in stereotypes:
         new_line += f"--{stereotype.strip()}--\\n"
     if tagged_values:
-        for tagged_value in tagged_values:
-            new_line += f"{tagged_value.replace("\"", "")}\\n"
-    new_line += "\"]\n"
+        if entity_type=="flow":
+            for tagged_value in tagged_values:
+                new_line += f"{tagged_value.replace("\"", "")}\\n"
+        else:
+            for tagged_value in tagged_values:
+                if ":" in tagged_value:
+                    tag = tagged_value.split(":")[0].strip()
+                    value = ":".join(v.strip().strip("\"") for v in tagged_value.split(":")[1:])
+                    new_line += f"{tag}: {value}\\n"
+    
+    if entity_type=="flow":
+        new_line += "\"]\n"
+    elif entity_type=="service":
+        new_line += "}\" shape = Mrecord];\n"
+    elif entity_type=="database":
+        new_line += "}\"]\n"
+    else:
+        new_line += "}\"];\n"
 
     # Append new line
     plantuml_new += new_line

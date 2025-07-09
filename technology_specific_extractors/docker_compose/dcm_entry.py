@@ -9,9 +9,6 @@ import tmp.tmp as tmp
 import output_generators.traceability as traceability
 
 docker_compose_content = False
-# TODO
-# possible_filenames = ["docker-compose.yml", "docker-compose.yaml", "docker-compose*"]
-
 
 def set_microservices(dfd) -> None:
     """Reads microservices out of a .yml file, only returns ones defined in this repo.

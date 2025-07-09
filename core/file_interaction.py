@@ -327,11 +327,14 @@ def check_dockerfile(build_path: str):
     local_repo_path = tmp.tmp_config["Repository"]["local_path"]
 
     # find docker-compose path, since build-path is relative to that
-    raw_files = get_file_as_lines("docker-compose.yml")
-    if len(raw_files) == 0:
-        raw_files = get_file_as_lines("docker-compose.yaml")
-    if len(raw_files) == 0:
-        return
+    possible_filenames = ["docker-compose.yml", "docker-compose.yaml", "docker-compose*"]
+    raw_files = ""
+    for filename in possible_filenames:
+        raw_files = get_file_as_lines(filename)
+        if raw_files:
+            break
+    if len(raw_files) == 0: return
+
     docker_compose_path = raw_files[0]["path"]  # TODO this assumes there is exactly 1 relevant docker-compose
     docker_compose_dir = os.path.dirname(docker_compose_path)
 

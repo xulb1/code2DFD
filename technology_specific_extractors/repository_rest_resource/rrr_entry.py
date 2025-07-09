@@ -21,4 +21,5 @@ def detect_endpoints(microservices: dict, dfd) -> dict:
                 for m in microservices.values():
                     if m["name"] == microservice:
                         m.setdefault("tagged_values", []).append(("Endpoints", list(endpoints)))
+    
     return microservices

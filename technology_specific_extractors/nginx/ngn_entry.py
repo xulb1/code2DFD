@@ -95,22 +95,20 @@ def detect_nginx(microservices: dict, information_flows: dict, external_componen
                             microservices[m]["tagged_values"] = [("Web Application", "Nginx")]
 
             else:
-                id = max(microservices.keys(), default=-1) + 1
-                microservices[id] = dict()
-
                 local_repo_path = tmp.tmp_config["Repository"]["local_path"]
                 docker_path = os.path.dirname(results[r]["path"])
                 if docker_path and local_repo_path:
                     docker_path = os.path.relpath(docker_path, start=local_repo_path)
                 service_name = "web-app"
                 # go through dockercompose and see if a build or image fits this. if yes, use that name
-                raw_files = fi.get_file_as_yaml("docker-compose.yml")
-                if len(raw_files) == 0:
-                    raw_files = fi.get_file_as_yaml("docker-compose.yaml")
-                if len(raw_files) == 0:
-                    raw_files = fi.get_file_as_yaml("docker-compose*")
-                if len(raw_files) == 0:
-                    raw_files = fi.get_file_as_yaml("docker-compose*")
+                
+                possible_filenames = ["docker-compose.yml", "docker-compose.yaml", "docker-compose*"]
+                raw_files = ""
+                for filename in possible_filenames:
+                    raw_files = fi.get_file_as_yaml(filename)
+                    if raw_files:
+                        break
+
                 docker_compose_content = raw_files[0]["content"]
 
                 yaml = ruamel.yaml.YAML()
@@ -128,26 +126,27 @@ def detect_nginx(microservices: dict, information_flows: dict, external_componen
                             image = file.get("services", {}).get(s).get("build")
                         except:
                             pass
-                        if image:
-                            if image == docker_path:
-                                service_name = s
+                        if image and image == docker_path:
+                            service_name = s
 
-                microservices[id]["name"] = service_name
-                microservices[id]["image"] = "nginx"
-                microservices[id]["type"] = "service"
-                microservices[id]["docker_path"] = docker_path
-                microservices[id]["properties"] = set()
-                microservices[id]["stereotype_instances"] = [("web_application")]
-                microservices[id]["tagged_values"] = [("Web Application", "Nginx")]
-                correct_id = id
+                key = max(microservices.keys(), default=-1) + 1
+                microservices[key] = {
+                    "name": service_name,
+                    "image": "nginx",
+                    "type": "service",
+                    "docker_path": docker_path,
+                    "properties": set(),
+                    "stereotype_instances": [("web_application")],
+                    "tagged_values": [("Web Application", "Nginx")]
+                }
+                correct_id = key
 
-                trace = dict()
-                trace["item"] = service_name
-                trace["file"] = results[r]["path"]
-                trace["line"] = results[r]["line_nr"]
-                trace["span"] = results[r]["span"]
-
-                traceability.add_trace(trace)
+                traceability.add_trace({
+                    "item": service_name,
+                    "file": results[r]["path"],
+                    "line": results[r]["line_nr"],
+                    "span": results[r]["span"]
+                })
 
             # Look for config file
             config_name = False
@@ -198,6 +197,7 @@ def detect_nginx(microservices: dict, information_flows: dict, external_componen
                                             try:
                                                 port = int(part.strip(";").strip())
                                             except:
+                                                print("\033[32m", part.strip(";").strip(),"-------------------------------------------- \033[0m")
                                                 pass
                                 except Exception as e:
                                     pass

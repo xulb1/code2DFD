@@ -259,7 +259,7 @@ def overwrite_port(microservices: dict) -> dict:
     for microservice in microservices.values():
         for prop in microservice.get("properties", []):
             if prop[0] == "port":
-                print(prop)
+                # print(prop)
                 port = None
                 if isinstance(prop[1], str):
                     if "port" in prop[1].casefold() and ":" in prop[1]:
@@ -371,6 +371,9 @@ def detect_miscellaneous(microservices: dict, information_flows: dict, external_
                     "stereotype_instances": ["external_website", "entrypoint", "exitpoint"],
                     "tagged_values": [("URL", prop[1])]
                 }
+                print("(((((((((((((((((((())))))))))))))))))))")
+                print("url:",prop)
+                print("(((((((((((((((((((())))))))))))))))))))")
                 
                 traceability.add_trace({
                     "item": "external-website",
@@ -573,7 +576,7 @@ def merge_duplicate_annotations(collection: dict):
             item["stereotype_instances"] = list(set(item["stereotype_instances"]))
 
         if "tagged_values" in item:
-            tagged_values_set = set()
+            merged_tagged_values = {}
             for tag, tagged_value in item["tagged_values"]:
                 if tag == "Port":
                     if isinstance(tagged_value, str):
@@ -582,8 +585,24 @@ def merge_duplicate_annotations(collection: dict):
                         try:
                             tagged_value = int(tagged_value)
                         except ValueError:
-                            pass
-                elif isinstance(tagged_value, list):
-                    tagged_value = str(tagged_value)
-                tagged_values_set.add((tag, tagged_value))
-            item["tagged_values"] = list(tagged_values_set)
+                            continue
+                    
+                    tagged_value = [tagged_value]
+                
+                # Easier to manipulate in dict (merging duplicate values, and values of same tags)
+                elif not isinstance(tagged_value, list):
+                    tagged_value = [tagged_value]
+
+                # merge in dict()
+                if tag in merged_tagged_values:
+                    for val in tagged_value:
+                        if val not in merged_tagged_values[tag]:
+                            merged_tagged_values[tag].append(val)
+                else:
+                    merged_tagged_values[tag] = tagged_value
+
+            # The above code is creating a new key-value pair in the `item` dictionary. The key is "tagged_values" and the value is a list created from the `merged_tagged_values`.
+            item["tagged_values"] = [
+                (tag, values if len(values) > 1 else values[0])
+                for tag, values in merged_tagged_values.items()
+            ]

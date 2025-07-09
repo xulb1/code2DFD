@@ -15,7 +15,6 @@ def detect_databases(microservices: dict) -> dict:
 
         if database:
             m["type"] == "database_component"
-            print(microservices)
             m.setdefault("stereotype_instances",[]).append("database")
             m.setdefault("tagged_values",[]).append(("Database", database))
 

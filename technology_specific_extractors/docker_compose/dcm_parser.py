@@ -140,7 +140,7 @@ def extract_service_from_file(s, file_content, file_name, data, microservices_di
         length_tuple = length_tuple.span()
         span = f"[{length_tuple[0]}:{length_tuple[1]}]"
         port = (port_nr, file_name, line_number + 1, span)
-    print("\033[34m",port,"\033[0m")
+    # print("\033[34m",port,"\033[0m")
     
     
     new_image = data.get(s).get("image")
@@ -173,7 +173,7 @@ def extract_service_from_file(s, file_content, file_name, data, microservices_di
     # Environment properties
     try:
         port, properties = extract_environment_props(data, s, lines, port, properties, file_name)
-        print("\033[35m",port,"\033[0m")
+        # print("\033[35m",port,"\033[0m")
     except Exception:
         print(f"\033[91m")
         traceback.print_exc()
@@ -193,7 +193,7 @@ def extract_service_from_file(s, file_content, file_name, data, microservices_di
             span = f"[{length_tuple[0]}:{length_tuple[1]}]"
             port = (port_nr, file_name, line_number + 1, span)
     
-    print("\033[32m",s,port,"\033[0m")
+    # print("\033[32m",s,port,"\033[0m")
 
     if not image:
         image = build or "image"
@@ -207,14 +207,14 @@ def extract_service_from_file(s, file_content, file_name, data, microservices_di
             if ki in image:
                 properties_dict[s] = properties
                 microservices_set.add((s, image, "type", port, trace))
-                print("\033[31m",s, image, port, trace,"\033[0m")
+                print("\033[31m",s, image, port,"\033[0m")
                 isImage=True
                 break
         
         if not isImage:
             properties_dict[s] = properties
             microservices_set.add((s, image, "type", port, trace))
-            print("\033[31m",s, image, port, trace,"--------->>>>>\033[0m")
+            print("\033[31m",s, image, port,"--------->>>>>\033[0m")
 
     # add additional information
     if exists and correct_id:
@@ -223,13 +223,13 @@ def extract_service_from_file(s, file_content, file_name, data, microservices_di
     return microservices_set, microservices_dict
 
 
+# FIXME -> detection du même port plusieurs fois -> optimiser
 def extract_environment_props(data, s, lines: list, port: tuple, properties: set,file_name: str) -> tuple[tuple,set]:
     """Extracts environment variable properties and port information from a service definition.
 
     This function scans the environment variables of a given service for database credentials and port settings,
     and adds relevant properties to the provided set along with their file location information.
     """
-    
     value = None # password or username
     environment_entries = data.get(s).get("environment")
     
@@ -260,7 +260,7 @@ def extract_environment_props(data, s, lines: list, port: tuple, properties: set
             length_tuple = re.search(str(port_nr), lines[line_number]).span()
             span = f"[{str(length_tuple[0])}:{str(length_tuple[1])}]"
             port = (port_nr, file_name, line_number + 1, span)
-        print(value, port)
+        # print(value, port)
     
     return port, properties
 
