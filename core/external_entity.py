@@ -4,14 +4,14 @@ class CExternalEntity:
 
     def __init__(self, name):
         self.name = name
-        self.stereotypes = list()
-        self.tagged_values = list()
+        self.stereotypes = []
+        self.tagged_values = []
 
     def add_stereotype(self, stereotype):
-        if not stereotype in self.stereotypes:
+        if stereotype not in self.stereotypes:
             self.stereotypes.append(stereotype)
         
     def add_tagged_value(self, tagged_value):
-        if not tagged_value in self.tagged_values:
+        if tagged_value not in self.tagged_values:
             self.tagged_values.append(tagged_value)
     
