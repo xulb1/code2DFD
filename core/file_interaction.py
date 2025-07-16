@@ -335,7 +335,7 @@ def check_dockerfile(build_path: str):
             break
     if len(raw_files) == 0: return
 
-    docker_compose_path = raw_files[0]["path"]  # TODO this assumes there is exactly 1 relevant docker-compose
+    docker_compose_path = raw_files[0]["path"]  # TODO: this assumes there is exactly 1 relevant docker-compose
     docker_compose_dir = os.path.dirname(docker_compose_path)
 
     build_path = PurePosixPath(build_path.strip("-'"))  # Build path is always posix, so resolve it accordingly

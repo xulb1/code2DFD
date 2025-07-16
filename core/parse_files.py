@@ -164,7 +164,7 @@ def parse_properties_file(file_path: str) -> str:
     return microservice, properties
 
 
-# FIXME -> beaucoup trop long ...
+# FIXME: beaucoup trop long ...
 def parse_yaml_file(file_path: str) -> str:
     """Extracts servicename from a .yml or .yaml file.
     """

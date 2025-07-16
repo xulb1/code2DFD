@@ -1,18 +1,15 @@
-TODO
+TODO:
 avoid multiple time invocation (at different stages...) of
-- get_microservices -> DONE
-- technology-specific classifiers
 
-TODO ->
+TODO:CANCELLED
 move hardcoded pattern keyword in a central configuration file
 
-TODO
+TODO:CANCELLED
 refactoring de l'outils celon le modèle présenté dans la thèse PSL2358 de Benni et Hathat
-
 
 R6-7-8-11-12-17-18
 
-TODO
+TODO:
 extraction2 vs dom_entry-3 inutile ?
 
 DONE
@@ -21,33 +18,17 @@ plein de truc inutile
 Aucun sens
 
 
-
-TODO TODO TODO TODO TODO TODO TODO
-fixe port line number errrrrrrrorrorororororrorrorroor
-ex : blog-microservices
-vérif port pour clone-sample-spring-oauth2-microservices
-
-TODO 
-trop d'appel inutile à Resolve_env_var() dans environment_variables.py
-microservice-kafka
-piggymetrics
-
-TODO issue -> DONE
+DONE
 dupplication de service avec nom différents, oublile de "_"
 
-detection of external entity : external_website
-
-TODO
-Reetudier les flows
-
+TODO:
+better detection of external entity : external_website
 
 DONE
 pb aver url: 'http...
 
-TODO :
+TODO:
 image None ? étrange ...
-
-pb avec proxy vs web_app
 
 DONE
 pb avec endpoint -> endpoint ['../ et rien après ... pourquoi ?
@@ -68,6 +49,19 @@ Reset	\033[0m
 
 
 
-TODO : 
+TODO:
 - voir output vs output jeisson
-- voir language server pour implémentation multi-language ...
+- voir api language server pour implémentation multi-language ...
+
+
+FIXME:
+fixe port line number errrrrrrrorrorororororrorrorroor
+ex : blog-microservices
+vérif port pour clone-sample-spring-oauth2-microservices
+
+TODO:
+trop d'appel inutile à Resolve_env_var() dans environment_variables.py
+microservice-kafka
+piggymetrics
+
+pb avec proxy vs web_app

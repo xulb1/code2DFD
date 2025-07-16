@@ -78,7 +78,7 @@ def detect_zipkin_server(microservices: dict, information_flows: dict, iterative
             zipkin_server_exists = True
             microservices[correct_id].setdefault("stereotype_instances",[]).append("tracing_server")
             microservices[correct_id].setdefault("tagged_values",[]).append(("Tracing Server", "Zipkin"))
-            # TODO : verify usefullness of break
+            # TODO: verify usefullness of break
             break
 
     if not zipkin_server_exists and connections_exist:

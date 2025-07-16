@@ -132,7 +132,7 @@ def DFD_extraction():
     # microservice
     # s1 = microservices
     
-    # FIXME
+    # FIXME:
     microservices, information_flows, external_components = classify_microservices(microservices, information_flows, external_components, dfd)
     print("l")
     # assert microservices1 != microservices, "Egalité"
@@ -518,7 +518,7 @@ def merge_duplicate_nodes(nodes: dict, information_flows: dict):
                 to_delete.add(i)
 
 
-        # FIXME
+        # FIXME:
         required_substrings = ["image_placeholder", "docker", ".", ":", "None"]
         
         try:

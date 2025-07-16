@@ -108,7 +108,7 @@ def get_outgoing_endpoints(routings: set, dfd) -> set:
                             exchange, routingKey = None, None
                             complete_command = line_content
                             if ";" not in complete_command:   # i.e., multi-line command -> search for next line with a semicolon
-                                # TODO also need to increment line ?
+                                # TODO: also need to increment line ?
                                 for i in range(line+1, len(f["content"])):
                                     complete_command += f["content"][i]
                                     if ";" in complete_command:

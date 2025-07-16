@@ -23,7 +23,7 @@ def detect_zuul(microservices: dict, information_flows: dict, external_component
         zuul_server = tech_sw.detect_microservice(results[r]["path"], dfd)
         for m in microservices.values():
             if m["name"] == zuul_server:    # this is the Zuul server
-                # FIXME insertion un peu étrange
+                # FIXME: insertion un peu étrange
                 m["stereotype_instances"] = m.get("stereotype_instances", []) + ["gateway", "load_balancer"]
                 m["tagged_values"] = m.get("tagged_values", []) + [("Gateway", "Zuul"), ("Load Balancer", "Ribbon")]
 

@@ -45,6 +45,6 @@ def detect_circuit_breakers(microservices: dict, information_flows: dict, dfd) -
     return microservices, information_flows
 
 
-# TODO
+# TODO:
 def detect_circuit_breaker_tech(path):
     return False
