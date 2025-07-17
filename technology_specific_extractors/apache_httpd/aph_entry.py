@@ -35,12 +35,12 @@ def detect_via_docker(microservices: dict, information_flows: dict, external_com
                 mark_server(microservices, microservice)
 
                 # Trace
-                trace = dict()
-                trace["item"] = "web_server"
-                trace["file"] = docker_path
-                trace["line"] = line_nr
-                trace["span"] = re.search("apache2ctl", line).span()
-                traceability.add_trace(trace)
+                traceability.add_trace({
+                    "item": "web_server",
+                    "file": docker_path,
+                    "line": line_nr,
+                    "span": re.search("apache2ctl", line).span()
+                })
 
         information_flows, external_components = add_user(information_flows, external_components, microservice, trace_info)
         microservices, information_flows = add_connections_docker(microservices, information_flows, results[r]["content"], docker_path, microservice, results[r]["path"])

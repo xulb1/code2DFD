@@ -1,52 +1,54 @@
-import ast
-from datetime import datetime
 from itertools import combinations
+from pydriller import Repository
+from datetime import datetime
+import ast
 import os
 
-from pydriller import Repository
-
-import output_generators.codeable_model as codeable_model
 import core.technology_switch as tech_sw
+from core.DFD import CDFD
+
 import tmp.tmp as tmp
+
 import output_generators.json_architecture as json_architecture
-import output_generators.json_edges as json_edges
+import output_generators.codeable_model as codeable_model
 import output_generators.traceability as traceability
+import output_generators.json_mm_arch as json_mm_arch
+import output_generators.json_edges as json_edges
 import output_generators.visualizer as visualizer
 import output_generators.plaintext as plaintext
-from technology_specific_extractors.apache_httpd.aph_entry import detect_apachehttpd_webserver
-from technology_specific_extractors.circuit_breaker.cbr_entry import detect_circuit_breakers
-from technology_specific_extractors.consul.cns_entry import detect_consul
-from technology_specific_extractors.database_connections.dbc_entry import clean_database_connections
-from technology_specific_extractors.databases.dbs_entry import detect_databases
-from technology_specific_extractors.elasticsearch.ela_entry import detect_elasticsearch
-from technology_specific_extractors.eureka.eur_entry import detect_eureka, detect_eureka_server_only
-from technology_specific_extractors.grafana.grf_entry import detect_grafana
-from technology_specific_extractors.http_security.hts_entry import detect_authentication_scopes
-from technology_specific_extractors.hystrix.hsx_entry import (detect_hystrix_circuit_breakers, detect_hystrix_dashboard)
-from technology_specific_extractors.kafka.kfk_entry import detect_kafka_server
-from technology_specific_extractors.kibana.kib_entry import detect_kibana
-from technology_specific_extractors.load_balancer.lob_entry import detect_load_balancers
-from technology_specific_extractors.local_logging.llo_entry import detect_local_logging
-from technology_specific_extractors.logstash.log_entry import detect_logstash
-from technology_specific_extractors.nginx.ngn_entry import detect_nginx
-from technology_specific_extractors.plaintext_credentials.plc_entry import set_plaintext_credentials
-from technology_specific_extractors.prometheus.prm_entry import detect_prometheus_server
-from technology_specific_extractors.rabbitmq.rmq_entry import detect_rabbitmq_server
-from technology_specific_extractors.repository_rest_resource.rrr_entry import detect_endpoints
-from technology_specific_extractors.ribbon.rib_entry import detect_ribbon_load_balancers
-from technology_specific_extractors.service_functionality_classification.itf_entry import classify_internal_infrastructural
-from technology_specific_extractors.spring_admin.sad_entry import detect_spring_admin_server
-from technology_specific_extractors.spring_config.cnf_entry import detect_spring_config
-from technology_specific_extractors.spring_encryption.enc_entry import detect_spring_encryption
-from technology_specific_extractors.spring_gateway.sgt_entry import detect_spring_cloud_gateway
-from technology_specific_extractors.spring_oauth.soa_entry import detect_spring_oauth
-from technology_specific_extractors.ssl.ssl_entry import detect_ssl_services
-from technology_specific_extractors.turbine.trb_entry import detect_turbine
-from technology_specific_extractors.zipkin.zip_entry import detect_zipkin_server
-from technology_specific_extractors.zookeeper.zoo_entry import detect_zookeeper
-from technology_specific_extractors.zuul.zul_entry import detect_zuul
 
-from core.DFD import CDFD
+from technology_specific_extractors.service_functionality_classification.itf_entry import classify_internal_infrastructural
+from technology_specific_extractors.repository_rest_resource.rrr_entry import detect_endpoints
+from technology_specific_extractors.plaintext_credentials.plc_entry import set_plaintext_credentials
+from technology_specific_extractors.database_connections.dbc_entry import clean_database_connections
+from technology_specific_extractors.spring_encryption.enc_entry import detect_spring_encryption
+from technology_specific_extractors.circuit_breaker.cbr_entry import detect_circuit_breakers
+from technology_specific_extractors.spring_gateway.sgt_entry import detect_spring_cloud_gateway
+from technology_specific_extractors.http_security.hts_entry import detect_authentication_scopes
+from technology_specific_extractors.load_balancer.lob_entry import detect_load_balancers
+from technology_specific_extractors.elasticsearch.ela_entry import detect_elasticsearch
+from technology_specific_extractors.local_logging.llo_entry import detect_local_logging
+from technology_specific_extractors.spring_config.cnf_entry import detect_spring_config
+from technology_specific_extractors.apache_httpd.aph_entry import detect_apachehttpd_webserver
+from technology_specific_extractors.spring_admin.sad_entry import detect_spring_admin_server
+from technology_specific_extractors.spring_oauth.soa_entry import detect_spring_oauth
+from technology_specific_extractors.prometheus.prm_entry import detect_prometheus_server
+from technology_specific_extractors.databases.dbs_entry import detect_databases
+from technology_specific_extractors.zookeeper.zoo_entry import detect_zookeeper
+from technology_specific_extractors.rabbitmq.rmq_entry import detect_rabbitmq_server
+from technology_specific_extractors.logstash.log_entry import detect_logstash
+from technology_specific_extractors.hystrix.hsx_entry import detect_hystrix_circuit_breakers, detect_hystrix_dashboard
+from technology_specific_extractors.grafana.grf_entry import detect_grafana
+from technology_specific_extractors.turbine.trb_entry import detect_turbine
+from technology_specific_extractors.eureka.eur_entry import detect_eureka, detect_eureka_server_only
+from technology_specific_extractors.ribbon.rib_entry import detect_ribbon_load_balancers
+from technology_specific_extractors.zipkin.zip_entry import detect_zipkin_server
+from technology_specific_extractors.consul.cns_entry import detect_consul
+from technology_specific_extractors.kibana.kib_entry import detect_kibana
+from technology_specific_extractors.kafka.kfk_entry import detect_kafka_server
+from technology_specific_extractors.nginx.ngn_entry import detect_nginx
+from technology_specific_extractors.zuul.zul_entry import detect_zuul
+from technology_specific_extractors.ssl.ssl_entry import detect_ssl_services
 
 
 def perform_analysis():
@@ -170,6 +172,7 @@ def DFD_extraction():
     visualizer.output_png(codeable_models_path)
     json_edges.generate_json_edges(information_flows)
     json_architecture.generate_json_architecture(microservices, information_flows, external_components)
+    json_mm_arch.save_arch(microservices, information_flows, external_components)
 
     # sep = "\n\n================================ ======================================"
     # print(sep, microservices, sep, information_flows, sep, external_components )
@@ -577,6 +580,7 @@ def merge_duplicate_annotations(collection: dict):
 
         if "tagged_values" in item:
             merged_tagged_values = {}
+            
             for tag, tagged_value in item["tagged_values"]:
                 if tag == "Port":
                     if isinstance(tagged_value, str):
@@ -586,7 +590,7 @@ def merge_duplicate_annotations(collection: dict):
                             tagged_value = int(tagged_value)
                         except ValueError:
                             continue
-                    
+                        
                     tagged_value = [tagged_value]
                 
                 # Easier to manipulate in dict (merging duplicate values, and values of same tags)
@@ -600,7 +604,7 @@ def merge_duplicate_annotations(collection: dict):
                             merged_tagged_values[tag].append(val)
                 else:
                     merged_tagged_values[tag] = tagged_value
-
+                
             # The above code is creating a new key-value pair in the `item` dictionary. The key is "tagged_values" and the value is a list created from the `merged_tagged_values`.
             item["tagged_values"] = [
                 (tag, values if len(values) > 1 else values[0])

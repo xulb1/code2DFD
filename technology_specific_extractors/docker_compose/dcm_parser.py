@@ -82,6 +82,7 @@ def extract_microservices(file_content, file_name) -> set:
         data  = file.get("services", {})
         
         for s in data:
+            print(s)
             microservices_set, microservices_dict = extract_service_from_file(s, file_content,file_name,data, microservices_dict, microservices_set, properties_dict, image, build)
             
     else:
@@ -89,6 +90,7 @@ def extract_microservices(file_content, file_name) -> set:
         data = file
         
         for s in file.keys():
+            print(s)
             microservices_set, microservices_dict = extract_service_from_file(s, file_content, file_name, data, microservices_dict, microservices_set, properties_dict, image, build)
 
 
@@ -117,6 +119,7 @@ def extract_service_from_file(s, file_content, file_name, data, microservices_di
         exists = True
     for id_ in microservices_dict:
         if microservices_dict[id_]["name"] == s:
+            microservices_dict[id_]["stereotype_instances"].append("isContainerised")
             exists = True
             correct_id = id_
 
