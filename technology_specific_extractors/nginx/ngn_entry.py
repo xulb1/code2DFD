@@ -6,7 +6,7 @@ import core.file_interaction as fi
 import core.technology_switch as tech_sw
 import tmp.tmp as tmp
 import output_generators.traceability as traceability
-
+import ast
 
 # The following is taken from ruamel.yaml's authro as a workaround for getting line count for str objects
 # https://stackoverflow.com/questions/45716281/parsing-yaml-get-line-numbers-even-in-ordered-maps/45717104#45717104
@@ -182,8 +182,16 @@ def detect_nginx(microservices: dict, information_flows: dict, external_componen
                                                 target_port = target.split(":")[1]
                                                 for m in microservices.keys():
                                                     for prop in microservices[m]["tagged_values"]:
-                                                        if prop[0] == "Port" and int(prop[1]) == int(target_port):
-                                                            gateway = microservices[m]["name"]
+                                                        # FIXME:
+                                                        if prop[0]=="Port":
+                                                            if isinstance(prop[1], str):
+                                                                p = ast.literal_eval(prop[1])
+                                                            else: 
+                                                                p = [prop[1]]
+                                                            for b in p:
+                                                                if int(b) == int(target_port):
+                                                                    gateway = microservices[m]["name"]
+                                                                    break
                                         else:
                                             for m in microservices.keys():
                                                 if microservices[m]["name"] == target:

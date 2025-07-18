@@ -172,7 +172,7 @@ def DFD_extraction():
     visualizer.output_png(codeable_models_path)
     json_edges.generate_json_edges(information_flows)
     json_architecture.generate_json_architecture(microservices, information_flows, external_components)
-    json_mm_arch.save_arch(microservices, information_flows, external_components)
+    # json_mm_arch.save_arch(microservices, information_flows, external_components)
 
     # sep = "\n\n================================ ======================================"
     # print(sep, microservices, sep, information_flows, sep, external_components )
@@ -508,15 +508,15 @@ def merge_duplicate_nodes(nodes: dict, information_flows: dict):
         
         if node_i_clean == node_j_clean:
             if len(node_i)>len(node_j):
-                print("1.1",node_i['name'],node_j['name'],image_i)
+                print("1.1",node_j['name'],"->",node_i['name'])
                 keep = node_i
                 delete = node_j
                 to_delete.add(j)
             else:
-                print("1.2",node_i['name'],node_j['name'],image_i)
                 keep = node_j
                 delete = node_i
                 to_delete.add(i)
+                print("1.2",node_i['name'],"->",node_j['name'])
 
 
         # FIXME:
@@ -535,16 +535,16 @@ def merge_duplicate_nodes(nodes: dict, information_flows: dict):
             or all(sub not in image_j for sub in required_substrings):
             if node_i["name"] == image_j \
                 and node_j_clean in node_i_clean:
-                    print("2.1",node_i['name'],node_j['name'],image_i)
                     keep=node_i
                     delete=node_j
                     to_delete.add(j)
+                    print("2.1",node_j['name'],"->",node_i['name'])
             if node_j["name"] == image_i \
                 and node_i_clean in node_j_clean:
-                    print("2.2",node_i['name'],node_j['name'],image_j)
                     keep=node_j
                     delete=node_i
                     to_delete.add(i)
+                    print("2.2",node_i['name'],"->",node_j['name'])
         
         if keep and delete:
             for field, j_value in delete.items():

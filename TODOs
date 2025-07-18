@@ -65,3 +65,29 @@ microservice-kafka
 piggymetrics
 
 pb avec proxy vs web_app
+
+
+TODO: ajout de la récupération des endpoints des fichiers bootstrap.yml
+récupérer les endpoints et les sécurités
+compile('org.springframework.boot:spring-boot-starter-security')
+compile('org.springframework.boot:spring-boot-starter-actuator')
+
+http vs https
+secrets en clair
+management.endpoints: 
+    exposure.include: "*"
+    shutdown.enabled: true
+environnement et profils : spring.profiles: dev/prod/docker/test/...
+
+Sleuth vs Micrometer Tracing (plus récent, opentelemetry)
+
+
+java file : 
+@GetMapping(value = "/count")
+
+fichier application.yml : 
+service, pour avoir les liaisons entre services ...
+serice: 
+    product:
+        url: http://azerty
+
