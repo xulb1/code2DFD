@@ -96,29 +96,29 @@ def DFD_extraction():
 
     # Parse internal and external configuration files
     microservices, information_flows, external_components = detect_spring_config(microservices, information_flows, external_components, dfd)
-    print("a")
+    # print("a")
     microservices = detect_eureka_server_only(microservices, dfd)
-    print("b")
+    # print("b")
     microservices = overwrite_port(microservices)
-    print("c")
+    # print("c")
     # Classify brokers (needed for information flows)
     microservices = classify_brokers(microservices)
-    print("d")
+    # print("d")
     
     # Check authentication information of services
     microservices = detect_authentication_scopes(microservices, dfd)
-    print("e")
+    # print("e")
     tmp.tmp_config.set("DFD", "microservices", str(microservices).replace("%", "%%"))
-    print("f")
+    # print("f")
 
     # Get information flows
     tmp.tmp_config.set("DFD", "external_components", str(external_components).replace("%", "%%"))
-    print("g")
+    # print("g")
 
     new_information_flows = tech_sw.get_information_flows(dfd)
-    print("h")
+    # print("h")
     external_components = ast.literal_eval(tmp.tmp_config["DFD"]["external_components"])
-    print("i")
+    # print("i")
 
     # Merge old and new
     for new_flow in new_information_flows.keys():
@@ -130,29 +130,29 @@ def DFD_extraction():
     # Detect everything else / execute all technology implementations
     print("Classifying all services")
     microservices = tech_sw.get_microservices(dfd)
-    print("k")
+    # print("k")
     # microservice
     # s1 = microservices
     
     # FIXME:
     microservices, information_flows, external_components = classify_microservices(microservices, information_flows, external_components, dfd)
-    print("l")
+    # print("l")
     # assert microservices1 != microservices, "Egalité"
 
     # Merging
     print("Merging duplicate items")
     merge_duplicate_nodes(microservices, information_flows)
-    print("m")
+    # print("m")
     merge_duplicate_nodes(external_components, information_flows)
-    print("n")
+    # print("n")
     merge_duplicate_flows(information_flows)
-    print("o")
+    # print("o")
     merge_duplicate_annotations(microservices)
-    print("p")
+    # print("p")
     merge_duplicate_annotations(information_flows)
-    print("q")
+    # print("q")
     merge_duplicate_annotations(external_components)
-    print("r")
+    # print("r")
     
     
     print("Cleaning database connections")
@@ -198,58 +198,59 @@ def classify_microservices(microservices: dict, information_flows: dict, externa
     """
 
     microservices, information_flows = detect_eureka(microservices, information_flows, dfd)
-    print("aa")
+    # The above code is a Python script that prints the string "aa" to the console.
+    # print("aa")
     microservices, information_flows, external_components = detect_zuul(microservices, information_flows, external_components, dfd)
-    print("ab")
+    # print("ab")
     microservices, information_flows, external_components = detect_spring_cloud_gateway(microservices, information_flows, external_components, dfd)
-    print("ac")
+    # print("ac")
     microservices, information_flows = detect_spring_oauth(microservices, information_flows, dfd)
-    print("ad")
+    # print("ad")
     microservices, information_flows = detect_consul(microservices, information_flows, dfd)
-    print("ae")
+    # print("ae")
     microservices, information_flows = detect_hystrix_dashboard(microservices, information_flows, dfd)
-    print("af")
+    # print("af")
     microservices, information_flows = detect_turbine(microservices, information_flows, dfd)
-    print("ag")
+    # print("ag")
     microservices, information_flows = detect_local_logging(microservices, information_flows, dfd)
-    print("ah")
+    # print("ah")
     microservices, information_flows = detect_zipkin_server(microservices, information_flows, dfd)
-    print("ai")
+    # print("ai")
     microservices, information_flows = detect_spring_admin_server(microservices, information_flows, dfd)
-    print("aj")
+    # print("aj")
     microservices, information_flows = detect_prometheus_server(microservices, information_flows, dfd)
-    print("ak")
+    # print("ak")
     microservices, information_flows = detect_circuit_breakers(microservices, information_flows, dfd)
-    print("al")
+    # print("al")
     microservices, information_flows = detect_load_balancers(microservices, information_flows, dfd)
-    print("aù")
+    # print("aù")
     microservices = detect_ribbon_load_balancers(microservices, dfd)
-    print("an")
+    # print("an")
     microservices, information_flows = detect_hystrix_circuit_breakers(microservices, information_flows, dfd)
-    print("ao")
+    # print("ao")
     microservices, information_flows = detect_zookeeper(microservices, information_flows, dfd)
-    print("ap")
+    # print("ap")
     microservices, information_flows = detect_kibana(microservices, information_flows, dfd)
-    print("aq")
+    # print("aq")
     microservices, information_flows = detect_elasticsearch(microservices, information_flows, dfd)
-    print("ar")
+    # print("ar")
     microservices, information_flows, external_components = detect_logstash(microservices, information_flows, external_components, dfd)
-    print("as")
+    # print("as")
     microservices, information_flows, external_components = detect_nginx(microservices, information_flows, external_components, dfd)
-    print("at")
+    # print("at")
     microservices, information_flows = detect_grafana(microservices, information_flows, dfd)
-    print("au")
+    # print("au")
     microservices, information_flows = detect_spring_encryption(microservices, information_flows, dfd)
-    print("av")
+    # print("av")
     microservices = detect_endpoints(microservices, dfd)
-    print("aw")
+    # print("aw")
 
     microservices, information_flows, external_components = detect_miscellaneous(microservices, information_flows, external_components)
-    print("ax")
+    # print("ax")
     microservices, information_flows, external_components = detect_apachehttpd_webserver(microservices, information_flows, external_components, dfd)
-    print("ay")
+    # print("ay")
     microservices = classify_internal_infrastructural(microservices)
-    print("az")
+    # print("az")
     microservices = set_plaintext_credentials(microservices)
 
     return microservices, information_flows, external_components
@@ -374,9 +375,6 @@ def detect_miscellaneous(microservices: dict, information_flows: dict, external_
                     "stereotype_instances": ["external_website", "entrypoint", "exitpoint"],
                     "tagged_values": [("URL", prop[1])]
                 }
-                print("(((((((((((((((((((())))))))))))))))))))")
-                print("url:",prop)
-                print("(((((((((((((((((((())))))))))))))))))))")
                 
                 traceability.add_trace({
                     "item": "external-website",
@@ -451,7 +449,7 @@ def detect_miscellaneous(microservices: dict, information_flows: dict, external_
 def merge_duplicate_flows(information_flows: dict):
     """Multiple flows with the same sender and receiver might occur. They are merged here.
     """
-    print("@@@@@@@@@@@@@@@@@@@@@@DuplicatFlow@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    print("@@@@@@@@@@@@@@@@@@@@@@ DuplicatFlow @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     to_delete = set()
     for i, j in combinations(information_flows.keys(), 2):
         if i == j:
@@ -492,7 +490,7 @@ def merge_duplicate_nodes(nodes: dict, information_flows: dict):
 
     # Microservices
     to_delete = set()
-    print("@@@@@@@@@@@@@@@@@@@@@@DuplicatNode@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    print("@@@@@@@@@@@@@@@@@@@@@@ DuplicatNode @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     for i, j in combinations(nodes.keys(), 2):
         if i == j:
             continue
@@ -533,7 +531,6 @@ def merge_duplicate_nodes(nodes: dict, information_flows: dict):
         except Exception:
             image_j = "None"
         
-        # print(node_i['name'],node_j['name'],image_i, image_j)
         if all(sub not in image_i for sub in required_substrings) \
             or all(sub not in image_j for sub in required_substrings):
             if node_i["name"] == image_j \
@@ -583,15 +580,22 @@ def merge_duplicate_annotations(collection: dict):
             
             for tag, tagged_value in item["tagged_values"]:
                 if tag == "Port":
-                    if isinstance(tagged_value, str):
-                        tagged_value = tagged_value.split("/")[0]  # Could be a protocol like 3306/tcp
-                    if not isinstance(tagged_value, int):
-                        try:
-                            tagged_value = int(tagged_value)
-                        except ValueError:
-                            continue
+                    try:
+                        tagged_value = ast.literal_eval(tagged_value)
+                    except Exception:
+                        pass
+                    if type(tagged_value) != list:
+                        tagged_value = [tagged_value]
+                    
+                    for i in range(len(tagged_value)):
+                        if isinstance(tagged_value[i], str):
+                            tagged_value[i] = tagged_value[i].split("/")[0]  # Could be a protocol like 3306/tcp
                         
-                    tagged_value = [tagged_value]
+                        if not isinstance(tagged_value[i], int):
+                            try:
+                                tagged_value[i] = int(tagged_value[i])
+                            except ValueError:
+                                continue
                 
                 # Easier to manipulate in dict (merging duplicate values, and values of same tags)
                 elif not isinstance(tagged_value, list):

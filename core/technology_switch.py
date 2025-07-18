@@ -23,11 +23,11 @@ def get_microservices(dfd) -> dict:
     """Calls get_microservices from correct container technology or returns existing list.
     """
 
-    stack = inspect.stack()
-    appelant = stack[1]
-    fichier = os.path.basename(appelant.filename)  # Juste le nom du fichier
-    fonction = appelant.function
-    print(f"\033[34mAppelée depuis la fonction '{fonction}' dans le fichier '{fichier}'\033[0m")
+    # stack = inspect.stack()
+    # appelant = stack[1]
+    # fichier = os.path.basename(appelant.filename)  # Juste le nom du fichier
+    # fonction = appelant.function
+    # print(f"\033[34mAppelée depuis la fonction '{fonction}' dans le fichier '{fichier}'\033[0m")
     
     if tmp.tmp_config.has_option("DFD", "microservices"):
         return ast.literal_eval(tmp.tmp_config["DFD"]["microservices"])
@@ -46,11 +46,11 @@ def get_microservices(dfd) -> dict:
 def get_information_flows(dfd) -> dict:
     """Calls get_information_flows from correct communication technology.
     """
-    stack = inspect.stack()
-    appelant = stack[1]
-    fichier = os.path.basename(appelant.filename)
-    fonction = appelant.function
-    print(f"\033[32mAppelée depuis la fonction '{fonction}' dans le fichier '{fichier}'\033[0m")
+    # stack = inspect.stack()
+    # appelant = stack[1]
+    # fichier = os.path.basename(appelant.filename)
+    # fonction = appelant.function
+    # print(f"\033[32mAppelée depuis la fonction '{fonction}' dans le fichier '{fichier}'\033[0m")
     
     if tmp.tmp_config.has_option("DFD", "information_flows"):
         return ast.literal_eval(tmp.tmp_config["DFD"]["information_flows"])
@@ -59,9 +59,8 @@ def get_information_flows(dfd) -> dict:
     logger.info("Information flows not set yet, start extraction")
     communication_techs_list = ast.literal_eval(tmp.tmp_config["Technology Profiles"]["communication_techs_list"])
     for com_tech in communication_techs_list:
-        print(com_tech)
         eval(com_tech[1]).set_information_flows(dfd)
-    print("ok")
+
     if tmp.tmp_config.has_option("DFD", "information_flows"):
         return ast.literal_eval(tmp.tmp_config["DFD"]["information_flows"])
 
@@ -69,11 +68,11 @@ def get_information_flows(dfd) -> dict:
 def detect_microservice(file_path: str, dfd) -> str:
     """Calls detect_microservices from correct microservice detection technology.
     """
-    stack = inspect.stack()
-    appelant = stack[1]
-    fichier = os.path.basename(appelant.filename)
-    fonction = appelant.function
-    print(f"\033[31mDetect_microservice appelée depuis la fonction '{fonction}' dans le fichier '{fichier}'\033[0m")
+    # stack = inspect.stack()
+    # appelant = stack[1]
+    # fichier = os.path.basename(appelant.filename)
+    # fonction = appelant.function
+    # print(f"\033[31mDetect_microservice appelée depuis la fonction '{fonction}' dans le fichier '{fichier}'\033[0m")
     
     microservice = mvn.detect_microservice(file_path, dfd)
     if microservice: print("mvn")

@@ -15,9 +15,9 @@ def detect_endpoints(microservices: dict, dfd) -> dict:
                 endpoint = line.split("path")[1].split(",")[0].strip().strip("=\"/() ")
                 endpoint = f"/{endpoint}"
                 endpoints.add(endpoint)
-                print("===============--------------------------===============")
-                print(endpoints)
-                print("===============--------------------------===============")
+                # print("===============--------------------------===============")
+                # print(endpoints)
+                # print("===============--------------------------===============")
                 for m in microservices.values():
                     if m["name"] == microservice:
                         m.setdefault("tagged_values", []).append(("Endpoints", list(endpoints)))

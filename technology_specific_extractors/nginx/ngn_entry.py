@@ -195,9 +195,9 @@ def detect_nginx(microservices: dict, information_flows: dict, external_componen
                                     for part in parts:
                                         if part != "":
                                             try:
-                                                port = int(part.strip(";").strip())
+                                                port = int(part.strip(":").strip())
                                             except:
-                                                print("\033[32m", part.strip(";").strip(),"-------------------------------------------- \033[0m")
+                                                print("\033[32m", part.strip(":").strip(),"-------------------------------------------- \033[0m")
                                                 pass
                                 except Exception as e:
                                     pass

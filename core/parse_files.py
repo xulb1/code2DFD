@@ -76,7 +76,6 @@ def parse_properties_file(file_path: str) -> str:
         elif "server.port" in line:
             try:
                 port = int(line.split("=")[1].strip()) if "=" in line else None
-                # print(port,"//////////////////\\\\\\\\\\\\\\\\\\\\\\\\\\\\")
                 if port:
                     span = re.search("server.port", line).span()
                     trace = (file_path, i, span)
@@ -224,7 +223,6 @@ def parse_yaml_file(file_path: str) -> str:
                         trace = (file_path, line_nr + 1, span)
                 if port != None:
                     properties.add(("port", port, trace))
-                    # print(port,"-------------------------------------")
 
             # Load Balancer
             if "ribbon" in document:

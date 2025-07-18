@@ -80,7 +80,7 @@ def dictionarify(elements_set: set, properties_dict: dict) -> dict:
             stereotypes = []
             tagged_values = []
         if e[3]:
-            tagged_values.append(("Port", str(e[3][0])))
+            tagged_values.append(("Port", str(list(e[3][0]))))
             traceability.add_trace({
                 "parent_item": e[0],#.replace("pom_", "")
                 "item": "Port",

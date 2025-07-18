@@ -104,6 +104,8 @@ def extract_service_from_file(s, file_content, file_name, data, microservices_di
     exists = False
     port = False
 
+    print("___________________________________")
+
     # Traceability
     lines = file_content.splitlines()
     line_number = data[s].lc.line - 1
@@ -124,27 +126,26 @@ def extract_service_from_file(s, file_content, file_name, data, microservices_di
             correct_id = id_
 
     ports = data.get(s).get("ports")
-    print("___________________________________")
-    print(ports)
     if ports :
-        try:
-            port_nr = ports[0].split(":")[0].strip("\" -")
-        except AttributeError:
-            port_nr = str(ports[0])
-            
-        if type(port_nr) == list:
-            port_nr = port_nr[0]
+        portList = []
+        for i in range(len(ports)):
+            try:
+                port_nr = ports[i].split(":")[0].strip("\" -")
+            except AttributeError:
+                port_nr = str(ports[i])
+                
+            if type(port_nr) == list:
+                port_nr = port_nr[0]
+            portList.append(port_nr)
         
         line_number = data[s]["ports"].lc.line - 1
-        length_tuple = re.search(port_nr, lines[line_number])
+        length_tuple = re.search(portList[0], lines[line_number])
         if not length_tuple:
             line_number = line_number + 1
-            length_tuple = re.search(port_nr, lines[line_number])
+            length_tuple = re.search(portList[0], lines[line_number])
         length_tuple = length_tuple.span()
         span = f"[{length_tuple[0]}:{length_tuple[1]}]"
-        port = (port_nr, file_name, line_number + 1, span)
-    # print("\033[34m",port,"\033[0m")
-    
+        port = (tuple(portList), file_name, line_number + 1, span)
     
     new_image = data.get(s).get("image")
     new_build = data.get(s).get("build")
@@ -176,7 +177,6 @@ def extract_service_from_file(s, file_content, file_name, data, microservices_di
     # Environment properties
     try:
         port, properties = extract_environment_props(data, s, lines, port, properties, file_name)
-        # print("\033[35m",port,"\033[0m")
     except Exception:
         print(f"\033[91m")
         traceback.print_exc()
@@ -184,19 +184,23 @@ def extract_service_from_file(s, file_content, file_name, data, microservices_di
 
     # Port via "Expose" (overrules "ports")
     ports = data.get(s).get("expose")
+    print("\033[34m",s,ports,"\033[0m")
     if ports:
-        port_nr = ports[0].split(":")[0].strip("\" -")
+        port_nr = []
+        for i in range(len(ports)):
+            port_nr.append(ports[i].split(":")[0].strip("\" -"))
+            
         line_number = data[s]["expose"].lc.line - 1
-        length_tuple = re.search(port_nr, lines[line_number])
+        length_tuple = re.search(port_nr[0], lines[line_number])
         if not length_tuple:
             line_number = line_number + 1
-            length_tuple = re.search(port_nr, lines[line_number])
+            length_tuple = re.search(port_nr[0], lines[line_number])
         if length_tuple:
             length_tuple = length_tuple.span()
             span = f"[{length_tuple[0]}:{length_tuple[1]}]"
-            port = (port_nr, file_name, line_number + 1, span)
-    
-    # print("\033[32m",s,port,"\033[0m")
+            port = (tuple(port_nr), file_name, line_number + 1, span)
+        print("\033[32m",s, port,"\033[0m")
+
 
     if not image:
         image = build or "image"
@@ -304,7 +308,6 @@ def extract_information_flows(file_content:  str, microservices: dict, informati
         for s in file.get("services"):
             try:
                 depends_on = file.get("services", {}).get(s).get("depends_on")
-                # print("((((((((((((((((((((",list(depends_on.keys()),"))))))))))))))))))))")
                 information_flows = get_flows(s,depends_on, microservices, information_flows, discovery_server, config_server)
             except:
                 pass
@@ -312,7 +315,6 @@ def extract_information_flows(file_content:  str, microservices: dict, informati
         for s in file.keys():
             try:
                 depends_on = file.get(s).get("depends_on")
-                # print("((((((((((((((((((((",list(depends_on.keys()),"))))))))))))))))))))")
                 information_flows = get_flows(s,depends_on, microservices, information_flows, discovery_server, config_server)
             except:
                 pass

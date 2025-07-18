@@ -171,9 +171,10 @@ def extract_endpoints(file_as_lines):
 
             if endpoint:
                 endpoints.add(endpoint)
-    print("-===================-----------------")
-    print(endpoints)
-    print("-===================-----------------")
+    # print("-===================-----------------")
+    # print(endpoints)
+    # print("-===================-----------------")
+    
     # nested mappings not considered here
     return list(endpoints)
 
