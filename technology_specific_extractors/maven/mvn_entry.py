@@ -40,6 +40,7 @@ def set_microservices(dfd) -> dict:
             module_dict[(pom_file["name"])] = modules
         else:
             microservice, properties = parse_configurations(pom_file)
+            print(microservice[0])
             properties = extract_dependencies(properties, pom_file)
             if microservice[0]:
                 port = dcr.detect_port(pom_file["path"])
@@ -82,14 +83,39 @@ def extract_dependencies(properties: set, pom_file) -> set:
     tree = etree.parse(pom_path)
     root = tree.getroot()
 
+
     dependencies = root.find('mvn:dependencies', NAMESPACE)
+
     if dependencies is not None:
         for dependency in dependencies.findall('mvn:dependency', NAMESPACE):
+            groupId = dependency.find('mvn:groupId', NAMESPACE)
             artifactId = dependency.find('mvn:artifactId', NAMESPACE)
-            if artifactId is not None and artifactId.text.strip() == "spring-cloud-starter-netflix-hystrix":
-                properties.add(("circuit_breaker", "Hystrix", ("file", "line", "span")))
 
+            if artifactId is not None:
+                aid = artifactId.text.strip()
+                print(aid)
+                
+                # Hystrix
+                if aid == "spring-cloud-starter-netflix-hystrix":
+                    properties.add(("circuit_breaker", "Hystrix", ("file", "line", "span")))
+
+                # Resilience4j (Spring Boot Starter or modules)
+                if aid.startswith("resilience4j-") or aid == "spring-boot-starter-resilience4j":
+                    properties.add(("circuit_breaker", "Resilience4j", ("file", "line", "span")))
+
+                # MicroProfile Fault Tolerance
+                if aid == "microprofile-fault-tolerance-api":
+                    properties.add(("circuit_breaker", "MicroProfile FT", ("file", "line", "span")))
+
+                # Failsafe
+                if aid == "failsafe":
+                    properties.add(("circuit_breaker", "Failsafe", ("file", "line", "span")))
+                    
+                print("<<<<<<<<<<>>>>><<<<<<<<< CICUIT BREAKER found in dependencies >>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+                
     return properties
+
+#TODO add detect dependencies and properties for Load Ballencer, security, ...
 
 
 def extract_modules(pom_file: dict) -> list:

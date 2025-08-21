@@ -502,15 +502,17 @@ def convert_architecture(microservices: dict, information_flows: dict, external_
                 "recommendation": "Encrypt communication channel or use secure credential management."
             })
         if "authentication_with_plaintext_credentials" in flow.get("stereotype_instances", []):
-             connector["secure"] = False
+            connector["secure"] = False
 
         if "circuit_breaker_link" in flow.get("stereotype_instances", []):
+            connector["isResilient"] = True
+            print(f"{flow['sender']}to {flow['receiver']} : circuitbreak")
             # This is not a security concern, but a resilience pattern
             # Can be added to details if needed
-            pass
         if "load_balanced_link" in flow.get("stereotype_instances", []):
+            connector["loadBalancing"] = True
+            print(f"{flow['sender']}to {flow['receiver']} : ldbalance")
             # Not a security concern
-            pass
         if "encryption" in flow.get("stereotype_instances", []):
             connector["isEncryptedCommunication"] = True
             connector["secure"] = True
