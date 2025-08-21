@@ -40,12 +40,12 @@ def detect_spring_admin_server(microservices: dict, information_flows: dict, dfd
                 trace_info[2] = prop[2][2]
                 if "://" in prop[1]:
                     host = prop[1].split("://")[1].split(":")[0]
-        if "stereotype_instances" in m and "service_discovery" in m["stereotype_instances"]:
+        if "stereotype_instances" in m and "service_registry" in m["stereotype_instances"]:
             reverse = True
         if "stereotype_instances" in m and "configuration_server" in m["stereotype_instances"]:
             config_reverse = True
         if host and host == admin_server:
-            if reverse: # flow admin -> service-discovery
+            if reverse: # flow admin -> service-registry
                 information_flows = ensure_flow_server_to_service(True ,admin_server, trace_info, m, information_flows)
             elif config_reverse:
                 information_flows = ensure_flow_server_to_service(False,admin_server, trace_info, m, information_flows)

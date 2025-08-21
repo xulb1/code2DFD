@@ -17,18 +17,18 @@ def detect_eureka(microservices: dict, information_flows: dict, dfd) -> dict:
         for m in microservices.keys():
             if microservices[m]["name"] == eureka_server:        # this is the eureka server
                 try:
-                    microservices[m]["stereotype_instances"].append("service_discovery")
+                    microservices[m]["stereotype_instances"].append("service_registry")
                 except:
-                    microservices[m]["stereotype_instances"] = "service_discovery"
+                    microservices[m]["stereotype_instances"] = "service_registry"
                 try:
-                    microservices[m]["tagged_values"].append(("Service Discovery", "Eureka"))
+                    microservices[m]["tagged_values"].append(("Service Registry", "Eureka"))
                 except:
-                    microservices[m]["tagged_values"] = ("Service Discovery", "Eureka")
+                    microservices[m]["tagged_values"] = ("Service Registry", "Eureka")
 
                 # Traceability
                 trace = dict()
                 trace["parent_item"] = eureka_server
-                trace["item"] = "service_discovery"
+                trace["item"] = "service_registry"
                 trace["file"] = results[r]["path"]
                 trace["line"] = results[r]["line_nr"]
                 trace["span"] = results[r]["span"]
@@ -103,12 +103,12 @@ def detect_eureka_server_only(microservices: dict, dfd):
         for m in microservices.keys():
             if microservices[m]["name"] == e:        # this is the eureka server
                 try:
-                    microservices[m]["stereotype_instances"].append("service_discovery")
+                    microservices[m]["stereotype_instances"].append("service_registry")
                 except:
-                    microservices[m]["stereotype_instances"] = "service_discovery"
+                    microservices[m]["stereotype_instances"] = "service_registry"
                 try:
-                    microservices[m]["tagged_values"].append(("Service Discovery", "Eureka"))
+                    microservices[m]["tagged_values"].append(("Service Registry", "Eureka"))
                 except:
-                    microservices[m]["tagged_values"] = ("Service Discovery", "Eureka")
+                    microservices[m]["tagged_values"] = ("Service Registry", "Eureka")
 
     return microservices

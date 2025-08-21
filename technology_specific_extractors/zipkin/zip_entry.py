@@ -17,19 +17,19 @@ def detect_zipkin_server(microservices: dict, information_flows: dict, iterative
             elif prop2[0] == "circuit_breaker":
                 circuit_breaker = prop2[1]
 
-        if load_balancer:
-            load_balancer = True
-            try:
-                tagged_values.add(("Load Balancer", load_balancer))
-            except Exception:
-                tagged_values = {("Load Balancer", load_balancer)}
+        # if load_balancer:
+        #     load_balancer = True
+        #     try:
+        #         tagged_values.add(("Load Balancer", load_balancer))
+        #     except Exception:
+        #         tagged_values = {("Load Balancer", load_balancer)}
 
-        if circuit_breaker:
-            circuit_breaker = True
-            try:
-                tagged_values.add(("Circuit Breaker", circuit_breaker))
-            except Exception:
-                tagged_values = {("Circuit Breaker", circuit_breaker)}
+        # if circuit_breaker:
+        #     circuit_breaker = True
+        #     try:
+        #         tagged_values.add(("Circuit Breaker", circuit_breaker))
+        #     except Exception:
+        #         tagged_values = {("Circuit Breaker", circuit_breaker)}
 
         zipkin_server = False
         for prop in microservices[m]["properties"]:
@@ -54,8 +54,8 @@ def detect_zipkin_server(microservices: dict, information_flows: dict, iterative
                                 "receiver": zipkin_server,
                                 "stereotype_instances": ["restful_http"]
                             }
-                            if tagged_values:
-                                information_flows[key]["tagged_values"] = tagged_values
+                            # if tagged_values:
+                            #     information_flows[key]["tagged_values"] = tagged_values
                             if circuit_breaker:
                                 information_flows[key]["stereotype_instances"].append("circuit_breaker_link")
                             if load_balancer:

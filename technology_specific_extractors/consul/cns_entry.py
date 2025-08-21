@@ -10,8 +10,8 @@ def detect_consul(microservices: dict, information_flows: dict, dfd) -> dict:
     for value in microservices.values():
         if "consul:" in value["image"]:
             consul_server.add(value["name"])
-            value.setdefault("stereotype_instances", []).append("service_discovery")
-            value.setdefault("tagged_values", []).append(("Service Discovery", "Consul"))
+            value.setdefault("stereotype_instances", []).append("service_registry")
+            value.setdefault("tagged_values", []).append(("Service Registry", "Consul"))
 
     # Flows
     if consul_server:

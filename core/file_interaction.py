@@ -104,12 +104,13 @@ def search_keywords(keywords: str):
 
                     if content:
                         id_ = max(results.keys(), default=-1) + 1
-                        results[id_] = dict()
-                        results[id_]["content"] = content
-                        results[id_]["name"] = name
-                        results[id_]["path"] = path
-                        results[id_]["line_nr"] = line_nr
-                        results[id_]["span"] = str(span)
+                        results[id_] = {
+                            "content": content,
+                            "name": name,
+                            "path": path,
+                            "line_nr": line_nr,
+                            "span": str(span)
+                        }
     return results
 
 

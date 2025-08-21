@@ -231,15 +231,15 @@ def detect_nginx(microservices: dict, information_flows: dict, external_componen
                         if not "gateway" in microservices[m]["stereotype_instances"]:
                             microservices[m]["stereotype_instances"].append("gateway")
 
-                            # check for service-discovery connection that has to be reverted
-                            discovery_server = False
+                            # check for service-registry connection that has to be reverted
+                            registry_server = False
                             for mi in microservices.keys():
-                                if "stereotype_instances" in microservices[mi] and "service_discovery" in microservices[mi]["stereotype_instances"]:
-                                    discovery_server = microservices[mi]["name"]
-                            if discovery_server:
+                                if "stereotype_instances" in microservices[mi] and "service_registry" in microservices[mi]["stereotype_instances"]:
+                                    registry_server = microservices[mi]["name"]
+                            if registry_server:
                                 for i in information_flows:
-                                    if information_flows[i]["sender"] == gateway and information_flows[i]["receiver"] == discovery_server:
-                                        information_flows[i]["sender"] = discovery_server
+                                    if information_flows[i]["sender"] == gateway and information_flows[i]["receiver"] == registry_server:
+                                        information_flows[i]["sender"] = registry_server
                                         information_flows[i]["receiver"] = gateway
                     else:
                         microservices[m]["stereotype_instances"] = ["gateway"]

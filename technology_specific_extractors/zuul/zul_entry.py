@@ -36,18 +36,18 @@ def detect_zuul(microservices: dict, information_flows: dict, external_component
                     "span": results[r]["span"]
                 })
 
-                # Reverting direction of flow to service discovery, if found
-                discovery_server = False
+                # Reverting direction of flow to service registry, if found
+                registry_server = False
                 for m2 in microservices.values():
                     for s in m2["stereotype_instances"]:
-                        if s == "service_discovery":
-                            discovery_server = m2["name"]
+                        if s == "service_registry":
+                            registry_server = m2["name"]
                             break
-                if discovery_server:
-                    traceability.revert_flow(zuul_server, discovery_server)
+                if registry_server:
+                    traceability.revert_flow(zuul_server, registry_server)
                     for flow in information_flows.values():
-                        if flow["sender"] == zuul_server and flow["receiver"] == discovery_server:
-                            flow["sender"] = discovery_server
+                        if flow["sender"] == zuul_server and flow["receiver"] == registry_server:
+                            flow["sender"] = registry_server
                             flow["receiver"] = zuul_server
 
                 # Adding user
@@ -94,10 +94,10 @@ def detect_zuul(microservices: dict, information_flows: dict, external_component
 
                             if circuit_breaker:
                                 information_flows[key]["stereotype_instances"].append("circuit_breaker_link")
-                                information_flows[key].setdefault("tagged_values",[]).append(("Circuit Breaker", circuit_breaker))
+                                # information_flows[key].setdefault("tagged_values",[]).append(("Circuit Breaker", circuit_breaker))
                             if load_balancer:
                                 information_flows[key]["stereotype_instances"].append("load_balanced_link")
-                                information_flows[key].setdefault("tagged_values",[]).append(("Load Balancer", load_balancer))
+                                # information_flows[key].setdefault("tagged_values",[]).append(("Load Balancer", load_balancer))
 
     tmp.tmp_config.set("DFD", "external_components", str(external_components).replace("%", "%%"))
     return microservices, information_flows, external_components

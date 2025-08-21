@@ -328,10 +328,10 @@ def match_incoming_to_outgoing_endpoints(incoming_endpoints: list, outgoing_endp
                 for prop in m["properties"]:
                     if prop[0] == "load_balancer":
                         stereotype_instances.append("load_balanced_link")
-                        tagged_values.append(("Load Balancer", prop[1]))
+                        # tagged_values.append(("Load Balancer", prop[1]))
                     elif prop[0] == "circuit_breaker":
                         stereotype_instances.append("circuit_breaker_link")
-                        tagged_values.append(("Circuit Breaker", prop[1]))
+                        # tagged_values.append(("Circuit Breaker", prop[1]))
                 for s in m["stereotype_instances"]:
                     if s == "authentication_scope_all_requests":
                         stereotype_instances.append("authenticated_request")

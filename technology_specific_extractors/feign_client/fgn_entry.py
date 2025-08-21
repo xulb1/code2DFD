@@ -45,10 +45,10 @@ def set_information_flows(dfd) -> dict:
                         load_balancer = "Spring Cloud Load Balancer" # Load balancer if Ribbon is explicitely disabled (also, recently recommended)
                     elif prop[0] == "circuit_breaker":
                         stereotype_instances.append("circuit_breaker_link")
-                        tagged_values.add(("Circuit Breaker", prop[1]))
+                        # tagged_values.add(("Circuit Breaker", prop[1]))
                     elif prop[0] == "feign_hystrix":
                         stereotype_instances.append("circuit_breaker_link")
-                        tagged_values.add(("Circuit Breaker", "Hystrix"))
+                        # tagged_values.add(("Circuit Breaker", "Hystrix"))
 
         tagged_values.add(("Load Balancer", load_balancer))
 
@@ -76,20 +76,21 @@ def set_information_flows(dfd) -> dict:
                 if target_service and microservice:
                     # set flow
                     id2 = max(information_flows.keys(), default=-1) + 1
-                    information_flows[id2] = dict()
-
-                    information_flows[id2]["sender"] = microservice
-                    information_flows[id2]["receiver"] = target_service
-                    information_flows[id2]["stereotype_instances"] = stereotype_instances
-                    information_flows[id2]["tagged_values"] = tagged_values
-
-                    trace = dict()
-                    trace["item"] = microservice + " -> " + target_service
-                    trace["file"] = results[id]["path"]
-                    trace["line"] = results[id]["line_nr"]
-                    trace["span"] = results[id]["span"]
-
-                    traceability.add_trace(trace)
+                    information_flows[id2] = {
+                        "sender": microservice,
+                        "receiver": target_service,
+                        "stereotype_instances": stereotype_instances,
+                        "tagged_values": tagged_values
+                    }
+                    
+                    traceability.add_trace(
+                        {
+                            "item": f"{microservice} -> {target_service}",
+                            "file": results[id]["path"],
+                            "line": results[id]["line_nr"],
+                            "span": results[id]["span"]
+                        }
+                    )
 
     tmp.tmp_config.set("DFD", "information_flows", str(information_flows).replace("%", "%%"))
     return information_flows

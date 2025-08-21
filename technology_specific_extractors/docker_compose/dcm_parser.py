@@ -279,11 +279,11 @@ def extract_information_flows(file_content:  str, microservices: dict, informati
     yaml = ruamel.yaml.YAML()
     yaml.Constructor = MyConstructor
 
-    discovery_server, config_server = False, False
+    registry_server, config_server = False, False
     for m in microservices.values():
         if "stereotype_instances" in m:
-            if "service_discovery" in m["stereotype_instances"]:
-                discovery_server = m["name"]
+            if "service_registry" in m["stereotype_instances"]:
+                registry_server = m["name"]
             if "configuration_server" in m["stereotype_instances"]:
                 config_server = m["name"]
 
@@ -293,14 +293,14 @@ def extract_information_flows(file_content:  str, microservices: dict, informati
         for s in file.get("services"):
             try:
                 links = file.get("services", {}).get(s).get("links")
-                information_flows = get_flows(s,links, microservices, information_flows, discovery_server, config_server)
+                information_flows = get_flows(s,links, microservices, information_flows, registry_server, config_server)
             except:
                 pass
     else:
         for s in file.keys():
             try:
                 links = file.get(s).get("links")
-                information_flows = get_flows(s,links, microservices, information_flows, discovery_server, config_server)
+                information_flows = get_flows(s,links, microservices, information_flows, registry_server, config_server)
             except:
                 pass
     
@@ -308,27 +308,27 @@ def extract_information_flows(file_content:  str, microservices: dict, informati
         for s in file.get("services"):
             try:
                 depends_on = file.get("services", {}).get(s).get("depends_on")
-                information_flows = get_flows(s,depends_on, microservices, information_flows, discovery_server, config_server)
+                information_flows = get_flows(s,depends_on, microservices, information_flows, registry_server, config_server)
             except:
                 pass
     else:
         for s in file.keys():
             try:
                 depends_on = file.get(s).get("depends_on")
-                information_flows = get_flows(s,depends_on, microservices, information_flows, discovery_server, config_server)
+                information_flows = get_flows(s,depends_on, microservices, information_flows, registry_server, config_server)
             except:
                 pass
     
     return information_flows
 
-def get_flows(s: str, links: str, microservices: dict, information_flows: dict, discovery_server: bool, config_server: bool) -> dict:
+def get_flows(s: str, links: str, microservices: dict, information_flows: dict, registry_server: bool, config_server: bool) -> dict:
     if not links:
         return information_flows
     
     for link in links:
         for m in microservices.values():
             if  m["name"] == link:
-                if link not in {discovery_server, config_server}:
+                if link not in {registry_server, config_server}:
                     newKey = max(information_flows.keys(), default=-1) + 1
                     information_flows[newKey] = {
                         "sender": s,

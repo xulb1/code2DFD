@@ -29,20 +29,20 @@ def detect_spring_cloud_gateway(microservices: dict, information_flows: dict, ex
                     })
 
     if server:
-        # Reverting direction of flow to service discovery, if found
-        discovery_server = False
+        # Reverting direction of flow to service registry, if found
+        registry_server = False
         for m in microservices.values():
             for s in m["stereotype_instances"]:
-                if s == "service_discovery":
-                    discovery_server = m["name"]
+                if s == "service_registry":
+                    registry_server = m["name"]
                     break
-        if discovery_server:
+        if registry_server:
             for flow in information_flows.values():
-                if flow["sender"] == server and flow["receiver"] == discovery_server:
-                    flow["sender"] = discovery_server
+                if flow["sender"] == server and flow["receiver"] == registry_server:
+                    flow["sender"] = registry_server
                     flow["receiver"] = server
 
-                    traceability.revert_flow(server, discovery_server)
+                    traceability.revert_flow(server, registry_server)
 
         # Adding user
         external_components = ext.add_user(external_components)

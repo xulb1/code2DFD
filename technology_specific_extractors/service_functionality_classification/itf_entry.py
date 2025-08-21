@@ -7,6 +7,7 @@ def classify_internal_infrastructural(microservices: dict) -> dict:
 
     infrastructural_stereotypes = [ "configuration_server",
                                     "administration_server",
+                                    "service_registry",
                                     "service_discovery",
                                     "gateway",
                                     "message_broker",

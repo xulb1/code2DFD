@@ -371,10 +371,10 @@ def convert_architecture(microservices: dict, information_flows: dict, external_
             component["technicalType"] = "MonitoringTool"
             component["toolName"] = find_tagged_value(ms.get("tagged_values", []), "Monitoring Server")
             component["hasMonitoringDashboard"] = "monitoring_dashboard" in ms.get("stereotype_instances", [])
-        if "service_discovery" in ms.get("stereotype_instances", []):
+        if "service_registry" in ms.get("stereotype_instances", []):
             component["type"] = "TechnicalComponent"
-            component["technicalType"] = "ServiceDiscovery"
-            component["toolName"] = find_tagged_value(ms.get("tagged_values", []), "Service Discovery")
+            component["technicalType"] = "ServiceRegistry"
+            component["toolName"] = find_tagged_value(ms.get("tagged_values", []), "Service Registry")
         if "authorization_server" in ms.get("stereotype_instances", []):
             component["type"] = "TechnicalComponent"
             component["technicalType"] = "AuthService"
