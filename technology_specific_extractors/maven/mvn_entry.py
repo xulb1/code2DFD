@@ -40,7 +40,8 @@ def set_microservices(dfd) -> dict:
             module_dict[(pom_file["name"])] = modules
         else:
             microservice, properties = parse_configurations(pom_file)
-            print(microservice[0])
+            
+            print("Dépendences maven de :",microservice[0])
             properties = extract_dependencies(properties, pom_file)
             if microservice[0]:
                 port = dcr.detect_port(pom_file["path"])
@@ -91,9 +92,10 @@ def extract_dependencies(properties: set, pom_file) -> set:
             groupId = dependency.find('mvn:groupId', NAMESPACE)
             artifactId = dependency.find('mvn:artifactId', NAMESPACE)
 
+            
             if artifactId is not None:
                 aid = artifactId.text.strip()
-                print(aid)
+                print("-",aid)
                 
                 # Hystrix
                 if aid == "spring-cloud-starter-netflix-hystrix":
@@ -111,7 +113,7 @@ def extract_dependencies(properties: set, pom_file) -> set:
                 if aid == "failsafe":
                     properties.add(("circuit_breaker", "Failsafe", ("file", "line", "span")))
                     
-                print("<<<<<<<<<<>>>>><<<<<<<<< CICUIT BREAKER found in dependencies >>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+                # print("<<<<<<<<<<>>>>><<<<<<<<< CICUIT BREAKER found in dependencies >>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
                 
     return properties
 

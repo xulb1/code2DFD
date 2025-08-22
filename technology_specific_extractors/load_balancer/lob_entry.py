@@ -11,43 +11,43 @@ def detect_load_balancers(microservices: dict, information_flows: dict, dfd) -> 
     for r in results.keys():
         microservice = tech_sw.detect_microservice(results[r]["path"], dfd)
 
-        correct_id = False
-        for m in microservices.keys():
-            if microservices[m]["name"] == microservice:
-                if "stereotype_instances" in microservices[m]:
-                    microservices[m]["stereotype_instances"].append("load_balancer")
+        for m in microservices.values():
+            if m["name"] == microservice:
+                if "stereotype_instances" in m:
+                    m["stereotype_instances"].append("load_balancer")
                 else:
-                    microservices[m]["stereotype_instances"] = ["load_balancer"]
-                if "tagged_values" in microservices[correct_id]:
-                    microservices[m]["tagged_values"].append(('Load Balancer', "Spring Cloud"))
+                    m["stereotype_instances"] = ["load_balancer"]
+                if "tagged_values" in m:
+                    m["tagged_values"].append(('Load Balancer', "Spring Cloud"))
                 else:
-                    microservices[m]["tagged_values"] = [('Load Balancer', "Spring Cloud")]
-
+                    m["tagged_values"] = [('Load Balancer', "Spring Cloud")]
+                
+                print("lob_entry :","SpringCloud","<<<<<<<<<<<<<<<<<load balancer")
                 # # Traceability
-                trace = dict()
-
-                trace["parent_item"] = microservice
-                trace["item"] = "load_balancer"
-                trace["file"] = results[r]["path"]
-                trace["line"] = results[r]["line_nr"]
-                trace["span"] = results[r]["span"]
-
-                traceability.add_trace(trace)
+                traceability.add_trace(
+                    {
+                        "parent_item": microservice,
+                        "item": "load_balancer",
+                        "file": results[r]["path"],
+                        "line": results[r]["line_nr"],
+                        "span": results[r]["span"]
+                    }
+                )
 
                 # adjust flows going from this service
-                for i in information_flows.keys():
-                    if information_flows[i]["sender"] == microservice:
-                        if "stereotype_instances" in information_flows[i]:
-                            information_flows[i]["stereotype_instances"].append("load_balanced_link")
+                for i in information_flows.values():
+                    if i["sender"] == microservice:
+                        if "stereotype_instances" in i:
+                            i["stereotype_instances"].append("load_balanced_link")
                         else:
-                            information_flows[i]["stereotype_instances"] = ["load_balanced_link"]
+                            i["stereotype_instances"] = ["load_balanced_link"]
 
-                        if "tagged_values" in information_flows[i]:
-                            if type(information_flows[i]["tagged_values"]) == list:
-                                information_flows[i]["tagged_values"].append(('Load Balancer', "Spring Cloud"))
-                            else:
-                                information_flows[i]["tagged_values"].add(('Load Balancer', "Spring Cloud"))
-                        else:
-                            information_flows[i]["tagged_values"] = [('Load Balancer', "Spring Cloud")]
+                        # if "tagged_values" in information_flows[i]:
+                        #     if type(information_flows[i]["tagged_values"]) == list:
+                        #         information_flows[i]["tagged_values"].append(('Load Balancer', "Spring Cloud"))
+                        #     else:
+                        #         information_flows[i]["tagged_values"].add(('Load Balancer', "Spring Cloud"))
+                        # else:
+                        #     information_flows[i]["tagged_values"] = [('Load Balancer', "Spring Cloud")]
 
     return microservices, information_flows

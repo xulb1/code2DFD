@@ -42,24 +42,21 @@ def detect_hystrix_circuit_breakers(microservices: dict, information_flows: dict
     for r in results.keys():
         microservice = tech_sw.detect_microservice(results[r]["path"], dfd)
         for line in results[r]["content"]:
-            if "@EnableHystrix" in line and not "@EnableHystrixDashboard" in line:
-                for m in microservices.keys():
-                    if microservices[m]["name"] == microservice:
-                        try:
-                            microservices[m]["stereotype_instances"].append("circuit_breaker")
-                        except:
-                            microservices[m]["stereotype_instances"] = ["circuit_breaker"]
-                        try:
-                            microservices[m]["tagged_values"].append(("Circuit Breaker", "Hystrix"))
-                        except:
-                            microservices[m]["tagged_values"] = [("Circuit Breaker", "Hystrix")]
+            if "@EnableHystrix" in line and "Dashboard" not in line:
+                for m in microservices.values():
+                    if m["name"] == microservice:
+                        m.setdefault("stereotype_instances",[]).append("circuit_breaker")
+                        m.setdefault("tagged_values",[]).append(("Circuit Breaker", "Hystrix"))
+                        print("parsefile : ","hystrix","<<<<<<<<< circuit breaker",microservice)
 
-                        trace = dict()
-                        trace["parent_item"] = microservices[m]["name"]
-                        trace["item"] = "circuit_breaker"
-                        trace["file"] = results[r]["path"]
-                        trace["line"] = results[r]["line_nr"]
-                        trace["span"] = results[r]["span"]
-                        traceability.add_trace(trace)
+                        traceability.add_trace(
+                            {
+                                "parent_item": m["name"],
+                                "item": "circuit_breaker",
+                                "file": results[r]["path"],
+                                "line": results[r]["line_nr"],
+                                "span": results[r]["span"],
+                            }
+                        )
 
     return microservices, information_flows

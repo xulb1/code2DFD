@@ -99,7 +99,7 @@ def detect_circuit_breakers(microservices: dict, information_flows: dict, dfd) -
                         if circuit_breaker_tuple not in tagged:
                             tagged.append(circuit_breaker_tuple)
 
-                    print(circuit_breaker_tuple,"<<<<<<<<<<<<<<<<<<<<<<<<<<<<çççççççç")
+                    print(circuit_breaker_tuple,"<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<circuitbreaker")
                     # Mise à jour des flux sortants
                     for flow in information_flows.values():
                         if flow["sender"] == microservice:

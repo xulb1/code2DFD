@@ -87,7 +87,9 @@ def DFD_extraction():
     microservices1, information_flows, external_components = dict(), dict(), dict()
 
     microservices = tech_sw.get_microservices(dfd)
-    assert microservices != microservices1, "Egalité - 1"
+    if microservices == microservices1:
+        print("\n/!\\ Aucun microservice détecté /!\\")
+        return None,None
     
     microservices = detect_databases(microservices)
     microservices = overwrite_port(microservices)

@@ -99,3 +99,26 @@ serice:
 TODO: actuor endpoints
 dependency check
 
+
+VérifiR!gle sde sécurités 
+
+TODO: R1 : vérif de la présence de logique d'auth sur la gateway
+TODO: R2 : auth entre services
+TODO: R3 : une seul logique d'auth
+TODO: R4 : adaptation des tokens externes 
+TODO: R5 : vérif des token intern avant l'envoi de requetes
+TODO: R6 : limite sur le nbr de tentative de co
+TODO: R7 : 
+TODO: R8
+TODO: R9
+TODO: R10
+TODO: R11
+TODO: R12
+R13 : circuit breaker
+R14 : load balancer
+TODO: R15
+TODO: R16
+TODO: R17
+TODO: R18
+TODO: R19
+TODO: R20

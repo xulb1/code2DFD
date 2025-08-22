@@ -23,12 +23,13 @@ def set_information_flows(dfd) -> dict:
         microservice = tech_sw.detect_microservice(results[id]["path"], dfd)
         for line in results[id]["content"]:
             if "@EnableCircuitBreaker" in line:
-                for m in microservices.keys():
-                    if microservices[m]["name"] == microservice:
+                for m in microservices.values():
+                    if m["name"] == microservice:
                         try:
-                            microservices[m]["properties"].append("hystrix_enabled")
+                            m["properties"].append("hystrix_enabled")
                         except:
-                            microservices[m]["properties"] = {("hystrix_enabled")}
+                            m["properties"] = {("hystrix_enabled")}
+                        print("fgn_entry : ","hystrix","<<<<<<<<< circuit breaker",microservice)
 
     results = fi.search_keywords("@FeignClient")     # content, name, path
     for id in results.keys():

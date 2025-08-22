@@ -22,5 +22,6 @@ def detect_client_side(microservices: dict, dfd) -> dict:
                     if m["name"] == microservice:
                         m.setdefault("stereotype_instances",[]).append("load_balancer")
                         m.setdefault("tagged_values",[]).append(("Load Balancer", "Ribbon"))
+                        print("rib_entry:","Ribbon","<<<<<<<<<<<<<<<<load Balancer")
 
     return microservices

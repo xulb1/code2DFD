@@ -7,6 +7,34 @@ import core.file_interaction as fi
 import tmp.tmp as tmp
 from output_generators.logger import logger
 
+LOAD_BALANCER_KEYWORDS = {
+    # Spring Cloud
+    "spring.cloud.loadbalancer": "Spring Cloud",
+    "spring.cloud.gateway.loadbalancer" : "Spring Cloud",
+    "spring.cloud.openfeign.loadbalancer" : "Spring Cloud",
+    # Ribbon
+    "ribbon" : "Ribbon",
+    # gRPC
+    "defaultLoadBalancingPolicy" : "gRPC",
+    "grpc.loadbalancer" : "gRPC",
+    "grpc.lb_policy" : "gRPC",
+    # Kubernetes / Infra
+    "service.type: LoadBalancer" : "K8s",
+    "loadBalancerIP" : "K8s",
+    "loadBalancerSourceRanges" : "K8s/infra"
+}
+
+CIRCUIT_BREAKER_KEYWORDS = {
+    "hystrix": "Hystrix",
+    "resilience4j.circuitbreaker." : "Resilience4j",
+    "resilience4j.retry." : "Resilience4j",
+    "resilience4j.timelimiter." : "Resilience4j",
+    "resilience4j.bulkhead." : "Resilience4j",
+    "spring.cloud.circuitbreaker." : "Spring Cloud",
+    "spring.cloud.sentinel." : "Spring Cloud"
+}
+
+
 
 # The following is taken from ruamel.yaml's author as a workaround for getting line count for str objects
 # https://stackoverflow.com/questions/45716281/parsing-yaml-get-line-numbers-even-in-ordered-maps/45717104#45717104
@@ -225,26 +253,29 @@ def parse_yaml_file(file_path: str) -> str:
                     properties.add(("port", port, trace))
 
             # Load Balancer
-            if "ribbon" in document:
-                load_balancer = document.get("ribbon")
-                if load_balancer != None:
+            for keyword,value in LOAD_BALANCER_KEYWORDS.items():
+                if keyword in str(document):  # on regarde si le keyword existe dans le dict YAML
                     for nr in range(len(lines)):
-                        if "ribbon" in lines[nr]:
+                        if keyword in lines[nr]:
                             line_nr = nr
-                    span = re.search(re.escape("ribbon"), lines[line_nr]).span()
-                    span = (span[0] + 1, span[1] + 1)
-                    trace = (file_path, line_nr + 1, span)
-                    properties.add(("load_balancer", "Ribbon", trace))
+                            span = re.search(re.escape(keyword), lines[line_nr]).span()
+                            span = (span[0] + 1, span[1] + 1)
+                            trace = (file_path, line_nr + 1, span)
+                            properties.add(("load_balancer", value, trace))
+                            print("parsefile : ",value,"<<<<<<<<< load balancer")
 
+            
             # Ciruit breaker
-            if "hystrix" in document:
-                circuit_breaker = document.get("hystrix")
-                if circuit_breaker != None:
+            for keyword,value in CIRCUIT_BREAKER_KEYWORDS.items():
+                if keyword in str(document):
                     for nr in range(len(lines)):
-                        if "hystrix" in lines[nr]:
+                        if keyword in lines[nr]:
                             line_nr = nr
-                    trace = ("file", "line", "span")
-                    properties.add(("circuit_breaker", "Hystrix", trace))
+                            span = re.search(re.escape(keyword), lines[line_nr]).span()
+                            span = (span[0] + 1, span[1] + 1)
+                            trace = (file_path, line_nr + 1, span)
+                            properties.add(("circuit_breaker", value, trace))
+                            print("parsefile : ",value,"<<<<<<<<< circuit breaker")
 
             # Eureka
             if "eureka" in document and "client" in document.get("eureka") and "serviceUrl" in document.get("eureka").get("client") and "defaultZone" in document.get("eureka").get("client").get("serviceUrl"):
