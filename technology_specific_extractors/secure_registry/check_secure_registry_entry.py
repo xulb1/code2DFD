@@ -4,6 +4,7 @@ import output_generators.traceability as traceability
 
 # Mots-clés pour la détection de la sécurité dans un registre de services
 
+# TODO: VOIR POUR LES COM SÉCU INTERSERVICES
 SECURITY_KEYWORDS = {
     "Eureka": [
         "spring-boot-starter-security",

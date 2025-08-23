@@ -57,7 +57,7 @@ def extract_variable(line, submodule):
     return line.split("=")[0].strip().split()[-1] if "=" in line else line.split(";")[0].strip().split()[-1]
 
 
-def search_keywords(keywords: str, directory_path=None):
+def search_keywords_v0(keywords: str, directory_path=None):
     """Searches keywords locally using grep.
     """
     if directory_path:
@@ -115,6 +115,91 @@ def search_keywords(keywords: str, directory_path=None):
                         }
     return results
 
+
+def search_keywords(keywords: str, directory_path=None, file_extension=None):
+    """
+    Recherche des mots-clés localement en utilisant grep avec un filtre d'extension de fichier.
+    """
+    if directory_path:
+        repo_folder = directory_path
+    else:
+        repo_folder = tmp.tmp_config["Repository"]["local_path"]
+
+    results = {}
+
+    if isinstance(keywords, str):
+        keywords = [keywords]
+
+    for keyword in keywords:
+        grep_command = ['grep', '-rn']
+        
+        # filtre par extension de fichier
+        if file_extension:
+            pattern_string = ",".join(file_extension)
+            include_argument = f"--include={{{pattern_string}}}"
+            grep_command.append(include_argument)
+        
+        if keyword[-1] == "(":
+            keyword = "\"" + keyword + "\""
+        
+        grep_command.extend([keyword, repo_folder])
+
+        try:
+            out = subprocess.Popen(grep_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            stdout, stderr = out.communicate()
+            
+            stdout = stdout.decode('utf-8')
+        except Exception as e:
+            logger.info(f"Error executing grep command: {e}")
+            stdout = ""
+
+        seen = set()
+        for line in stdout.splitlines():
+            if line.startswith("Binary file"):
+                continue
+            
+            line_parts = line.split(":", 2)
+            if len(line_parts) < 3:
+                continue
+            
+            full_path = line_parts[0]
+            if full_path not in seen:
+                seen.add(full_path)
+                
+                # Exclusion des fichiers de test et markdown, etc.
+                if not "test" in full_path and len(full_path) >= 3 and not os.path.splitext(full_path)[1] == ".md":
+                    path = os.path.relpath(full_path, start=repo_folder)
+                    name = os.path.basename(path)
+                    line_nr = line_parts[1]
+                    code_line = line_parts[2]
+                    
+                    try:
+                        match = re.search(re.escape(keyword.strip('"')), code_line)
+                    except Exception as e:
+                        logger.info(f"Error in regex matching for keyword {keyword}: {e}")
+                        match = None
+                        
+                    if match is None:
+                        continue
+                        
+                    span = match.span()
+                    
+                    try:
+                        with open(full_path, 'r', encoding='utf-8') as file:
+                            content = file.readlines()
+                    except:
+                        content = False
+
+                    if content:
+                        id_ = max(results.keys(), default=-1) + 1
+                        results[id_] = {
+                            "content": content,
+                            "name": name,
+                            "path": path,
+                            "line_nr": line_nr,
+                            "span": str(span)
+                        }
+    return results
 
 def pagList2lines(pagList) -> dict:
     """Converts paginated list into files as lines.

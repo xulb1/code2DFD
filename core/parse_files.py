@@ -146,6 +146,7 @@ def parse_properties_file(file_path: str) -> str:
                 properties.add(("config_uri", config_uri, trace))
                 properties.add(("config_connected", True, trace))
 
+#TODO:
         # SSL
         elif "server.ssl" in line:
             # Default for enabled is true when ssl keyword is given
@@ -475,6 +476,7 @@ def parse_yaml_file(file_path: str) -> str:
                                 #span = (span[0] + 1, span[1] + 1)
                                 trace = (file_path, line_nr + 1, "span")
                                 properties.add(("spring_cloud_gateway_route", route["id"], trace))
+                                properties.add(("gateway", route["id"], trace))
 
                     # Consul connection
                     if "consul" in document.get("spring").get("cloud") and "host" in document.get("spring").get("cloud").get("consul"):
@@ -693,6 +695,7 @@ def parse_yaml_file(file_path: str) -> str:
                         trace = (file_path, line_nr + 1, span)
                         properties.add(("datasource_username", neo4j_username, trace))
 
+#TODO:
             # SSL
             # Default for enabled is true, when any configurations are made
             if "server" in document and "ssl" in document.get("server"):

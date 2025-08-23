@@ -50,7 +50,13 @@ from technology_specific_extractors.kafka.kfk_entry import detect_kafka_server
 from technology_specific_extractors.nginx.ngn_entry import detect_nginx
 from technology_specific_extractors.zuul.zul_entry import detect_zuul
 from technology_specific_extractors.ssl.ssl_entry import detect_ssl_services
-from technology_specific_extractors.secure_registry.test_secure_registry_entry import check_registry_security
+
+# R17
+from technology_specific_extractors.secure_registry.check_secure_registry_entry import check_registry_security
+# R7
+from technology_specific_extractors.encrypted_com.external_communication_entry import check_external_encryption
+# R8
+from technology_specific_extractors.encrypted_com.internal_communication_entry import check_inter_service_encryption
 
 
 def perform_analysis():
@@ -257,8 +263,11 @@ def classify_microservices(microservices: dict, information_flows: dict, externa
     microservices = classify_internal_infrastructural(microservices)
     # print("az")
     microservices = set_plaintext_credentials(microservices)
-
+    
+    # Check security rules
     microservices = check_registry_security(microservices)
+    microservices = check_inter_service_encryption(microservices,information_flows)
+    microservices = check_external_encryption(microservices)
     
     return microservices, information_flows, external_components
 
@@ -303,6 +312,9 @@ def detect_miscellaneous(microservices: dict, information_flows: dict, external_
 
     for microservice in microservices.values():
         for prop in microservice.get("properties", []):
+            if "gateway" in prop[0]:
+                microservice["stereotype_instances"].append("gateway")
+            
             # external mail server
             if prop[0] == "mail_host":
                 mail_username, mail_password = None, None

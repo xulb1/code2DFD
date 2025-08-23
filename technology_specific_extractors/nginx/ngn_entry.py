@@ -227,29 +227,26 @@ def detect_nginx(microservices: dict, information_flows: dict, external_componen
             # adjust gateway annotations
             for m in microservices.keys():
                 if microservices[m]["name"] == gateway:
-                    if "stereotype_instances" in microservices[m]:
-                        if not "gateway" in microservices[m]["stereotype_instances"]:
-                            microservices[m]["stereotype_instances"].append("gateway")
-
-                            # check for service-registry connection that has to be reverted
-                            registry_server = False
-                            for mi in microservices.keys():
-                                if "stereotype_instances" in microservices[mi] and "service_registry" in microservices[mi]["stereotype_instances"]:
-                                    registry_server = microservices[mi]["name"]
-                            if registry_server:
-                                for i in information_flows:
-                                    if information_flows[i]["sender"] == gateway and information_flows[i]["receiver"] == registry_server:
-                                        information_flows[i]["sender"] = registry_server
-                                        information_flows[i]["receiver"] = gateway
-                    else:
-                        microservices[m]["stereotype_instances"] = ["gateway"]
+                    microservices[m].setdefault("stereotype_instances",[]).append("gateway")
+                    
+                    # check for service-registry connection that has to be reverted
+                    registry_server = False
+                    for mi in microservices.keys():
+                        if "stereotype_instances" in microservices[mi] and "service_registry" in microservices[mi]["stereotype_instances"]:
+                            registry_server = microservices[mi]["name"]
+                    if registry_server:
+                        for i in information_flows:
+                            if information_flows[i]["sender"] == gateway and information_flows[i]["receiver"] == registry_server:
+                                information_flows[i]["sender"] = registry_server
+                                information_flows[i]["receiver"] = gateway
 
             # Set connection between web app and gateway
-            id = max(information_flows.keys(), default=-1) + 1
-            information_flows[id] = dict()
-            information_flows[id]["sender"] = web_app
-            information_flows[id]["receiver"] = gateway
-            information_flows[id]["stereotype_instances"] = ["restful_http"]
+            key = max(information_flows.keys(), default=-1) + 1
+            information_flows[key] = {
+                "sender": web_app,
+                "receiver": gateway,
+                "stereotype_instances": ["restful_http"]
+            }
 
             # Check if user exists
             user_exists = False
@@ -265,14 +262,15 @@ def detect_nginx(microservices: dict, information_flows: dict, external_componen
                     elif information_flows[i]["sender"] == "user" and information_flows[i]["receiver"] == gateway:
                         information_flows[i]["receiver"] = web_app
 
-                    trace = dict()
-                    trace["item"] = web_app + " -> user"
-                    trace["file"] = "implicit"
-                    trace["line"] = "implicit"
-                    trace["span"] = "implicit"
+                    trace = {
+                        "item": f"{web_app} -> user",
+                        "file": "implicit",
+                        "line": "implicit",
+                        "span": "implicit"
+                    }
                     traceability.add_trace(trace)
 
-                    trace["item"] = "user -> " + web_app
+                    trace["item"] = f"user -> {web_app}"
                     traceability.add_trace(trace)
             else:
                 # Add user

@@ -31,25 +31,25 @@ def set_microservices(dfd) -> dict:
             microservice, properties = parse_configurations(gradle_file)
 
             if microservice[0]:
-                id = max(microservices.keys(), default=-1) + 1
-                microservices[id] = dict()
-
-                microservices[id]["name"] = microservice[0]
-                microservices[id]["image"] = image
-                microservices[id]["type"] = "internal"
-                microservices[id]["gradle_path"] = gradle_file["path"]
-                microservices[id]["properties"] = properties
-                microservices[id]["stereotype_instances"] = list()
-                microservices[id]["tagged_values"] = list()
+                key = max(microservices.keys(), default=-1) + 1
+                microservices[key] = {
+                    "name": microservice[0],
+                    "image": image,
+                    "type": "internal",
+                    "gradle_path": gradle_file["path"],
+                    "properties": properties,
+                    "stereotype_instances": list(),
+                    "tagged_values": list()
+                }
 
                 try:
-                    trace = dict()
                     name = microservice[0]
-                    trace["item"] = name
-                    trace["file"] = microservice[1][0]
-                    trace["line"] = microservice[1][1]
-                    trace["span"] = microservice[1][2]
-                    traceability.add_trace(trace)
+                    traceability.add_trace({
+                        "item": name,
+                        "file": microservice[1][0],
+                        "line": microservice[1][1],
+                        "span": microservice[1][2]
+                    })
                 except:
                     pass
 
