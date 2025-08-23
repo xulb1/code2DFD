@@ -2,78 +2,185 @@ import core.file_interaction as fi
 import core.technology_switch as tech_sw
 import output_generators.traceability as traceability
 
+# --- Keywords pour Eureka (annotations, imports et config) ---
+SERVER_KEYWORDS = [
+    "@EnableEurekaServer",
+    "spring-cloud-starter-netflix-eureka-server",
+    "eureka:",
+    "eureka.server"
+]
+CLIENT_KEYWORDS = [
+    "@EnableEurekaClient",
+    "@EnableDiscoveryClient",
+    "spring-cloud-starter-netflix-eureka-client",
+    "eureka.client.serviceUrl.defaultZone",
+    "eureka.instance",
+    "eureka.client"
+]
 
 def detect_eureka(microservices: dict, information_flows: dict, dfd) -> dict:
-    """Detects Eureka servers if there are any.
-    """
+    """Detects Eureka servers and clients using annotations, imports, dependencies, and YAML keywords."""
+    eureka_servers = set()
 
-    # Server (/microservice classification)
-    results = fi.search_keywords("@EnableEurekaServer")
+    # --- Detect servers via annotations / imports / dependencies ---
+    for keyword in SERVER_KEYWORDS:
+        print("\n\n================================================================================================")
+        results = fi.search_keywords(keyword)
+        for res in results.values():
+            if (keyword=="eureka:" and "docker" not in res['name'])\
+                or (len(res["path"].split("/"))>1 and any(ext in res["name"] for ext in ["yml","xml"])):
+                    continue
+            if all(keyword not in r for r in res["content"]):
+                continue
+            if any(any((word in r and keyword in r) for word in ["defaultZone","ENTRYPOINT"]) for r in res["content"]):
+                continue
+            
+            server_name = tech_sw.detect_microservice(res["path"], dfd)
+            eureka_servers.add(server_name)
+            serverFound = False
+            
+            # Ajouter stéréotype et tagged values
+            for m in microservices.values():
+                if m["name"] == server_name:
+                    m.setdefault("stereotype_instances", []).append("service_registry")
+                    m.setdefault("tagged_values", []).append(("Service Registry", "Eureka"))
+                    print(m["name"],"rrrr<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< afjsaklmf")
+                    print(keyword,res["path"])
+                    # Traceability
+                    traceability.add_trace({
+                        "parent_item": server_name,
+                        "item": "service_registry",
+                        "file": res["path"],
+                        "line": res["line_nr"],
+                        "span": res["span"]
+                    })
+                    serverFound = True
+            if not serverFound:
+                print("33[0m Il existe un server Eureka, mais le microservice associé n'a pas été trouvé -------")
 
-    eureka_server = False
-    for r in results.keys():
-        eureka_server = tech_sw.detect_microservice(results[r]["path"], dfd)
+    print("eurekaservers",eureka_servers)
+    if not eureka_servers:
+        return microservices, information_flows
 
-        for m in microservices.keys():
-            if microservices[m]["name"] == eureka_server:        # this is the eureka server
-                try:
-                    microservices[m]["stereotype_instances"].append("service_registry")
-                except:
-                    microservices[m]["stereotype_instances"] = "service_registry"
-                try:
-                    microservices[m]["tagged_values"].append(("Service Registry", "Eureka"))
-                except:
-                    microservices[m]["tagged_values"] = ("Service Registry", "Eureka")
+    # --- Detect clients via annotations / dependencies / config ---
+    client_results = set()
+    for keyword in CLIENT_KEYWORDS:
+        results = fi.search_keywords(keyword)
+        for r, res in results.items():
+            client_results.add((res["path"], res["line_nr"], res["span"]))
+
+    participants = set()
+    for file_path, line_nr, span in client_results:
+        service_name = tech_sw.detect_microservice(file_path, dfd)
+        for m in microservices.values():
+            if m["name"] == service_name:
+                participants.add((service_name, file_path, line_nr, span))
+
+    # --- Ajouter les participants signalés via propriété custom ---
+    for m_id, m in microservices.items():
+        for prop in m.get("properties", []):
+            if prop[0] == "eureka_connected" and m["name"] not in [p[0] for p in participants]:
+                participants.add((m["name"], prop[2][0], prop[2][1], prop[2][2]))
+
+    # --- Ajouter les flows des clients vers les serveurs Eureka ---
+    if information_flows is None:
+        information_flows = dict()
+
+    for participant in participants:
+        participant_name, file_path, line_nr, span = participant
+        for server_name in eureka_servers:
+            if participant_name != server_name:
+                flow_id = max(information_flows.keys(), default=-1) + 1
+                information_flows[flow_id] = {
+                    "sender": participant_name,
+                    "receiver": server_name,
+                    "stereotype_instances": ["restful_http"]
+                }
+                traceability.add_trace({
+                    "item": f"{participant_name} -> {server_name}",
+                    "file": file_path,
+                    "line": line_nr,
+                    "span": span
+                })
+
+    return microservices, information_flows
+
+
+def detect_eureka_v0(microservices: dict, information_flows: dict, dfd) -> dict:
+    """Detect Eureka servers and clients, enrich microservices and flows."""
+    
+    # --- Detect Eureka servers ---
+    server_results = fi.search_keywords("@EnableEurekaServer")
+    eureka_servers = []
+
+    for result in server_results.values():
+        server_name = tech_sw.detect_microservice(result["path"], dfd)
+        eureka_servers.append(server_name)
+
+        # Add stereotype and tagged values
+        for m in microservices.values():
+            if m["name"] == server_name:
+                m.setdefault("stereotype_instances", []).append("service_registry")
+                m.setdefault("tagged_values", []).append(("Service Registry", "Eureka"))
 
                 # Traceability
-                trace = dict()
-                trace["parent_item"] = eureka_server
-                trace["item"] = "service_registry"
-                trace["file"] = results[r]["path"]
-                trace["line"] = results[r]["line_nr"]
-                trace["span"] = results[r]["span"]
+                traceability.add_trace({
+                    "parent_item": server_name,
+                    "item": "service_registry",
+                    "file": result["path"],
+                    "line": result["line_nr"],
+                    "span": result["span"]
+                })
 
-                traceability.add_trace(trace)
+    if not eureka_servers:
+        return microservices, information_flows
 
-    # Clients (/adding info flows) via annotations
-    if eureka_server:
-        result_paths = set()
-        keywords = ["EnableEurekaClient", "EnableDiscoveryClient", "spring-cloud-starter-netflix-eureka-client"]
-        for k in keywords:
-            results = fi.search_keywords(k)
-            for r in results.keys():
-                result_paths.add((results[r]["path"], results[r]["line_nr"], results[r]["span"]))
+    # --- Detect Eureka clients ---
+    client_keywords = [
+        "@EnableEurekaClient",
+        "@EnableDiscoveryClient",
+        "spring-cloud-starter-netflix-eureka-client"
+    ]
+    result_paths = set()
+    for keyword in client_keywords:
+        results = fi.search_keywords(keyword)
+        for r, res in results.items():
+            result_paths.add((res["path"], res["line_nr"], res["span"]))
 
-        if not information_flows:
-            information_flows = dict()
+    if information_flows is None:
+        information_flows = dict()
 
-        participants = set()
-        for result_path in result_paths:
-            service = tech_sw.detect_microservice(result_path[0], dfd)
-            for m in microservices.keys():
-                if microservices[m]["name"] == service:
-                    participants.add((microservices[m]["name"], result_path[0], result_path[1], result_path[2]))
+    # Build participants
+    participants = set()
+    for file_path, line_nr, span in result_paths:
+        service_name = tech_sw.detect_microservice(file_path, dfd)
+        for m in microservices.values():
+            if m["name"] == service_name:
+                participants.add((service_name, file_path, line_nr, span))
 
-        for m in microservices.keys():
-            for prop in microservices[m]["properties"]:
-                if prop[0] == "eureka_connected" and microservices[m]["name"] not in participants:
-                    participants.add((microservices[m]["name"], prop[2][0], prop[2][1], prop[2][2]))
+    # Add participants marked via properties
+    for m in microservices.values():
+        for prop in m.get("properties", []):
+            if prop[0] == "eureka_connected" and m["name"] not in [p[0] for p in participants]:
+                participants.add((m["name"], prop[2][0], prop[2][1], prop[2][2]))
 
-        for participant in participants:
-            if not participant[0] == eureka_server:
-                id = max(information_flows.keys(), default=-1) + 1
-                information_flows[id] = dict()
-                information_flows[id]["sender"] = participant[0]
-                information_flows[id]["receiver"] = eureka_server
-                information_flows[id]["stereotype_instances"] = ["restful_http"]
-
-                trace = dict()
-                trace["item"] = participant[0] + " -> " + eureka_server
-                trace["file"] = participant[1]
-                trace["line"] = participant[2]
-                trace["span"] = participant[3]
-
-                traceability.add_trace(trace)
+    # --- Add flows from clients to Eureka servers ---
+    for participant in participants:
+        participant_name, file_path, line_nr, span = participant
+        for server_name in eureka_servers:
+            if participant_name != server_name:
+                flow_id = max(information_flows.keys(), default=-1) + 1
+                information_flows[flow_id] = {
+                    "sender": participant_name,
+                    "receiver": server_name,
+                    "stereotype_instances": ["restful_http"]
+                }
+                traceability.add_trace({
+                    "item": f"{participant_name} -> {server_name}",
+                    "file": file_path,
+                    "line": line_nr,
+                    "span": span
+                })
 
     return microservices, information_flows
 
@@ -100,15 +207,9 @@ def detect_eureka_server_only(microservices: dict, dfd):
         eureka_servers.add(tech_sw.detect_microservice(results[r]["path"], dfd))
 
     for e in eureka_servers:
-        for m in microservices.keys():
-            if microservices[m]["name"] == e:        # this is the eureka server
-                try:
-                    microservices[m]["stereotype_instances"].append("service_registry")
-                except:
-                    microservices[m]["stereotype_instances"] = "service_registry"
-                try:
-                    microservices[m]["tagged_values"].append(("Service Registry", "Eureka"))
-                except:
-                    microservices[m]["tagged_values"] = ("Service Registry", "Eureka")
+        for m in microservices.values():
+            if m["name"] == e:        # this is the eureka server
+                m.setdefault("stereotype_instances",[]).append("service_registry")
+                m.setdefault("tagged_values",[]).append(("Service Registry", "Eureka"))
 
     return microservices

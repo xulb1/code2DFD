@@ -10,7 +10,7 @@ def detect_ribbon_load_balancers(microservices: dict, dfd) -> dict:
 
 
 def detect_client_side(microservices: dict, dfd) -> dict:
-    """Detects client side load balncing.
+    """Detects client side load balancing.
     """
 
     results = fi.search_keywords("RibbonClient")     # content, name, path
@@ -22,6 +22,5 @@ def detect_client_side(microservices: dict, dfd) -> dict:
                     if m["name"] == microservice:
                         m.setdefault("stereotype_instances",[]).append("load_balancer")
                         m.setdefault("tagged_values",[]).append(("Load Balancer", "Ribbon"))
-                        print("rib_entry:","Ribbon","<<<<<<<<<<<<<<<<load Balancer")
 
     return microservices

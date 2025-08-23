@@ -110,11 +110,15 @@ def extract_service_from_file(s, file_content, file_name, data, microservices_di
     lines = file_content.splitlines()
     line_number = data[s].lc.line - 1
     length_tuple = re.search(s, lines[line_number])
+    if not length_tuple:
+        line_number = line_number+1
+        length_tuple = re.search(s, lines[line_number])
     if length_tuple:
         length_tuple = length_tuple.span()
         span = f"[{str(length_tuple[0])}:{str(length_tuple[1])}]"
         trace = (file_name, line_number + 1, span)
-
+    else:
+        trace = (None,None,None)
 
     
     if s == "networks":
@@ -208,7 +212,7 @@ def extract_service_from_file(s, file_content, file_name, data, microservices_di
     if not exists:
         # Have to filter here and only add those with a known image.
         # Otherwise, many dublicates will occur when developers call the services different in docker-compose than in Spring.application.name
-        known_images = ["elasticsearch","kibana","logstash","grafana","kafka","rabbit","zookeeper","postgres","zipkin","prometheus","mongo","consul","mysql","scope","postgres","apache","nginx"]
+        known_images = ["elasticsearch","kibana","logstash","grafana","kafka","rabbit","zookeeper","postgres","zipkin","prometheus","mongo","consul","eureka","mysql","scope","postgres","apache","nginx"]
         isImage = False
         for ki in known_images:
             if ki in image:

@@ -57,11 +57,13 @@ def extract_variable(line, submodule):
     return line.split("=")[0].strip().split()[-1] if "=" in line else line.split(";")[0].strip().split()[-1]
 
 
-def search_keywords(keywords: str):
+def search_keywords(keywords: str, directory_path=None):
     """Searches keywords locally using grep.
     """
-
-    repo_folder = tmp.tmp_config["Repository"]["local_path"]
+    if directory_path:
+        repo_folder = directory_path
+    else:
+        repo_folder = tmp.tmp_config["Repository"]["local_path"]
 
     results = dict()
 

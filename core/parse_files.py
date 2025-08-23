@@ -262,8 +262,6 @@ def parse_yaml_file(file_path: str) -> str:
                             span = (span[0] + 1, span[1] + 1)
                             trace = (file_path, line_nr + 1, span)
                             properties.add(("load_balancer", value, trace))
-                            print("parsefile : ",value,"<<<<<<<<< load balancer")
-
             
             # Ciruit breaker
             for keyword,value in CIRCUIT_BREAKER_KEYWORDS.items():

@@ -41,6 +41,7 @@ from technology_specific_extractors.hystrix.hsx_entry import detect_hystrix_circ
 from technology_specific_extractors.grafana.grf_entry import detect_grafana
 from technology_specific_extractors.turbine.trb_entry import detect_turbine
 from technology_specific_extractors.eureka.eur_entry import detect_eureka, detect_eureka_server_only
+from technology_specific_extractors.etcd.etcd_entry import detect_etcd
 from technology_specific_extractors.ribbon.rib_entry import detect_ribbon_load_balancers
 from technology_specific_extractors.zipkin.zip_entry import detect_zipkin_server
 from technology_specific_extractors.consul.cns_entry import detect_consul
@@ -49,6 +50,7 @@ from technology_specific_extractors.kafka.kfk_entry import detect_kafka_server
 from technology_specific_extractors.nginx.ngn_entry import detect_nginx
 from technology_specific_extractors.zuul.zul_entry import detect_zuul
 from technology_specific_extractors.ssl.ssl_entry import detect_ssl_services
+from technology_specific_extractors.secure_registry.test_secure_registry_entry import check_registry_security
 
 
 def perform_analysis():
@@ -231,6 +233,7 @@ def classify_microservices(microservices: dict, information_flows: dict, externa
     microservices, information_flows = detect_hystrix_circuit_breakers(microservices, information_flows, dfd)
     # print("ao")
     microservices, information_flows = detect_zookeeper(microservices, information_flows, dfd)
+    microservices, information_flows = detect_etcd(microservices, information_flows, dfd)
     # print("ap")
     microservices, information_flows = detect_kibana(microservices, information_flows, dfd)
     # print("aq")
@@ -255,6 +258,8 @@ def classify_microservices(microservices: dict, information_flows: dict, externa
     # print("az")
     microservices = set_plaintext_credentials(microservices)
 
+    microservices = check_registry_security(microservices)
+    
     return microservices, information_flows, external_components
 
 
@@ -317,7 +322,7 @@ def detect_miscellaneous(microservices: dict, information_flows: dict, external_
                     external_components[key]["tagged_values"].append(("Password", mail_password))
                     external_components[key]["stereotype_instances"].append("plaintext_credentials")
                 if mail_username:
-                    external_components[id_]["tagged_values"].append(("Username", mail_username))
+                    external_components[key]["tagged_values"].append(("Username", mail_username))
 
                 traceability.add_trace({
                     "item": "mail-server",
@@ -477,10 +482,14 @@ def merge_duplicate_flows(information_flows: dict):
             # merge
             for field, j_value in flow_j.items():
                 if field not in ["sender", "receiver"]:
+                    print(" - ",flow_i,"\n",j_value)
                     try:
                         flow_i[field] = flow_i.get(field, []) + list(j_value)
                     except Exception:
-                        flow_i[field] = list(j_value).append(flow_i.get(field, []))
+                        try:
+                            flow_i[field] = list(j_value).append(flow_i.get(field, []))
+                        except TypeError:
+                            pass
             to_delete.add(j)
     for k in to_delete:
         del information_flows[k]

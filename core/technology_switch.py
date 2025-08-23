@@ -39,6 +39,7 @@ def get_microservices(dfd) -> dict:
     mvn.set_microservices(dfd)
     grd.set_microservices(dfd)
     dcm.set_microservices(dfd)
+    # TODO: détect k8s manifest and ansible
     if tmp.tmp_config.has_option("DFD", "microservices"):
         return ast.literal_eval(tmp.tmp_config["DFD"]["microservices"])
 
