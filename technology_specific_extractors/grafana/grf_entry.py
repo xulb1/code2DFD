@@ -8,7 +8,7 @@ def detect_grafana(microservices: dict, information_flows: dict, dfd) -> dict:
     """
 
     grafana_server = str()
-    results = fi.search_keywords("grafana/grafana")
+    results = fi.search_keywords("grafana/grafana", file_extension=["Dockerfile","*.yaml","*.yml", "*.tf","*.sh","*.json"])
 
     for r in results.keys():
         grafana_server = tech_sw.detect_microservice(results[r]["path"], dfd)

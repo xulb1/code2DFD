@@ -44,7 +44,7 @@ def check_external_encryption(microservices: dict) -> dict:
         # Recherche des mots-clés dans les fichiers de configuration
         for keyword in ENCRYPTION_KEYWORDS["configuration"]:
             # On cherche dans les fichiers de configuration (.yml, .properties)
-            results = fi.search_keywords(keyword, directory_path, file_patterns=["yml", "properties"])
+            results = fi.search_keywords(keyword, directory_path, file_patterns=["*.conf","*.xml","*.gradle","*.sh","*.json","*.yml","*.yaml", "*.properties"])
             if results:
                 is_secured = True
                 for _, res in results.items():
@@ -63,7 +63,7 @@ def check_external_encryption(microservices: dict) -> dict:
         # Recherche dans le code Java (pour des implémentations personnalisées)
         for keyword in ENCRYPTION_KEYWORDS["code"]:
             # On cherche spécifiquement dans les fichiers .java
-            results = fi.search_keywords(keyword, directory_path, file_patterns=["java"])
+            results = fi.search_keywords(keyword, directory_path, file_patterns=["*.java"])
             if results:
                 is_secured = True
                 for _, res in results.items():
@@ -79,7 +79,7 @@ def check_external_encryption(microservices: dict) -> dict:
         # Si toujours rien, on cherche dans la configuration de passerelle (ex: Spring Cloud Gateway)
         if not is_secured and is_entry_point:
             for keyword in ENCRYPTION_KEYWORDS["gateway_config"]:
-                results = fi.search_keywords(keyword, directory_path, file_patterns=["yml"])
+                results = fi.search_keywords(keyword, directory_path, file_patterns=["*.xml","*.json","*.yml","*.yaml", "*.properties"])
                 if results:
                     is_secured = True
                     for _, res in results.items():

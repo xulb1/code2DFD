@@ -74,7 +74,7 @@ def check_registry_security(microservices: dict) -> dict:
                         "line": res["line_nr"],
                         "span": res["span"]
                     })
-                    print(f"Security keyword found for {registry_type}: '{keyword}'")
+                    # print(f"Security keyword found for {registry_type}: '{keyword}'")
                 break
         
         # 4. If no security keywords were found, flag a vulnerability

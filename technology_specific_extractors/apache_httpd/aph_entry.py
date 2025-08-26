@@ -23,7 +23,7 @@ def detect_via_docker(microservices: dict, information_flows: dict, external_com
 
     docker_path = False
 
-    results = fi.search_keywords("apache2ctl")     # content, name, path
+    results = fi.search_keywords("apache2ctl", file_extension=["*.yml","*.yaml","*.service","*.conf","Dockerfile"])     # content, name, path
     for r in results.keys():
         microservice = tech_sw.detect_microservice(results[r]["path"], dfd)
         trace_info = (results[r]["path"], results[r]["line_nr"], results[r]["span"])
@@ -52,6 +52,7 @@ def detect_via_proxypass(microservices: dict, information_flows: dict, external_
     """Searches for keyword ProxyPass to detect server. For cases where config file has to be handled manually by user, detection is still possible this way.
     """
 
+    # fichier: yaml, yml, vhost et conf, et parfois ds des ficheirs sans extension ...
     results = fi.search_keywords("ProxyPass")     # content, name, path
     for r in results.keys():
         microservice = tech_sw.detect_microservice(results[r]["path"], dfd)

@@ -7,7 +7,7 @@ def detect_hystrix_dashboard(microservices: dict, information_flows: dict, dfd) 
     """Detects hystrix monitoring dashboards .
     """
 
-    results = fi.search_keywords("@EnableHystrixDashboard")     # content, name, path
+    results = fi.search_keywords("@EnableHystrixDashboard", file_extension=["*.java"])     # content, name, path
     for r in results.keys():
         microservice = tech_sw.detect_microservice(results[r]["path"], dfd)
         for line in results[r]["content"]:
@@ -38,7 +38,7 @@ def detect_hystrix_circuit_breakers(microservices: dict, information_flows: dict
     """Detects HystrixCommand.
     """
 
-    results = fi.search_keywords("@EnableHystrix")     # content, name, path
+    results = fi.search_keywords("@EnableHystrix", file_extension=["*.java"])     # content, name, path
     for r in results.keys():
         microservice = tech_sw.detect_microservice(results[r]["path"], dfd)
         for line in results[r]["content"]:
@@ -47,7 +47,7 @@ def detect_hystrix_circuit_breakers(microservices: dict, information_flows: dict
                     if m["name"] == microservice:
                         m.setdefault("stereotype_instances",[]).append("circuit_breaker")
                         m.setdefault("tagged_values",[]).append(("Circuit Breaker", "Hystrix"))
-                        print("parsefile : ","hystrix","<<<<<<<<< circuit breaker",microservice)
+                        # print("parsefile : ","hystrix","<<<<<<<<< circuit breaker",microservice)
 
                         traceability.add_trace(
                             {

@@ -7,7 +7,7 @@ def detect_circuit_breakers_v0(microservices: dict, information_flows: dict, dfd
     """Find circuit breakers.
     """
 
-    results = fi.search_keywords("@EnableCircuitBreaker")     # content, name, path
+    results = fi.search_keywords("@EnableCircuitBreaker", file_extension=["*.java"])     # content, name, path
     for r in results.keys():
         microservice = tech_sw.detect_microservice(results[r]["path"], dfd)
         # Check if circuit breaker tech was found
@@ -62,7 +62,20 @@ ALL_ANNOTATIONS_PATTERN = re.compile(
 def detect_circuit_breakers(microservices: dict, information_flows: dict, dfd) -> dict:
     """Détecte tous les mécanismes de résilience dans les microservices, gère les répétitions et ignore les commentaires."""
 
-    results = fi.search_keywords(list({f"@{ann}" for anns in CIRCUIT_BREAKER_ANNOTATIONS.values() for ann in anns}))
+    
+    # results = fi.search_keywords(list({f"@{ann}" for anns in CIRCUIT_BREAKER_ANNOTATIONS.values() for ann in anns}))
+    # for i in results.values():
+    #     print(i["name"])
+    #     print("")
+    # print("--------------jdskqmfldkjslkfdjqsmlfjqslkdfqj---------------------")
+    
+    results = fi.search_keywords(list({f"@{ann}" for anns in CIRCUIT_BREAKER_ANNOTATIONS.values() for ann in anns}), file_extension=["*.java"])
+    # print("----------------------------------")
+    # for i in results.values():
+    #     print(i["name"])
+    #     print("")
+    # print("--------------jdskqmfldkjslkfdjqsmlfjqslkdfqj---------------------")
+    
 
     for r in results.keys():
         microservice = tech_sw.detect_microservice(results[r]["path"], dfd)
@@ -99,7 +112,7 @@ def detect_circuit_breakers(microservices: dict, information_flows: dict, dfd) -
                         if circuit_breaker_tuple not in tagged:
                             tagged.append(circuit_breaker_tuple)
 
-                    print(circuit_breaker_tuple,"<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<circuitbreaker")
+                    # print(circuit_breaker_tuple,"<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<circuitbreaker")
                     # Mise à jour des flux sortants
                     for flow in information_flows.values():
                         if flow["sender"] == microservice:

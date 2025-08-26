@@ -10,8 +10,8 @@ def detect_zuul(microservices: dict, information_flows: dict, external_component
     """
 
     # Server (/microservice classification)
-    results = fi.search_keywords("@EnableZuulServer")
-    new_results = fi.search_keywords("@EnableZuulProxy")
+    results = fi.search_keywords("@EnableZuulServer", file_extension=["*.java"])
+    new_results = fi.search_keywords("@EnableZuulProxy", file_extension=["*.java"])
 
     for r in new_results.keys():
         key = max(results.keys(), default=-1) + 1

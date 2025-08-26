@@ -37,7 +37,7 @@ def detect_logstash(microservices: dict, information_flows: dict, external_compo
                             # internal via port
                             if not logstash:
                                 logstash_port = int(logstash_server.split(":")[1].strip())
-                                print("logstash_port: ",logstash_port,int(logstash_server.split(":")[1].strip().strip("")))
+                                # print("logstash_port: ",logstash_port,int(logstash_server.split(":")[1].strip().strip("")))
                                 
                                 for mi in microservices.values():
                                     for prop2 in mi["properties"]:
@@ -49,7 +49,7 @@ def detect_logstash(microservices: dict, information_flows: dict, external_compo
                             # external
                             if not logstash:
                                 logstash_port = int(logstash_server.split(":")[1].strip())
-                                print("logstash_port",logstash_port, int(logstash_server.split(":")[1].strip().strip("")))
+                                # print("logstash_port",logstash_port, int(logstash_server.split(":")[1].strip().strip("")))
 
                                 key = max(external_components.keys(), default=-1) + 1
 

@@ -33,7 +33,7 @@ def set_information_flows(dfd) -> dict:
 
 
 def used_in_application():
-    return len(fi.search_keywords("RestTemplate")) > 0
+    return len(fi.search_keywords("RestTemplate", file_extension=["*.java"])) > 0
 
 
 def get_incoming_endpoints(dfd) -> list:
@@ -41,7 +41,7 @@ def get_incoming_endpoints(dfd) -> list:
     """
 
     endpoints = set()
-    files = fi.search_keywords("RequestMapping")
+    files = fi.search_keywords("RequestMapping", file_extension=["*.java"])
 
     for file in files.keys():
 
@@ -146,7 +146,7 @@ def get_outgoing_endpoints(information_flows: dict, dfd) -> set:
 
     commands = ["restTemplate.exchange", "restTemplate.getForObject"]
     for command in commands:
-        files = fi.search_keywords(command)
+        files = fi.search_keywords(command, file_extension=["*.java"])
         for file in files.keys():
             f = files[file]
             if "README" in f["name"] or "test" in f["path"].casefold():
@@ -178,6 +178,12 @@ def get_outgoing_endpoints(information_flows: dict, dfd) -> set:
 
 
 def find_rst_variable(parameter: str, file: dict, line_nr: int, information_flows: dict, microservice: str, dfd, count=0):
+    """
+    Resolves the value of a RestTemplate endpoint parameter, handling variables, class references, and input parameters.
+    
+    Attempts to statically determine the endpoint URL by recursively searching for variable assignments and class attributes. 
+    Updates the information_flows dictionary if a service name is detected in the parameter.
+    """
 
     # check if service name in parameter, if yes, add flow directly
     microservices = tech_sw.get_microservices(dfd)
@@ -216,7 +222,7 @@ def find_rst_variable(parameter: str, file: dict, line_nr: int, information_flow
             try:
                 parameter_variable = parameters[p].split(".")[-1]
                 parameter_class = parameters[p].split(".")[-2]
-                files_containing_class = fi.search_keywords(f"class {parameter_class}")
+                files_containing_class = fi.search_keywords(f"class {parameter_class}", file_extension=["*.java"])
                 correct_file = None
                 for filec in files_containing_class.keys():
                     fc = files_containing_class[filec]

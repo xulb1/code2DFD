@@ -274,7 +274,6 @@ def parse_yaml_file(file_path: str) -> str:
                             span = (span[0] + 1, span[1] + 1)
                             trace = (file_path, line_nr + 1, span)
                             properties.add(("circuit_breaker", value, trace))
-                            print("parsefile : ",value,"<<<<<<<<< circuit breaker")
 
             # Eureka
             if "eureka" in document and "client" in document.get("eureka") and "serviceUrl" in document.get("eureka").get("client") and "defaultZone" in document.get("eureka").get("client").get("serviceUrl"):

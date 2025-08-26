@@ -47,7 +47,7 @@ def get_incoming_endpoints(dfd) -> set:
     """
 
     listening_topics = set()
-    files = fi.search_keywords("@KafkaListener")
+    files = fi.search_keywords("@KafkaListener", file_extension=["*.java"])
 
     for f in files.keys():
         file = files[f]
@@ -94,7 +94,7 @@ def get_outgoing_endpoints(dfd) -> set:
     asset = str()
     for template in kafkatemplates:
         for command in commands:
-            files = fi.search_keywords(f"{template}.{command}")
+            files = fi.search_keywords(f"{template}.{command}", file_extension=["*.java"])
             for file in files.keys():
                 f = files[file]
                 if "README" not in f["name"]:
@@ -385,7 +385,7 @@ def add_kafka_information_flow(isProducer: bool, topic, m: dict, information_flo
         keyword = "@StreamListener"
         texte = "consumer"
     
-    results = fi.search_keywords(keyword)
+    results = fi.search_keywords(keyword, file_extension=["*.java"])
     for r in results.keys():
         if tech_sw.detect_microservice(results[r]["path"], dfd) == m["name"]:
             key = max(information_flows.keys(), default=-1) + 1

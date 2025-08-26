@@ -57,7 +57,10 @@ from technology_specific_extractors.secure_registry.check_secure_registry_entry 
 from technology_specific_extractors.encrypted_com.external_communication_entry import check_external_encryption
 # R8
 from technology_specific_extractors.encrypted_com.internal_communication_entry import check_inter_service_encryption
-
+# R2
+from technology_specific_extractors.auth_nz.check_mutual_auth_entry import check_inter_service_auth_and_authz
+# R3
+from technology_specific_extractors.auth_nz.check_central_auth_logic_entry import check_auth_logic_separation
 
 def perform_analysis():
     """
@@ -96,7 +99,7 @@ def DFD_extraction():
 
     microservices = tech_sw.get_microservices(dfd)
     if microservices == microservices1:
-        print("\n/!\\ Aucun microservice détecté /!\\")
+        print("\n/!\\ No microservice detected /!\\")
         return None,None
     
     microservices = detect_databases(microservices)
@@ -261,13 +264,22 @@ def classify_microservices(microservices: dict, information_flows: dict, externa
     microservices, information_flows, external_components = detect_apachehttpd_webserver(microservices, information_flows, external_components, dfd)
     # print("ay")
     microservices = classify_internal_infrastructural(microservices)
-    # print("az")
+    print("az")
     microservices = set_plaintext_credentials(microservices)
     
     # Check security rules
+    print("aza")
     microservices = check_registry_security(microservices)
+    print("azb")
+    #  long ->
     microservices = check_inter_service_encryption(microservices,information_flows)
+    print("azc")
     microservices = check_external_encryption(microservices)
+    print("azd")
+    microservices = check_inter_service_auth_and_authz(microservices, information_flows)
+    print("aze")
+    microservices = check_auth_logic_separation(microservices)
+    print("azf")
     
     return microservices, information_flows, external_components
 

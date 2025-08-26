@@ -84,6 +84,7 @@ def extract_microservices(file_content, file_name) -> set:
         for s in data:
             print(s)
             microservices_set, microservices_dict = extract_service_from_file(s, file_content,file_name,data, microservices_dict, microservices_set, properties_dict, image, build)
+            print("___________________________________")
             
     else:
         print("NO SERVICES -------------------------------")
@@ -103,8 +104,6 @@ def extract_service_from_file(s, file_content, file_name, data, microservices_di
     correct_id = False
     exists = False
     port = False
-
-    print("___________________________________")
 
     # Traceability
     lines = file_content.splitlines()
@@ -215,17 +214,17 @@ def extract_service_from_file(s, file_content, file_name, data, microservices_di
         known_images = ["elasticsearch","kibana","logstash","grafana","kafka","rabbit","zookeeper","postgres","zipkin","prometheus","mongo","consul","eureka","mysql","scope","postgres","apache","nginx"]
         isImage = False
         for ki in known_images:
-            if ki in image:
+            if ki in image and ":" in image:
                 properties_dict[s] = properties
                 microservices_set.add((s, image, "type", port, trace))
-                print("\033[31m",s, image, port,"\033[0m")
+                print("\033[31m",s, image, port," ---> Is known docker image\033[0m")
                 isImage=True
                 break
         
         if not isImage:
             properties_dict[s] = properties
             microservices_set.add((s, image, "type", port, trace))
-            print("\033[31m",s, image, port,"--------->>>>>\033[0m")
+            print("\033[31m",s, image, port,"\033[0m")
 
     # add additional information
     if exists and correct_id:

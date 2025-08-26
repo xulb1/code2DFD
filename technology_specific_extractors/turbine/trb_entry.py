@@ -21,7 +21,7 @@ def detect_turbine_server(microservices: dict, dfd) -> dict:
     """Detects standard turbine servers.
     """
 
-    results = fi.search_keywords("@EnableTurbine")     # content, name, path
+    results = fi.search_keywords("@EnableTurbine", file_extension=["*.java"])     # content, name, path
     for r in results.values():
         microservice = tech_sw.detect_microservice(r["path"], dfd)
         for line in r["content"]:
@@ -46,7 +46,7 @@ def detect_turbineamqp(microservices: dict, information_flows: dict, dfd) -> dic
     """Detects turbine servers implementes via EnableTurbineAmqp annotation.
     """
 
-    results = fi.search_keywords("@EnableTurbineAmqp")     # content, name, path
+    results = fi.search_keywords("@EnableTurbineAmqp", file_extension=["*.java"])     # content, name, path
     for r in results.values():
         microservice = tech_sw.detect_microservice(r["path"], dfd)
         for line in r["content"]:
@@ -108,7 +108,7 @@ def detect_turbine_stream(microservices: dict, information_flows: dict, dfd) -> 
     uses_rabbit = False
     rabbitmq = False
     turbine_server = False
-    results = fi.search_keywords("EnableTurbineStream")     # content, name, path
+    results = fi.search_keywords("EnableTurbineStream", file_extension=["*.java"])     # content, name, path
     for r in results.values():
         trace_info = (False, False, False)
         microservice = tech_sw.detect_microservice(r["path"], dfd)
@@ -192,7 +192,7 @@ def detect_turbine_stream(microservices: dict, information_flows: dict, dfd) -> 
 
     # clients:
     if uses_rabbit and rabbitmq:
-        results = fi.search_keywords("spring-cloud-netflix-hystrix-stream")     # content, name, path
+        results = fi.search_keywords("spring-cloud-netflix-hystrix-stream", file_extension=["*.xml","*.gradle"])     # content, name, path
         for r in results.values():
             microservice = tech_sw.detect_microservice(r["path"], dfd)
             

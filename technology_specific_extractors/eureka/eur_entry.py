@@ -24,8 +24,8 @@ def detect_eureka(microservices: dict, information_flows: dict, dfd) -> dict:
 
     # --- Detect servers via annotations / imports / dependencies ---
     for keyword in SERVER_KEYWORDS:
-        print("\n\n================================================================================================")
-        results = fi.search_keywords(keyword)
+        # print("\n\n================================================================================================")
+        results = fi.search_keywords(keyword, file_extension=["*.java","*.conf","*.sh","*.xml","*.gradle","*.json","*.yml","*.yaml","*.properties"])
         for res in results.values():
             if (keyword=="eureka:" and "docker" not in res['name'])\
                 or (len(res["path"].split("/"))>1 and any(ext in res["name"] for ext in ["yml","xml"])):
@@ -44,8 +44,8 @@ def detect_eureka(microservices: dict, information_flows: dict, dfd) -> dict:
                 if m["name"] == server_name:
                     m.setdefault("stereotype_instances", []).append("service_registry")
                     m.setdefault("tagged_values", []).append(("Service Registry", "Eureka"))
-                    print(m["name"],"rrrr<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< afjsaklmf")
-                    print(keyword,res["path"])
+                    # print(m["name"],"rrrr<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< afjsaklmf")
+                    # print(keyword,res["path"])
                     # Traceability
                     traceability.add_trace({
                         "parent_item": server_name,
@@ -58,14 +58,14 @@ def detect_eureka(microservices: dict, information_flows: dict, dfd) -> dict:
             if not serverFound:
                 print("33[0m Il existe un server Eureka, mais le microservice associé n'a pas été trouvé -------")
 
-    print("eurekaservers",eureka_servers)
+    # print("eurekaservers",eureka_servers)
     if not eureka_servers:
         return microservices, information_flows
 
     # --- Detect clients via annotations / dependencies / config ---
     client_results = set()
     for keyword in CLIENT_KEYWORDS:
-        results = fi.search_keywords(keyword)
+        results = fi.search_keywords(keyword, file_extension=["*.java","*.conf","*.sh","*.xml","*.gradle","*.json","*.yml","*.yaml","*.properties"])
         for r, res in results.items():
             client_results.add((res["path"], res["line_nr"], res["span"]))
 
@@ -110,7 +110,7 @@ def detect_eureka_v0(microservices: dict, information_flows: dict, dfd) -> dict:
     """Detect Eureka servers and clients, enrich microservices and flows."""
     
     # --- Detect Eureka servers ---
-    server_results = fi.search_keywords("@EnableEurekaServer")
+    server_results = fi.search_keywords("@EnableEurekaServer", file_extension=["*.java"])
     eureka_servers = []
 
     for result in server_results.values():
@@ -136,16 +136,14 @@ def detect_eureka_v0(microservices: dict, information_flows: dict, dfd) -> dict:
         return microservices, information_flows
 
     # --- Detect Eureka clients ---
-    client_keywords = [
-        "@EnableEurekaClient",
-        "@EnableDiscoveryClient",
-        "spring-cloud-starter-netflix-eureka-client"
-    ]
     result_paths = set()
-    for keyword in client_keywords:
-        results = fi.search_keywords(keyword)
-        for r, res in results.items():
-            result_paths.add((res["path"], res["line_nr"], res["span"]))
+    results = fi.search_keywords(["@EnableEurekaClient","@EnableDiscoveryClient"], file_extension="*.java")
+    for res in results.values():
+        result_paths.add((res["path"], res["line_nr"], res["span"]))
+    
+    results = fi.search_keywords("spring-cloud-starter-netflix-eureka-client", file_extension=["*.conf","*.xml","*.gradle","*.json","*.yml","*.yaml","*.properties"])
+    for res in results.values():
+        result_paths.add((res["path"], res["line_nr"], res["span"]))
 
     if information_flows is None:
         information_flows = dict()
@@ -190,7 +188,7 @@ def is_eureka(microservice: tuple) -> bool:
     Input tuple: (servicename, image, type)
     """
 
-    files = fi.search_keywords("@EnableEurekaServer")
+    files = fi.search_keywords("@EnableEurekaServer", file_extension=["*.java"])
     for file in files.keys():
         f = files[file]
         if microservice["pom_path"] in f["path"]:
@@ -201,7 +199,7 @@ def is_eureka(microservice: tuple) -> bool:
 
 def detect_eureka_server_only(microservices: dict, dfd):
 
-    results = fi.search_keywords("@EnableEurekaServer")
+    results = fi.search_keywords("@EnableEurekaServer", file_extension=["*.java"])
     eureka_servers = set()
     for r in results.keys():
         eureka_servers.add(tech_sw.detect_microservice(results[r]["path"], dfd))

@@ -33,7 +33,7 @@ def get_microservices(dfd) -> dict:
         return ast.literal_eval(tmp.tmp_config["DFD"]["microservices"])
     
     
-    print("\033[34mAnalyse des microservices ...\033[0m")
+    print("\033[34mMicroservices analysis ...\033[0m")
     logger.info("Microservices not set yet, start extraction")
 
     mvn.set_microservices(dfd)
@@ -56,7 +56,7 @@ def get_information_flows(dfd) -> dict:
     if tmp.tmp_config.has_option("DFD", "information_flows"):
         return ast.literal_eval(tmp.tmp_config["DFD"]["information_flows"])
     
-    print("\033[32mAnalyse des flows ...\033[0m")
+    print("\033[32mFlows analysis ...\033[0m")
     logger.info("Information flows not set yet, start extraction")
     communication_techs_list = ast.literal_eval(tmp.tmp_config["Technology Profiles"]["communication_techs_list"])
     for com_tech in communication_techs_list:

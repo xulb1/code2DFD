@@ -125,3 +125,6 @@ TODO: R20
 
 
 Ajouter detection ansible / k8s
+
+
+file ext = ["Dockerfile","*.yaml","*.yml", "*.tf","*.sh","*.json","*.java","*.conf","*.sh","*.xml","*.gradle","*.json","*.yml","*.yaml","*.properties"]

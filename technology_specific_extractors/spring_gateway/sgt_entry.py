@@ -9,7 +9,7 @@ def detect_spring_cloud_gateway(microservices: dict, information_flows: dict, ex
     """
 
     server = False
-    results = fi.search_keywords("spring-cloud-starter-gateway")
+    results = fi.search_keywords("spring-cloud-starter-gateway", file_extension=["*.xml","*.gradle"])
     for r in results.values():
         microservice = tech_sw.detect_microservice(r["path"], dfd)
         if microservice:

@@ -21,7 +21,7 @@ def detect_passwordEncoder(microservices: dict, dfd) -> dict:
     encoders = set()
 
     for passwordencoder in passwordencoders:
-        results = fi.search_keywords(passwordencoder)
+        results = fi.search_keywords(passwordencoder, file_extension=["*.java"])
         for r in results.values():
             for line in r["content"]:
                 if f"= new {passwordencoder}" in line:
@@ -45,19 +45,19 @@ def detect_bytesEncryptor(microservices: dict, dfd) -> dict:
     """
 
     types = ["stronger", "standard", "text", "delux", "queryableText", "noOpText"]
-    for type in types:
-        results = fi.search_keywords(f"Encryptors {type}")
-        for r in results.values():
+    results = fi.search_keywords("Encryptors", file_extension=["*.java"])
+    for r in results.values():
             stereotypes, tagged_values = False, False
             microservice = tech_sw.detect_microservice(r["path"], dfd)
             for line in r["content"]:
-                if f"Encryptors.{type}" in line:
+                if f"Encryptors.{t}" in line:
                     stereotypes = "encryption"
-                    try:
-                        password = line.split(f"Encryptors.{type}(")[1].split(",")[0].strip()
-                        tagged_values = ("Encrypted String", password)
-                    except Exception:
-                        password = False
+                    for t in types:
+                        try:
+                            password = line.split(f"Encryptors.{t}(")[1].split(",")[0].strip()
+                            tagged_values = ("Encrypted String", password)
+                        except Exception:
+                            password = False
                         
             for m in microservices.values():
                 if m["name"] == microservice:
@@ -76,29 +76,33 @@ def detect_keyGenerator(microservices: dict, dfd) -> dict:
     keygenerators = []
 
     commands = ["string", "shared", "secureRandom"]
-    results = fi.search_keywords("Keygenerator")
+    results = fi.search_keywords("Keygenerator", file_extension=["*.java"])
     for r in results.values():
-        for command in commands:
-            for line in r["content"]:
+        for line in r["content"]:
+            for command in commands:
                 if f"Keygenerator.{command}" in line:
                     # Direct use
                     if "().generateKey" in line:
                         microservice = tech_sw.detect_microservice(r["path"], dfd)
                         for m in microservices.values():
                             if m["name"] == microservice:
-                                m.setdefault("stereotypes",[]).append("keygenerator")
+                                m.setdefault("stereotype_instances",[]).append("keygenerator")
                     # Creation here, use later
                     else:
                         keygenerators.add(extract_keygenerator(line))
 
     # Find uses of the keygenerators
-    for keygenerator in keygenerators:
-        results = fi.search_keywords(f"{keygenerator}.generateKey")
-        for r in results.values():
-            microservice = tech_sw.detect_microservice(r["path"], dfd)
-            for m in microservices.values():
-                if m["name"] == microservice:
-                    m.setdefault("stereotypes",[]).append("keygenerator")
+    results = fi.search_keywords(f".generateKey", file_extension=["*.java"])
+    for r in results.values():
+        for keygenerator in keygenerators:
+            if any(f"{keygenerator}.generateKey" in line for line in r["content"]):
+                microservice = tech_sw.detect_microservice(r["path"], dfd)
+                for m in microservices.values():
+                    if m["name"] == microservice:
+                        m.setdefault("stereotype_instances",[]).append("keygenerator")
+    
+    #TODO: tester en faisant une boucle fi.search_keywords avec les keygenerator
+            # vérifier le plus rapide ...
 
     return microservices
 

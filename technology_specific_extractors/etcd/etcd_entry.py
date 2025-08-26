@@ -30,7 +30,7 @@ def detect_etcd(microservices: dict, information_flows: dict, dfd) -> dict:
 
     # --- Détection des serveurs et clients via les mots-clés ---
     for keyword in ETCD_CLIENT_KEYWORDS:
-        results = fi.search_keywords(keyword)
+        results = fi.search_keywords(keyword,file_extension=["*.conf","*.sh","*.xml","*.gradle","*.json","*.yml","*.yaml","*.properties"])
         
         for _, res in results.items():
             if (keyword=="etcd:" and "docker" not in res['name'])\

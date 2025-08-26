@@ -18,20 +18,17 @@ def set_information_flows(dfd) -> dict:
         information_flows = dict()
 
     # check for circuit breaker
-    results = fi.search_keywords("@EnableFeignClients")     # content, name, path
+    results = fi.search_keywords("@EnableFeignClients", file_extension=["*.java"])     # content, name, path
     for id in results.keys():
         microservice = tech_sw.detect_microservice(results[id]["path"], dfd)
         for line in results[id]["content"]:
             if "@EnableCircuitBreaker" in line:
                 for m in microservices.values():
                     if m["name"] == microservice:
-                        try:
-                            m["properties"].append("hystrix_enabled")
-                        except:
-                            m["properties"] = {("hystrix_enabled")}
-                        print("fgn_entry : ","hystrix","<<<<<<<<< circuit breaker",microservice)
+                        m.setdefault("properties",[]).append("hystrix_enabled")
+                        # print("fgn_entry : ","hystrix","<<<<<<<<< circuit breaker",microservice)
 
-    results = fi.search_keywords("@FeignClient")     # content, name, path
+    results = fi.search_keywords("@FeignClient", file_extension=["*.java"])     # content, name, path
     for id in results.keys():
         microservice = tech_sw.detect_microservice(results[id]["path"], dfd)
 

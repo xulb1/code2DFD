@@ -131,21 +131,29 @@ def search_keywords(keywords: str, directory_path=None, file_extension=None):
         keywords = [keywords]
 
     for keyword in keywords:
-        grep_command = ['grep', '-rn']
-        
-        # filtre par extension de fichier
-        if file_extension:
-            pattern_string = ",".join(file_extension)
-            include_argument = f"--include={{{pattern_string}}}"
-            grep_command.append(include_argument)
-        
         if keyword[-1] == "(":
             keyword = "\"" + keyword + "\""
-        
-        grep_command.extend([keyword, repo_folder])
 
+        grep_cmd = ["find", repo_folder, "-type", "f"]
+        # filtre par extension de fichier
+        # file_extension = None
+        if file_extension:
+            iname_arguments = []
+            for ext in file_extension:
+                iname_arguments.extend(["-iname", f"{ext}"])
+            # intercaler les -o
+            iname_cmd = []
+            for i, arg in enumerate(iname_arguments):
+                if i > 0 and arg.startswith("-iname"):
+                    iname_cmd.append("-o")
+                iname_cmd.append(arg)
+                
+            grep_cmd.extend(["("] + iname_cmd + [")"])
+        
+        grep_cmd.extend(["-exec", "grep", "-nHi", keyword, "{}", "+"])
+        
         try:
-            out = subprocess.Popen(grep_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            out = subprocess.Popen(grep_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             stdout, stderr = out.communicate()
             
             stdout = stdout.decode('utf-8')

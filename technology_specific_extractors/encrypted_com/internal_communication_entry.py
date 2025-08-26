@@ -2,24 +2,34 @@ import core.file_interaction as fi
 import output_generators.traceability as traceability
 
 ENCRYPTION_KEYWORDS = {
-    "server": [
-        "server.ssl.enabled=true",
-        "server.ssl.key-store",
-        "server.ssl.key-store-password",
-        "server.ssl.key-store-type",
-        "server.port=8443",
-        "management.ssl.enabled=true",
-        "@EnableWebSecurity",
-        "requiresSecure"
-    ],
-    "client": [
-        "https://",
-        "eureka.client.serviceUrl=https://",
-        "spring.cloud.config.uri=https://",
-        "@FeignClient(",
-        "WebClient.create(\"https://",
-        "RestTemplate().getForObject(\"https://"
-    ],
+    "server": {
+        "config":[
+            "server.ssl.enabled=true",
+            "server.ssl.key-store",
+            "server.ssl.key-store-password",
+            "server.ssl.key-store-type",
+            "server.port=8443",
+            "management.ssl.enabled=true"
+        ],
+        "java_code":[
+            "@EnableWebSecurity",
+            "requiresSecure"
+        ]
+    },
+    "client": {
+        "all":[
+            "https://"
+        ],
+        "config":[
+            "eureka.client.serviceUrl=https://",
+            "spring.cloud.config.uri=https://"
+        ],
+        "java_code":[
+            "@FeignClient(",
+            "WebClient.create(\"https://",
+            "RestTemplate().getForObject(\"https://"
+        ]
+    },
     "infra": [
         "ssl_certificate",
         "ssl_certificate_key",
@@ -29,8 +39,8 @@ ENCRYPTION_KEYWORDS = {
         "sidecar.istio.io/inject:",
         "linkerd",
         "linkerd.io/inject:",
-        # "envoy",
         "linkerd-proxy"
+        # "envoy",
     ]
 }
 
@@ -46,20 +56,33 @@ def check_inter_service_encryption(microservices: dict, information_flows: dict)
         directory_path = m.get("directory_path")
         
         # Détection SSL côté serveur
-        is_server_ssl_enabled = any(fi.search_keywords(keyword, directory_path) for keyword in ENCRYPTION_KEYWORDS["server"])
+        #TODO: detection pb
+        for mot in ENCRYPTION_KEYWORDS["server"]["java_code"]:
+            results = fi.search_keywords(mot, directory_path)
+            if results:
+                for i in results["content"]:
+                    print(i)
+        for mot in ENCRYPTION_KEYWORDS["server"]["config"]:
+            results = fi.search_keywords(mot, directory_path)
+            if results:
+                for i in results["content"]:
+                    print(i)
+        is_server_ssl_enabled = any(fi.search_keywords(keyword, directory_path, file_extension=["*.java"]) for keyword in ENCRYPTION_KEYWORDS["server"]["java_code"]) or \
+                                any(fi.search_keywords(keyword, directory_path, file_extension=["*.conf","*.sh","*.xml","*.gradle","*.json","*.yml","*.yaml","*.properties"]) for keyword in ENCRYPTION_KEYWORDS["server"]["config"])
         if is_server_ssl_enabled:
             m.setdefault("stereotype_instances", []).append("tls_enabled")
             m.setdefault("tagged_values", []).append(("Security", "Server SSL/TLS Enabled"))
 
         # Détection SSL côté client
-        is_client_ssl_enabled = any(fi.search_keywords(keyword, directory_path) for keyword in ENCRYPTION_KEYWORDS["client"])
+        is_client_ssl_enabled = any(fi.search_keywords(keyword, directory_path) for keyword in ENCRYPTION_KEYWORDS["client"]["all"]) or \
+                                any(fi.search_keywords(keyword, directory_path,file_extension=["*.conf","*.sh","*.xml","*.gradle","*.json","*.yml","*.yaml", "*.properties"]) for keyword in ENCRYPTION_KEYWORDS["client"]["config"]) or \
+                                any(fi.search_keywords(keyword, directory_path,file_extension=["*.java"]) for keyword in ENCRYPTION_KEYWORDS["client"]["java_code"])
         if is_client_ssl_enabled:
             m.setdefault("stereotype_instances", []).append("client_tls_enabled")
             m.setdefault("tagged_values", []).append(("Security", "Client SSL/TLS Enabled"))
 
-        # TODO: modifier pour la recherche dans des fichiers spécifiques et sur la config
         # Détection SSL via l'infrastructure
-        is_infra_ssl_enabled = any(fi.search_keywords(keyword, directory_path) for keyword in ENCRYPTION_KEYWORDS["infra"])
+        is_infra_ssl_enabled = any(fi.search_keywords(keyword, directory_path, file_extension=["*.conf","*.xml","*.gradle","*.sh","*.json","*.yml","*.yaml", "*.properties"]) for keyword in ENCRYPTION_KEYWORDS["infra"])
         if is_infra_ssl_enabled:
             m.setdefault("stereotype_instances", []).append("infra_tls_enabled")
             m.setdefault("tagged_values", []).append(("Security", "Infrastructure SSL/TLS Enabled"))

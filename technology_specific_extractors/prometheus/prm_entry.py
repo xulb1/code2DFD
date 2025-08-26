@@ -20,7 +20,7 @@ def detect_server_docker(microservices: dict, information_flows: dict, dfd) -> d
     """
 
     prometheus_server = str()
-    results = fi.search_keywords("prom/prometheus")
+    results = fi.search_keywords("prom/prometheus", file_extension=["Dockerfile","*.yaml","*.yml", "*.tf","*.sh","*.json"])
 
     for r in results.keys():
         found = False

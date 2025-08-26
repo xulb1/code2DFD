@@ -10,9 +10,9 @@ import tmp.tmp as tmp
 def generate_json_architecture(microservices: dict, information_flows: dict, external_components: dict):
     """Creates JSON file that contains the complete extracted architecture.
     """
-    print(list(microservices.values()))
-    print(list(information_flows.values()))
-    print(list(external_components.values()))
+    # print(list(microservices.values()))
+    # print(list(information_flows.values()))
+    # print(list(external_components.values()))
     
     full_dict = {"microservices": list(microservices.values()),
                  "information_flows": list(information_flows.values()),
@@ -310,7 +310,7 @@ def convert_architecture(microservices: dict, information_flows: dict, external_
 
             if type(endpoints) is not list:
                 endpoints = [endpoints]
-            print(endpoints)
+            
             for endpoint_route in endpoints:
                 interface["api"]["restEndpoints"].append({
                     "route": endpoint_route,
@@ -506,12 +506,10 @@ def convert_architecture(microservices: dict, information_flows: dict, external_
 
         if "circuit_breaker_link" in flow.get("stereotype_instances", []):
             connector["isResilient"] = True
-            print(f"{flow['sender']}to {flow['receiver']} : circuitbreak")
             # This is not a security concern, but a resilience pattern
             # Can be added to details if needed
         if "load_balanced_link" in flow.get("stereotype_instances", []):
             connector["loadBalancing"] = True
-            print(f"{flow['sender']}to {flow['receiver']} : ldbalance")
             # Not a security concern
         if "encryption" in flow.get("stereotype_instances", []):
             connector["isEncryptedCommunication"] = True

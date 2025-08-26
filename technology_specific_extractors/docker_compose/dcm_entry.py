@@ -84,8 +84,8 @@ def dictionarify(elements_set: set, properties_dict: dict) -> dict:
                 tagged_values.append(("Port", str(list(e[3][0]))))
             except TypeError:
                 tagged_values.append(("Port", str(e[3][0])))
-            except:
-                print(list(e[3]))
+            except Exception as ex:
+                print(ex,"\n",list(e[3]))
                 
             traceability.add_trace({
                 "parent_item": e[0],#.replace("pom_", "")
@@ -229,7 +229,8 @@ def detect_microservice(file_path: str, dfd) -> str:
             if m["image"] == docker_image:
                 microservice = m["name"]
     except Exception as e:
-        print(e)
+        pass
+        # print(e)
 
 
     return microservice

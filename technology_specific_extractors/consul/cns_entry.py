@@ -22,7 +22,7 @@ def detect_consul(microservices: dict, information_flows: dict, dfd) -> dict:
     for m in microservices.values():
         # Docker & Maven/Gradle detection
         for keyword in SERVER_KEYWORDS:
-            results = fi.search_keywords(keyword)
+            results = fi.search_keywords(keyword, file_extension=["*.conf","*.properties","*.xml","*.gradle","*.sh","*.json","*.yml","*.yaml"])
             for r, res in results.items():
                 
                 if (keyword=="consul:" and "docker" not in res['name'])\
@@ -48,7 +48,7 @@ def detect_consul(microservices: dict, information_flows: dict, dfd) -> dict:
     # --- Detect clients via annotations, imports, config ---
     participants = set()
     for keyword in CLIENT_KEYWORDS:
-        results = fi.search_keywords(keyword)
+        results = fi.search_keywords(keyword, file_extension=["*.xml","*.gradle","*.sh","*.json","*.yml","*.yaml", "*.properties","*.conf"])
         for r, res in results.items():
             service_name = tech_sw.detect_microservice(res["path"], dfd)
             participants.add((service_name, res["path"], res["line_nr"], res["span"]))

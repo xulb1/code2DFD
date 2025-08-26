@@ -7,7 +7,7 @@ def detect_load_balancers(microservices: dict, information_flows: dict, dfd) -> 
     """Find load balancers.
     """
 
-    results = fi.search_keywords("@LoadBalanced")     # content, name, path
+    results = fi.search_keywords("@LoadBalanced", file_extension=["*.java"])     # content, name, path
     for r in results.keys():
         microservice = tech_sw.detect_microservice(results[r]["path"], dfd)
 
@@ -22,7 +22,7 @@ def detect_load_balancers(microservices: dict, information_flows: dict, dfd) -> 
                 else:
                     m["tagged_values"] = [('Load Balancer', "Spring Cloud")]
                 
-                print("lob_entry :","SpringCloud","<<<<<<<<<<<<<<<<<load balancer")
+                # print("lob_entry :","SpringCloud","<<<<<<<<<<<<<<<<<load balancer")
                 # # Traceability
                 traceability.add_trace(
                     {

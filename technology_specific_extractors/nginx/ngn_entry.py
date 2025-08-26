@@ -77,7 +77,7 @@ def detect_nginx(microservices: dict, information_flows: dict, external_componen
                 microservices[m]["tagged_values"] = [("Web Application", "Nginx")]
 
     if not web_app:
-        results = fi.search_keywords("FROM nginx:")
+        results = fi.search_keywords("FROM nginx:", file_extension=["Dockerfile"])
         for r in results:
             web_service = tech_sw.detect_microservice(results[r]["path"], dfd)
             if web_service:
