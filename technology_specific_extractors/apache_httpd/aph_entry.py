@@ -71,12 +71,12 @@ def add_user(information_flows: dict, external_components: dict, microservice: s
     if not microservice:
         microservice = "apache-server"
 
-        trace = dict()
-        trace["item"] = microservice
-        trace["file"] = trace_info[0]
-        trace["line"] = trace_info[1]
-        trace["span"] = trace_info[2]
-        traceability.add_trace(trace)
+        traceability.add_trace({
+            "item": microservice,
+            "file": trace_info[0],
+            "line": trace_info[1],
+            "span": trace_info[2]
+        })
 
     # External component user
     external_components = ext.add_user(external_components)
@@ -94,10 +94,11 @@ def mark_server(microservices: dict, microservice: str) -> dict:
     if not microservice:
         newKey = max(microservices.keys(), default=-1) + 1
         
-        microservices[newKey] = dict()
-        microservices[newKey]["name"] = "apache-server"
-        microservices[newKey]["stereotype_instances"] = ["web_server"]
-        microservices[newKey]["tagged_values"] = [("Web Server", "Apache httpd")]
+        microservices[newKey] = {
+            "name": "apache-server",
+            "stereotype_instances": ["web_server"],
+            "tagged_values": [("Web Server", "Apache httpd")]
+        }
     else:
         for m in microservices.values():
             if m["name"] == microservice: # this is the service
@@ -163,10 +164,11 @@ def add_connections(microservices: dict, information_flows: dict, file, microser
                 if target_service:
                     newKey = max(information_flows.keys(), default=-1) + 1
                     
-                    information_flows[newKey] = dict()
-                    information_flows[newKey]["sender"] = microservice
-                    information_flows[newKey]["receiver"] = target_service
-                    information_flows[newKey]["stereotype_instances"] = ["restful_http"]
+                    information_flows[newKey] = {
+                        "sender": microservice,
+                        "receiver": target_service,
+                        "stereotype_instances": ["restful_http"]
+                    }
 
                     traceability.add_trace({
                         "item": f"{microservice} -> {target_service}",

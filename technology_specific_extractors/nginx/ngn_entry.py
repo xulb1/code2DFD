@@ -98,7 +98,9 @@ def detect_nginx(microservices: dict, information_flows: dict, external_componen
                 local_repo_path = tmp.tmp_config["Repository"]["local_path"]
                 docker_path = os.path.dirname(results[r]["path"])
                 if docker_path and local_repo_path:
-                    docker_path = os.path.relpath(docker_path, start=local_repo_path)
+                    # docker_path = os.path.relpath(docker_path, start=local_repo_path) # pk un chemin relatif ?
+                    docker_path = os.path.join(local_repo_path, docker_path)
+                
                 service_name = "web-app"
                 # go through dockercompose and see if a build or image fits this. if yes, use that name
                 
@@ -126,7 +128,7 @@ def detect_nginx(microservices: dict, information_flows: dict, external_componen
                             image = file.get("services", {}).get(s).get("build")
                         except:
                             pass
-                        if image and image == docker_path:
+                        if image and image.strip(" /") in docker_path.strip(" /"):
                             service_name = s
 
                 key = max(microservices.keys(), default=-1) + 1
@@ -203,9 +205,9 @@ def detect_nginx(microservices: dict, information_flows: dict, external_componen
                                     for part in parts:
                                         if part != "":
                                             try:
-                                                port = int(part.strip(":").strip())
+                                                port = int(part.strip(" :;"))
                                             except:
-                                                print("\033[32m", part.strip(":").strip(),"-------------------------------------------- \033[0m")
+                                                print("\033[32m", part.strip(" :;"),"-------------------------------------------- \033[0m")
                                                 pass
                                 except Exception as e:
                                     pass

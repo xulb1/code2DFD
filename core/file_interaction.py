@@ -180,9 +180,9 @@ def search_keywords(keywords: str, directory_path=None, file_extension=None):
             full_path = line_parts[0]
             if full_path not in seen:
                 seen.add(full_path)
-                
+
                 # Exclusion des fichiers de test et markdown, etc.
-                if (all(w not in full_path for w in ["README","test","example","exemple"])
+                if (all(w not in full_path.lower() for w in ["readme","test"])
                         and len(full_path) >= 3
                         and all(ext not in os.path.splitext(full_path)[1] for ext in [".txt",".md"])):
                     path = os.path.relpath(full_path, start=repo_folder)
