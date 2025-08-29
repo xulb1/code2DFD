@@ -39,7 +39,15 @@ def check_external_encryption(microservices: dict) -> dict:
             
         is_secured = False
         service_name = m.get("name")
-        directory_path = m.get("directory_path")
+        path, directory_path = "", ""
+        for a in m:
+            if "path" in a:
+                path = a
+        if path:
+            directory_path = (m.get(f"{path}")).rsplit("/",1)[0]
+        
+        print(directory_path,"&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
+        
 
         # Recherche des mots-clés dans les fichiers de configuration
         for keyword in ENCRYPTION_KEYWORDS["configuration"]:

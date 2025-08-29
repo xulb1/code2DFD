@@ -53,15 +53,33 @@ def check_inter_service_encryption(microservices: dict, information_flows: dict)
     # Vérification individuelle des services
     for m in microservices.values():
         service_name = m.get("name")
-        directory_path = m.get("directory_path")
+        
+        directory_path, path = "", ""
+        for a in m:
+            if "path" in a:
+                path = a
+        if path:
+            directory_path = (m.get(f"{path}")).rsplit("/",1)[0]
+        
+        print(directory_path,"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+        
+        
+        # Détection SSL via l'infrastructure
+        is_infra_ssl_enabled = any(fi.search_keywords(keyword, file_extension=["*.conf","*.xml","*.gradle","*.sh","*.json","*.yml","*.yaml", "*.properties"]) for keyword in ENCRYPTION_KEYWORDS["infra"])
+        if is_infra_ssl_enabled:
+            m.setdefault("stereotype_instances", []).append("infra_tls_enabled")
+            m.setdefault("tagged_values", []).append(("Security", "Infrastructure SSL/TLS Enabled"))
+        #FIXME: pas sûr pour infra
+        if not directory_path:
+            continue
         
         # Détection SSL côté serveur
         #TODO: detection pb
         for mot in ENCRYPTION_KEYWORDS["server"]["java_code"]:
             results = fi.search_keywords(mot, directory_path)
             if results:
-                for i in results["content"]:
-                    print(i)
+                for i in results.values():
+                    print(i["path"])
         for mot in ENCRYPTION_KEYWORDS["server"]["config"]:
             results = fi.search_keywords(mot, directory_path)
             if results:
@@ -80,12 +98,6 @@ def check_inter_service_encryption(microservices: dict, information_flows: dict)
         if is_client_ssl_enabled:
             m.setdefault("stereotype_instances", []).append("client_tls_enabled")
             m.setdefault("tagged_values", []).append(("Security", "Client SSL/TLS Enabled"))
-
-        # Détection SSL via l'infrastructure
-        is_infra_ssl_enabled = any(fi.search_keywords(keyword, directory_path, file_extension=["*.conf","*.xml","*.gradle","*.sh","*.json","*.yml","*.yaml", "*.properties"]) for keyword in ENCRYPTION_KEYWORDS["infra"])
-        if is_infra_ssl_enabled:
-            m.setdefault("stereotype_instances", []).append("infra_tls_enabled")
-            m.setdefault("tagged_values", []).append(("Security", "Infrastructure SSL/TLS Enabled"))
 
     # Vérification de chaque flux d'information
     for flow_id, flow in information_flows.items():
@@ -108,6 +120,7 @@ def check_inter_service_encryption(microservices: dict, information_flows: dict)
         # client + serveur => une configuration SSL
         if sender_uses_tls and receiver_accepts_tls:
             # Pour garantir la certitude, on peut chercher la chaîne "https://" dans la configuration du sender.
+            print(sender_service.get("directory_path"),"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             secure_url_found = fi.search_keywords(f"https://{receiver_name}", sender_service.get("directory_path"))
             if secure_url_found:
                 is_secured = True

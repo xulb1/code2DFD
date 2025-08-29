@@ -1,3 +1,4 @@
+import fnmatch
 import os
 import re
 import subprocess
@@ -60,10 +61,13 @@ def extract_variable(line, submodule):
 def search_keywords_v0(keywords: str, directory_path=None):
     """Searches keywords locally using grep.
     """
+
+    repo_folder = tmp.tmp_config["Repository"]["local_path"]
     if directory_path:
-        repo_folder = directory_path
-    else:
-        repo_folder = tmp.tmp_config["Repository"]["local_path"]
+        if repo_folder not in directory_path:
+            repo_folder = f"{repo_folder}{directory_path}"
+        else:
+            repo_folder = directory_path
 
     results = dict()
 
@@ -120,11 +124,14 @@ def search_keywords(keywords: str, directory_path=None, file_extension=None):
     """
     Recherche des mots-clés localement en utilisant grep avec un filtre d'extension de fichier.
     """
+    repo_folder = tmp.tmp_config["Repository"]["local_path"]
     if directory_path:
-        repo_folder = directory_path
-    else:
-        repo_folder = tmp.tmp_config["Repository"]["local_path"]
-
+        if repo_folder not in directory_path:
+            repo_folder = f"{repo_folder}/{directory_path}"
+        else:
+            repo_folder = directory_path
+        # print(repo_folder)
+    
     results = {}
 
     if isinstance(keywords, str):
@@ -175,7 +182,9 @@ def search_keywords(keywords: str, directory_path=None, file_extension=None):
                 seen.add(full_path)
                 
                 # Exclusion des fichiers de test et markdown, etc.
-                if not "test" in full_path and len(full_path) >= 3 and not os.path.splitext(full_path)[1] == ".md":
+                if (all(w not in full_path for w in ["README","test","example","exemple"])
+                        and len(full_path) >= 3
+                        and all(ext not in os.path.splitext(full_path)[1] for ext in [".txt",".md"])):
                     path = os.path.relpath(full_path, start=repo_folder)
                     name = os.path.basename(path)
                     line_nr = line_parts[1]
@@ -438,7 +447,6 @@ def check_dockerfile(build_path: str):
     build_path = os.path.normpath(build_path)
 
     docker_path = os.path.join(local_repo_path, os.path.join(docker_compose_dir, build_path))
-
     lines = list()
 
     dirs = list()
@@ -549,3 +557,30 @@ def get_file_as_lines(filename: str) -> dict:
             files[key]["path"] = os.path.relpath(line, start=local_path)
 
     return files
+
+
+def search_files(patterns, path=None):
+    """Recherche tous les fichiers correspondant aux motifs fournis dans le répertoire racine.    """
+    repo_folder = tmp.tmp_config["Repository"]["local_path"]
+    if path and repo_folder not in path:
+        path = f"{repo_folder}/{path}"
+    else:
+        path = repo_folder
+    
+    if isinstance(patterns, str):
+        patterns = [patterns]
+
+    found_files = {}
+
+    for dirpath, _, filenames in os.walk(path):
+        for pattern in patterns:
+            for filename in fnmatch.filter(filenames, pattern):
+                full_path = os.path.join(dirpath, filename)
+                try:
+                    with open(full_path, "r", encoding="utf-8") as f:
+                        content = f.read().splitlines()
+                    found_files[full_path] = content
+                except Exception as e:
+                    print(f"Erreur en lisant {full_path}: {e}")
+
+    return found_files

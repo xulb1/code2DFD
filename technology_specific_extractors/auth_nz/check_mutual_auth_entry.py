@@ -37,7 +37,15 @@ def check_inter_service_auth_and_authz(microservices: dict, information_flows: d
     
     # Étape 1 : Analyser chaque service individuellement
     for service in microservices.values():
-        directory_path = service.get("directory_path")
+        directory_path, path = "", ""
+        for a in service:
+            if "path" in a:
+                path = a
+        if path:
+            directory_path = (service.get(f"{path}")).rsplit("/",1)[0]
+        print(directory_path,"----------------------------------------------")
+        if not directory_path:
+            continue
 
         # Détection des mécanismes de sécurité côté serveur
         server_security_found = any(fi.search_keywords(pattern, directory_path, file_extension=["*.properties", "*.yml", "*.yaml","*.xml","*.sh","*.json","*.conf"]) for pattern in AUTH_PATTERNS["server"]["config_files"]) or \

@@ -59,9 +59,21 @@ def check_registry_security(microservices: dict) -> dict:
         # 2. Get the security keywords for this specific registry type
         keywords_to_search = SECURITY_KEYWORDS.get(registry_type, [])
         
-        # 3. Search for the keywords in the service's directory
+        # 3. Set directory path for grep
+        path, directory_path = "", ""
+        for a in m:
+            if "path" in a:
+                path = a
+        if path:
+            directory_path = (m.get(f"{path}")).rsplit("/",1)[0]
+        print(directory_path," ((((((((((((((((((((()))))))))))))))))))))")
+        if not directory_path:
+            continue
+        
+        # 4. Search for the keywords in the service's directory
         for keyword in keywords_to_search:
-            results = fi.search_keywords(keyword, m.get("directory_path"))
+                
+            results = fi.search_keywords(keyword, directory_path)
             
             if results:
                 is_secured = True

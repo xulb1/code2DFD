@@ -42,7 +42,16 @@ def check_auth_logic_separation(microservices: dict) -> dict:
     local_security_impls = defaultdict(list)
     
     for service_id, service in microservices.items():
-        directory_path = service.get("directory_path")
+        directory_path, path = "", ""
+        for a in service:
+            if "path" in a:
+                path = a
+        if path:
+            directory_path = (service.get(f"{path}")).rsplit("/",1)[0]
+        
+        print(directory_path,"=========================================")
+        if not directory_path:
+            continue
         
         # Étape 1 : Vérifier l'implémentation centralisée
         is_centralized = False
