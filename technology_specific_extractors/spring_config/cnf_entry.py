@@ -231,10 +231,8 @@ def parse_config_files(config_server: str, config_file_path: str, config_file_pa
                 elif ending == "properties":
                     name, properties = parse.parse_properties_file(file[1])
                     name = name[0]
-                if "properties" in microservices[correct_id]:
-                    microservices[correct_id]["properties"] |= properties
-                else:
-                    microservices[correct_id]["properties"] = properties
+                
+                microservices[correct_id].setdefault("properties",set()).update(properties)
 
     return microservices, information_flows, external_components
 

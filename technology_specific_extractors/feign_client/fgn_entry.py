@@ -25,7 +25,7 @@ def set_information_flows(dfd) -> dict:
             if "@EnableCircuitBreaker" in line:
                 for m in microservices.values():
                     if m["name"] == microservice:
-                        m.setdefault("properties",[]).append("hystrix_enabled")
+                        m.setdefault("properties",set()).update("hystrix_enabled")
                         # print("fgn_entry : ","hystrix","<<<<<<<<< circuit breaker",microservice)
 
     results = fi.search_keywords("@FeignClient", file_extension=["*.java"])     # content, name, path

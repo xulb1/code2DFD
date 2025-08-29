@@ -91,7 +91,7 @@ def detect_zipkin_server(microservices: dict, information_flows: dict, iterative
         microservices[key] = {
             "name": "zipkin-server",
             "image": "placeholder_image",
-            "properties": [("port", port, ("file", "line", "span"))],
+            "properties": {("port", port, ("file", "line", "span"))},
             "stereotype_instances": ["tracing_server"],
             "tagged_values": [("Tracing Server", "Zipkin")]
         }
