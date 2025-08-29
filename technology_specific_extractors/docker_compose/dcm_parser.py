@@ -4,6 +4,7 @@ from pathlib import Path
 import traceback
 
 import ruamel.yaml
+from ruamel.yaml.nodes import MappingNode
 
 import output_generators.traceability as traceability
 import technology_specific_extractors.environment_variables as env
@@ -53,6 +54,25 @@ class MyConstructor(ruamel.yaml.constructor.RoundTripConstructor):
         ret_val.lc.line = node.start_mark.line
         ret_val.lc.col = node.start_mark.column
         return ret_val
+    
+    def construct_mapping(self, node, mapping, deep=False):
+        """Accepte les doublons et garde la dernière valeur (modifie 'mapping' en place)."""
+        if not isinstance(node, MappingNode):
+            raise ruamel.yaml.constructor.ConstructorError(
+                "while constructing a mapping", node.start_mark,
+                f"expected a mapping node, but found {node.id}", node.start_mark
+            )
+
+        # Important pour gérer les merges '<<' et normaliser
+        self.flatten_mapping(node)
+
+        # Remplir l'instance 'mapping' passée par ruamel (NE PAS en créer une nouvelle)
+        for key_node, value_node in node.value:
+            key = self.construct_object(key_node, deep=deep)
+            value = self.construct_object(value_node, deep=deep)
+            mapping[key] = value  # la dernière occurrence écrase les précédentes
+        return mapping
+    
 # end of external code
 
 
@@ -63,7 +83,6 @@ def extract_microservices(file_content, file_name) -> set:
 
     yaml = ruamel.yaml.YAML()
     yaml.Constructor = MyConstructor
-
     file = yaml.load(file_content)
     print("===========================================")
 
@@ -234,7 +253,7 @@ def extract_service_from_file(s, file_content, file_name, data, microservices_di
 
 
 # FIXME: detection du même port plusieurs fois -> optimiser
-def extract_environment_props(data, s, lines: list, port: tuple, properties: set,file_name: str) -> tuple[tuple,set]:
+def extract_environment_props(data, s, lines: list, port: list, properties: set,file_name: str) -> tuple[tuple,set]:
     """Extracts environment variable properties and port information from a service definition.
 
     This function scans the environment variables of a given service for database credentials and port settings,
@@ -247,6 +266,8 @@ def extract_environment_props(data, s, lines: list, port: tuple, properties: set
         return port, properties
         
     for line_number, entry in enumerate(environment_entries):
+        if ':' not in entry:
+            continue
         # looking for databases creds : 
         if any(keyword in entry.upper() for keyword in ["USER", "PASS"]) and \
            any(db in entry.upper() for db in ["MONGODB", "MYSQL", "POSTGRES"]):
@@ -263,14 +284,35 @@ def extract_environment_props(data, s, lines: list, port: tuple, properties: set
                 properties.add((key_type, value, (file_name, line_number + 1, span)))
 
         # port (kafka) -> KAFKA_ADVERTISED_PORT
-        if ("KAFKA" in entry.upper() and
-            "PORT"  in entry.upper()):
-            port_nr = environment_entries.get(entry)
-            line_number = data[s]["environment"].lc.key(entry)[0]
-            length_tuple = re.search(str(port_nr), lines[line_number]).span()
-            span = f"[{str(length_tuple[0])}:{str(length_tuple[1])}]"
-            port = (port_nr, file_name, line_number + 1, span)
+        # if ("ADVERTISED" in entry.upper() and
+        #     "PORT"  in entry.upper()):
+        #     port_nr = environment_entries.get(entry)
+        #     line_number = data[s]["environment"].lc.key(entry)[0]
+        #     length_tuple = re.search(str(port_nr), lines[line_number]).span()
+        #     span = f"[{str(length_tuple[0])}:{str(length_tuple[1])}]"
+        #     port = (port_nr, file_name, line_number + 1, span)
         # print(value, port)
+        # Séparer la clé et la valeur
+        if "KAFKA" in entry.upper():
+            key, value = entry.split(':', 1)
+            key = key.strip()
+            value = value.strip().strip('"')
+
+            # Traitement spécial pour certains champs
+            # if key == "KAFKA_LISTENER_SECURITY_PROTOCOL_MAP":
+            if "KAFKA_ADVERTISED_LISTENERS" in key.upper():
+                # Convertir en dict {listener: host:port}
+                listeners = dict(item.split('://') for item in value.split(','))
+                line_number = data[s]["environment"].lc.key(entry)[0]
+                length_tuple = re.search(key, lines[line_number]).span()
+                span = f"[{str(length_tuple[0])}:{str(length_tuple[1])}]"
+                properties.add(("kafka_listeners", listeners, (file_name, line_number + 1, span)))
+            elif "JMX" in key:
+                line_number = data[s]["environment"].lc.key(entry)[0]
+                length_tuple = re.search(key, lines[line_number]).span()
+                span = f"[{str(length_tuple[0])}:{str(length_tuple[1])}]"
+                properties.add(("kafka_monitoring_port", value, (file_name, line_number + 1, span)))
+    
     
     return port, properties
 
