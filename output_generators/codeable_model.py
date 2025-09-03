@@ -41,7 +41,7 @@ def output_uml_entities(entities: dict, entity_type: str, file_content, allCompo
         tagged_values = dict()
         if "tagged_values" in m:
             for t in m["tagged_values"]:
-                if t[0] == "Port" and isinstance(t[1], int):
+                if t[0].casefold() == "port" and isinstance(t[1], int):
                     tagged_values[t[0]] = int(t[1])
                 else:
                     tagged_values[t[0]] = t[1]
@@ -54,10 +54,18 @@ def output_uml_entities(entities: dict, entity_type: str, file_content, allCompo
                     stereotypes.add(s)
             else:
                 stereotypes.add(m["stereotype_instances"])
-                
-            if stereotypes:
-                stereotypes = str(list(stereotypes)).replace("'", "")
+            
+        if "properties" in m:
+            if m["properties"]:
+                if isinstance(m["properties"], dict):
+                    for k,v in m["properties"].items():
+                        tagged_values[k] = str(v)
+                else:
+                    stereotypes.add(str(m["properties"]))
 
+        if stereotypes:
+            stereotypes = str(list(stereotypes)).replace("'", "")
+                
         if entity_type=="information_flows":
             sender = str(m["sender"]).replace("-", "_")
             receiver = str(m["receiver"]).replace("-", "_")

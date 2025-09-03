@@ -136,7 +136,6 @@ def DFD_extraction():
     # Merge old and new
     for new_flow in new_information_flows.keys():
         key = max(information_flows.keys(), default=-1) + 1
-        information_flows[key] = dict()
         information_flows[key] = new_information_flows[new_flow]
     print("Extracted information flows from API-calls, message brokers, and database connections")
 
@@ -155,15 +154,10 @@ def DFD_extraction():
     # Merging
     print("Merging duplicate items")
     merge_duplicate_nodes(microservices, information_flows)
-    # print("m")
     merge_duplicate_nodes(external_components, information_flows)
-    # print("n")
     merge_duplicate_flows(information_flows)
-    # print("o")
     merge_duplicate_annotations(microservices)
-    # print("p")
     merge_duplicate_annotations(information_flows)
-    # print("q")
     merge_duplicate_annotations(external_components)
     # print("r")
     
@@ -179,14 +173,25 @@ def DFD_extraction():
     tmp.tmp_config.set("DFD", "information_flows", str(information_flows).replace("%", "%%"))
     tmp.tmp_config.set("DFD", "external_components", str(external_components).replace("%", "%%"))
 
+    microservices = clean_props(microservices)
     plaintext.write_plaintext(microservices, information_flows, external_components)
     codeable_models, codeable_models_path = codeable_model.output_codeable_model(microservices, information_flows, external_components)
     traceability_content = traceability.output_traceability()
-    visualizer.output_png(codeable_models_path)
+    try:
+        visualizer.output_png(codeable_models_path)
+        print("pas bof")
+    except :
+        print("bof")
+        
     json_edges.generate_json_edges(information_flows)
     json_architecture.generate_json_architecture(microservices, information_flows, external_components)
     # json_mm_arch.save_arch(microservices, information_flows, external_components)
 
+    for m in microservices.values():
+        si = m.get("stereotype_instances",[])
+        for i in si:
+            if "connect" in i:
+                print(f"\033[31m{m["name"]} -> {i}\033[0m")
     # sep = "\n\n================================ ======================================"
     # print(sep, microservices, sep, information_flows, sep, external_components )
     
@@ -264,22 +269,22 @@ def classify_microservices(microservices: dict, information_flows: dict, externa
     microservices, information_flows, external_components = detect_apachehttpd_webserver(microservices, information_flows, external_components, dfd)
     # print("ay")
     microservices = classify_internal_infrastructural(microservices)
-    print("az")
+    # print("az")
     microservices = set_plaintext_credentials(microservices)
     
     # Check security rules
-    print("aza")
+    # print("aza")
     microservices = check_registry_security(microservices)
-    print("azb")
+    # print("azb")
     #  long ->
     microservices = check_inter_service_encryption(microservices,information_flows)
-    print("azc")
+    # print("azc")
     microservices = check_external_encryption(microservices)
-    print("azd")
+    # print("azd")
     microservices = check_inter_service_auth_and_authz(microservices, information_flows)
-    print("aze")
+    # print("aze")
     microservices = check_auth_logic_separation(microservices)
-    print("azf")
+    # print("azf")
     
     return microservices, information_flows, external_components
 
@@ -290,7 +295,7 @@ def overwrite_port(microservices: dict) -> dict:
 
     for microservice in microservices.values():
         for prop in microservice.get("properties", []):
-            if prop[0] == "port":
+            if prop[0] == "Port":
                 # print(prop)
                 port = None
                 if isinstance(prop[1], str):
@@ -456,6 +461,7 @@ def detect_miscellaneous(microservices: dict, information_flows: dict, external_
 
             # connection config to services
             elif prop[0] == "config_connected":
+                hasLink = False
                 for m2 in microservices.values():
                     for stereotype in m2.get("stereotype_instances", []):
                         if stereotype == "configuration_server":
@@ -472,7 +478,37 @@ def detect_miscellaneous(microservices: dict, information_flows: dict, external_
                                 "line": prop[2][1],
                                 "span": prop[2][2]
                             })
-
+                            hasLink = True
+                            break
+                if hasLink :
+                    microservice["properties"] = [
+                        p for p in microservice["properties"] if p[0] != "config_connected"
+                    ]
+                
+            elif prop[0] == "eureka_connected":
+                hasLink = False
+                for m2 in microservices.values():
+                    for stereotype in m2.get("stereotype_instances", []):
+                        if stereotype == "service_registry":
+                            key = max(information_flows.keys(), default=-1) + 1
+                            information_flows[key] = {
+                                "sender": microservice["name"],
+                                "receiver": m2["name"],
+                                "stereotype_instances": ["restful_http"]
+                            }
+                            
+                            traceability.add_trace({
+                                "item": f"{m2["name"]} -> {microservice["name"]}",
+                                "file": prop[2][0],
+                                "line": prop[2][1],
+                                "span": prop[2][2]
+                            })
+                            hasLink = True
+                            break
+                if hasLink:
+                    microservice["properties"] = [
+                        p for p in microservice["properties"] if p[0] != "eureka_connected"
+                    ]
 
     return microservices, information_flows, external_components
 
@@ -506,7 +542,7 @@ def merge_duplicate_flows(information_flows: dict):
             # merge
             for field, j_value in flow_j.items():
                 if field not in ["sender", "receiver"]:
-                    print(" - ",flow_i,"\n",j_value)
+                    print(" - ",flow_i," -> ",j_value)
                     try:
                         flow_i[field] = flow_i.get(field, []) + list(j_value)
                     except Exception:
@@ -587,7 +623,10 @@ def merge_duplicate_nodes(nodes: dict, information_flows: dict):
                     try:
                         keep[field] = keep.get(field, []) + list(j_value)
                     except Exception:
-                        keep[field] = list(j_value).append(keep.get(field, []))
+                        try:
+                            keep[field] = list(j_value).append(keep.get(field, []))
+                        except TypeError as e:
+                            print(f"\033[91m{e}\033[0m")
             rename_information_flow_services(keep["name"],delete["name"], information_flows)
         
     for k in to_delete:
@@ -605,6 +644,8 @@ def rename_information_flow_services(keep: str, delete: str, information_flows: 
 def merge_duplicate_annotations(collection: dict):
     """Merge annotations of all items
     """
+    
+    
 
     for item in collection.values():
         if "stereotype_instances" in item:
@@ -614,12 +655,12 @@ def merge_duplicate_annotations(collection: dict):
             merged_tagged_values = {}
             
             for tag, tagged_value in item["tagged_values"]:
-                if tag == "Port":
+                if tag.casefold() == "port":
                     try:
                         tagged_value = ast.literal_eval(tagged_value)
                     except Exception:
                         pass
-                    if type(tagged_value) != list:
+                    if not isinstance(tagged_value, list):
                         tagged_value = [tagged_value]
                     
                     for i in range(len(tagged_value)):
@@ -649,3 +690,18 @@ def merge_duplicate_annotations(collection: dict):
                 (tag, values if len(values) > 1 else values[0])
                 for tag, values in merged_tagged_values.items()
             ]
+
+# FIXME: delete props not usefull ...
+def clean_props(microservices: dict):
+    for m in microservices.values():
+        clean_props = {}
+        if "properties" in m and m["properties"]:
+            for p in m["properties"]:
+                value = p[1]
+                key = p[0]
+                if value: # and "connected" not in key:
+                    clean_props[key] = value
+            m["properties"] = clean_props
+        else:
+            m.pop("properties", None)
+    return microservices

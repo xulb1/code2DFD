@@ -243,7 +243,7 @@ def find_rst_variable(parameter: str, file: dict, line_nr: int, information_flow
                                         if count < 50:
                                             parameters[p], x = find_rst_variable(parameters[p], fc, linec, information_flows, microservice, dfd, count + 1)     # recursive step
             except:
-                print("\tCould not find a definition for " + str(parameters[p]) + ".")
+                print(f"\033[91m\tCould not find a definition for {parameters[p]}.\033[0m")
                 return False, information_flows
         else:           # means that it's a variable in this file -> go through lines to find it
             found = False
@@ -270,7 +270,7 @@ def find_rst_variable(parameter: str, file: dict, line_nr: int, information_flow
 
                 line += 1
             if found == False:
-                print("\tCould not find a definition for " + str(parameters[p]) + ".")
+                print(f"\033[91m\tCould not find a definition for {parameters[p]}.\033[0m")
                 return False, information_flows
     invalid = False
     for p in parameters:

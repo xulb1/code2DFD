@@ -8,10 +8,24 @@ def detect_databases(microservices: dict) -> dict:
     for indice, m in microservices.items():
         database = False
         if "image" in m:
-            if "mongo:" in m["image"]:
+            if "mongo" in m["image"].lower() and "express" not in m["image"].lower():
                 database = "MongoDB"
-            elif "mysql-server:" in m["image"]:
+            elif "mysql" in m["image"].lower():
                 database = "MySQL"
+            elif "postgres" in m["image"].lower():
+                database = "PostgreSQL"
+            elif "mariadb" in m["image"].lower():
+                database = "MariaDB"
+            elif "mssql" in m["image"].lower():
+                database = "Microsoft SQL Server"
+            elif all(w in m["image"] for w in ["oracle.com", "database"]):
+                database = "Oracle DB"
+            elif "redis" in m["image"].lower():
+                database = "Redis"
+            elif "database" in m["image"].lower():
+                print(f"\033[91mm{m["image"]}\033[0m")
+                database = "Unknown DB"
+            
 
         if database:
             m["type"] == "database_component"
@@ -44,10 +58,23 @@ def detect_via_docker(microservices: dict, m: int) -> dict:
     
     for line in dockerfile_lines:
         if "FROM" in line:
-            if "mongo" in line:
+            if "mongo" in line.lower() and "express" not in line.lower():
                 database = "MongoDB"
-            elif "postgres" in line:
+            elif "mysql" in line.lower():
+                database = "MySQL"
+            elif "postgres" in line.lower():
                 database = "PostgreSQL"
+            elif "mariadb" in line.lower():
+                database = "MariaDB"
+            elif "mssql" in line.lower():
+                database = "Microsoft SQL Server"
+            elif all(w in line.lower() for w in ["oracle.com", "database"]):
+                database = "Oracle DB"
+            elif "redis" in line.lower():
+                database = "Redis"
+            elif "database" in line.lower():
+                print(f"\033[91m{line}\033[0m")
+                database = "Unknown DB"
 
     if not database:
         return microservices

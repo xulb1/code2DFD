@@ -591,6 +591,6 @@ def save_arch(microservices: dict, information_flows: dict, external_components:
         with open(output_path, 'w') as architecture_file:
             json.dump(arch, architecture_file, indent=4)
         
-        print(f"Successfully converted {filename} to {output_path}, mm converted")
+        print(f"\033[32mSuccessfully converted {filename} to {output_path}, mm converted\033[0m")
     except Exception as e:
-        print(f"Error converting {filename}: {e}")
+        print(f"\033[91mError converting {filename}: {e}\033[0m")

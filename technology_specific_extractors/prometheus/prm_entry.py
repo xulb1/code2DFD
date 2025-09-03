@@ -79,7 +79,7 @@ def detect_connections(microservices: dict, information_flows: dict, dockerfile,
                                             if prop[0] == "Port" and str(prop[1]) == str(part):
                                                 target_service = m["name"]
                                     except Exception as e:
-                                        print(f"failed tagged_values for {m["name"]}")
+                                        print(f"\033[91mfailed tagged_values for {m["name"]}\033[0m")
                                 elif m["name"] == part:
                                     target_service = m["name"]
                     

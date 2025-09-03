@@ -126,7 +126,7 @@ def get_outgoing_endpoints(routings: set, dfd) -> set:
                                             exchange = parameters[i]
                                             routingKey = parameters[i + 1]
                                         except Exception:
-                                            print("Could not extract exchange and routing key from sending-statement")
+                                            print("\033[91mCould not extract exchange and routing key from sending-statement\033[0m")
                                         break
 
                             span = re.search(f"rabbitTemplate.{command}", line_content)

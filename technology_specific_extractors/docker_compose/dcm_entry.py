@@ -85,7 +85,7 @@ def dictionarify(elements_set: set, properties_dict: dict) -> dict:
             except TypeError:
                 tagged_values.append(("Port", str(e[3][0])))
             except Exception as ex:
-                print(ex,"\n",list(e[3]))
+                print(f"\033[91m{ex}\n{list(e[3])}")
                 
             traceability.add_trace({
                 "parent_item": e[0],#.replace("pom_", "")
@@ -159,10 +159,10 @@ def get_environment_variables(docker_compose_file_URL: str) -> set:
             try:
                 environment_variables.add((line.split("=")[0].strip(), line.split("=")[1].strip()))
             except Exception as e:
-                print(e)
+                print(f"\033[91m{e}\033[0m")
                 logger.debug("error splitting line in dco_entry.set_microservices")
     except Exception as e:
-        print(e)
+        print(f"\033[91m{e}\033[0m")
         logger.info("No .env file exists",e)
     return environment_variables
 
@@ -215,7 +215,7 @@ def detect_microservice(file_path: str, dfd) -> str:
         docker_compose_path = raw_files[0]["path"]          # path in the repo (w/0 "analysed_...")
         docker_compose_location = os.path.dirname(docker_compose_path)
     except Exception as e:
-        print(e)
+        print(f"\033[91m{e}\033[0m")
 
     # path of dockerfile relative to docker-compose file
     # if dockerfile is in same branch in file structure as docker-compose-file:
@@ -229,8 +229,8 @@ def detect_microservice(file_path: str, dfd) -> str:
             if m["image"] == docker_image:
                 microservice = m["name"]
     except Exception as e:
-        pass
-        # print(e)
+        # pass
+        print(f"\033[91m{e}\033[0m")
 
 
     return microservice

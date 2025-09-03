@@ -12,34 +12,34 @@ def set_plaintext_credentials(microservices: dict) -> dict:
         tagged_values = set()
         if "properties" in microservices[m] and "stereotype_instances" in microservices[m]:
             for prop in microservices[m]["properties"]:
-                if prop[0] == "datasource_password" and "database" in microservices[m]["stereotype_instances"]:
+                if prop[0] == "datasource_password" : # and "database" in microservices[m]["stereotype_instances"]:
                     plaintext_credentials = True
                     trace_info = (prop[2][0], prop[2][1], prop[2][2])
                     password = env.resolve_env_var(prop[1])
                     tagged_values.add(("Password", password))
-                elif prop[0] == "datasource_username" and "database" in microservices[m]["stereotype_instances"]:
+                elif prop[0] == "datasource_username" : # and "database" in microservices[m]["stereotype_instances"]:
                     plaintext_credentials = True
                     trace_info = (prop[2][0], prop[2][1], prop[2][2])
                     username = env.resolve_env_var(prop[1])
                     tagged_values.add(("Username", username))
 
-                elif prop[0] == "mail_password" and "mail_server" in microservices[m]["stereotype_instances"]:
+                elif prop[0] == "mail_password" : # and "mail_server" in microservices[m]["stereotype_instances"]:
                     plaintext_credentials = True
                     trace_info = (prop[2][0], prop[2][1], prop[2][2])
                     password = env.resolve_env_var(prop[1])
                     tagged_values.add(("Password", password))
-                elif prop[0] == "mail_username" and "mail_server" in microservices[m]["stereotype_instances"]:
+                elif prop[0] == "mail_username" : # and "mail_server" in microservices[m]["stereotype_instances"]:
                     plaintext_credentials = True
                     trace_info = (prop[2][0], prop[2][1], prop[2][2])
                     username = env.resolve_env_var(prop[1])
                     tagged_values.add(("Username", username))
 
-                elif prop[0] == "config_password" and "configuration_server" in microservices[m]["stereotype_instances"]:
+                elif prop[0] == "config_password" : # and "configuration_server" in microservices[m]["stereotype_instances"]:
                     plaintext_credentials = True
                     trace_info = (prop[2][0], prop[2][1], prop[2][2])
                     password = env.resolve_env_var(prop[1])
                     tagged_values.add(("Password", password))
-                elif prop[0] == "config_username" and "configuration_server" in microservices[m]["stereotype_instances"]:
+                elif prop[0] == "config_username" : # and "configuration_server" in microservices[m]["stereotype_instances"]:
                     plaintext_credentials = True
                     trace_info = (prop[2][0], prop[2][1], prop[2][2])
                     username = env.resolve_env_var(prop[1])

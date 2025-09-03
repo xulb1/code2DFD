@@ -132,7 +132,10 @@ def check_properties(microservices: dict, information_flows: dict, external_comp
                     database_type = "PostgreSQL"
                 elif "neo4j" in database_url.casefold():
                     database_type = "Neo4j"
+                else:
+                    database_type = "UnknownDB"
 
+            #FIXME: duplicate database found
             # create external component
             key = max(external_components.keys(), default=-1) + 1
             external_components[key] = {

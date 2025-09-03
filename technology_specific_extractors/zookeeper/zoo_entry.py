@@ -86,7 +86,7 @@ def detect_zookeeper(microservices: dict, information_flows: dict, dfd) -> dict:
     for zk_server in zookeeper_servers:
         for kafka_service in kafka_services:
             if zk_server != kafka_service:
-                add_information_flow(information_flows, zk_server, kafka_service)
+                add_information_flow(information_flows, kafka_service, zk_server)
 
     return microservices, information_flows
 
@@ -94,8 +94,7 @@ def detect_zookeeper(microservices: dict, information_flows: dict, dfd) -> dict:
 def add_information_flow(information_flows: dict, sender: str, receiver: str):
     """ Ajoute un flux d'information si il n'existe pas déjà et supprime le flux inverse. """
     flow_exists = any(
-        (flow["sender"] == sender and flow["receiver"] == receiver) or
-        (flow["sender"] == receiver and flow["receiver"] == sender)
+        (flow["sender"] == sender and flow["receiver"] == receiver)
         for flow in information_flows.values()
     )
 

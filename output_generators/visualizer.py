@@ -16,4 +16,4 @@ def output_png(codeable_models_path: str):
     try:
         generator.processes_file(filename=new_plantuml_path)
     except Exception:
-        print("No connection to the PlantUML server possible or malformed input to the server.")
+        print("\033[91mNo connection to the PlantUML server possible or malformed input to the server.\033[0m")

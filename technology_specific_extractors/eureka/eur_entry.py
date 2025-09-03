@@ -56,8 +56,8 @@ def detect_eureka(microservices: dict, information_flows: dict, dfd) -> dict:
                     })
                     serverFound = True
             if not serverFound:
-                print("33[0m Il existe un server Eureka, mais le microservice associé n'a pas été trouvé -------")
-
+                print("\033[91m Il existe un server Eureka, mais le microservice associé n'a pas été trouvé -------\033[0m")
+                
     # print("eurekaservers",eureka_servers)
     if not eureka_servers:
         return microservices, information_flows
@@ -77,7 +77,7 @@ def detect_eureka(microservices: dict, information_flows: dict, dfd) -> dict:
                 participants.add((service_name, file_path, line_nr, span))
 
     # --- Ajouter les participants signalés via propriété custom ---
-    for m_id, m in microservices.items():
+    for m in microservices.values():
         for prop in m.get("properties", []):
             if prop[0] == "eureka_connected" and m["name"] not in [p[0] for p in participants]:
                 participants.add((m["name"], prop[2][0], prop[2][1], prop[2][2]))

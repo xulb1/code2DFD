@@ -34,7 +34,7 @@ def detect_config_server(microservices: dict, dfd):
     config_file_path_local = False
 
     if len(results) > 1:
-        print("More than one config server. Picking first one found.")
+        print("\033[94mMore than one config server. Picking first one found.\033[0m")
     for r in results.values():
         config_server = tech_sw.detect_microservice(r["path"], dfd)
 
@@ -70,9 +70,9 @@ def detect_config_server(microservices: dict, dfd):
                             "span": prop[2][2]
                         })
 
-                    elif prop[0] == "config_file_path_local":
+                    elif prop[0].casefold() == "config_file_path_local":
                         config_file_path_local = prop[1]
-                    elif prop[0] == "port":
+                    elif prop[0].casefold() == "port":
                         config_server_ports.append(prop[1])
     return microservices, config_server, config_path, config_file_path, config_repo_uri, config_server_ports, config_file_path_local
 

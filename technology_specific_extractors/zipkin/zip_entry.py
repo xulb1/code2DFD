@@ -43,7 +43,7 @@ def detect_zipkin_server(microservices: dict, information_flows: dict, iterative
                             zipkin_server = microservices[m2]["name"]
                         if not zipkin_server \
                             and ":" in part  \
-                            and part.split(":")[1] in [b for (a, b, c) in microservices[m2]["properties"] if (a == "port")]:
+                            and part.split(":")[1] in [b for (a, b, c) in microservices[m2]["properties"] if (a.casefold() == "port")]:
                                 zipkin_server = microservices[m2]["name"]
                         if zipkin_server:
                             correct_id = m2
@@ -91,7 +91,7 @@ def detect_zipkin_server(microservices: dict, information_flows: dict, iterative
         microservices[key] = {
             "name": "zipkin-server",
             "image": "placeholder_image",
-            "properties": {("port", port, ("file", "line", "span"))},
+            "properties": {("Port", port, ("file", "line", "span"))},
             "stereotype_instances": ["tracing_server"],
             "tagged_values": [("Tracing Server", "Zipkin")]
         }

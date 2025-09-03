@@ -107,7 +107,7 @@ def parse_properties_file(file_path: str) -> str:
                 if port:
                     span = re.search("server.port", line).span()
                     trace = (file_path, i, span)
-                    properties.add(("port", port, trace))
+                    properties.add(("Port", port, trace))
             except Exception:
                 logger.debug(f"Port is not an integer in line {line}")
 
@@ -163,7 +163,7 @@ def parse_properties_file(file_path: str) -> str:
                     properties.add(("ssl_enabled", ssl_enabled, trace))
 
         # Eureka
-        elif "eureka.client.serviceUrl.defaultZone" in line:
+        elif "eureka.client.serviceurl.defaultzone" in line.lower():
             span = re.search("eureka.client.serviceUrl.defaultZone", line).span()
             trace = (file_path, i, span)
             properties.add(("eureka_connected", True, trace))
@@ -251,7 +251,7 @@ def parse_yaml_file(file_path: str) -> str:
                         span = re.search(re.escape(str(port)), lines[line_nr]).span()
                         trace = (file_path, line_nr + 1, span)
                 if port != None:
-                    properties.add(("port", port, trace))
+                    properties.add(("Port", port, trace))
 
             # Load Balancer
             for keyword,value in LOAD_BALANCER_KEYWORDS.items():

@@ -6,3 +6,4 @@ PyDriller==2.6.0
 lxml==5.3.0
 six==1.17.0
 ruamel.yaml
+Werkzeug==2.2.2

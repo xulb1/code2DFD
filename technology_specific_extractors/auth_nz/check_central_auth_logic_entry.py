@@ -49,7 +49,7 @@ def check_auth_logic_separation(microservices: dict) -> dict:
         if path:
             directory_path = (service.get(f"{path}")).rsplit("/",1)[0]
         
-        print(directory_path,"=========================================")
+        # print(directory_path,"=========================================")
         if not directory_path:
             continue
         

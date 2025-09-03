@@ -73,7 +73,7 @@ def detect_microservice(file_path: str, dfd) -> str:
     # appelant = stack[1]
     # fichier = os.path.basename(appelant.filename)
     # fonction = appelant.function
-    # print(f"\033[31mDetect_microservice appelée depuis la fonction '{fonction}' dans le fichier '{fichier}'\033[0m")
+    # print(f"\033[32mDetect_microservice appelée depuis la fonction '{fonction}' dans le fichier '{fichier}'\033[0m")
     
     microservice = mvn.detect_microservice(file_path, dfd)
     if microservice: print("mvn")

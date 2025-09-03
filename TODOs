@@ -100,7 +100,15 @@ TODO: actuor endpoints
 dependency check
 
 
+TODO: suppr config_file_path_...
+TODO: database_passowrd/username duplication ...
+TODO: \n en fin de valeurs ...
+TODO: AttributeError: 'CommentedSeq' object has no attribute 'items'
+TODO: implémenter la logique de reconnaissance de nom de service à la découverte d'un microservice
+TODO: faire un résolveur de variable
+TODO: faire le résolveur de variable en dernier ...
 VérifiR!gle sde sécurités 
+TODO: faire gestion des properties
 
 TODO: R1 : vérif de la présence de logique d'auth sur la gateway
 TODO: R2 : auth entre services
@@ -121,7 +129,7 @@ TODO: R16
 TODO: R17
 TODO: R18
 TODO: R19
-TODO: R20
+TODO: R20 - 
 
 
 Ajouter detection ansible / k8s

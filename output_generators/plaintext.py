@@ -14,9 +14,9 @@ def write_plaintext(microservices, information_flows, external_components):
         if microservices:
             output_file.write("Microservices:\n")
             for m in microservices.keys():
-                microservices[m].pop("image", None)
+                # microservices[m].pop("image", None)
                 microservices[m].pop("pom_path", None)
-                microservices[m].pop("properties", None)
+                # microservices[m].pop("properties", None)
                 output_file.write("\n" + str(microservices[m]))
 
         if information_flows:

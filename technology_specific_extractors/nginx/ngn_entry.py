@@ -201,13 +201,14 @@ def detect_nginx(microservices: dict, information_flows: dict, external_componen
                                     counter += 1
                             elif "listen " in line2:
                                 try:
-                                    parts = line2.strip().split(" ")
+                                    parts = line2.strip().split()
                                     for part in parts:
                                         if part != "":
                                             try:
                                                 port = int(part.strip(" :;"))
                                             except:
-                                                print("\033[32m", part.strip(" :;"),"-------------------------------------------- \033[0m")
+                                                # The code is using Python to print a formatted string with color codes. It is using the escape sequence `\033[91m` to set the text color to red, then printing the value of `part` with leading and trailing spaces, colons, and semicolons stripped, followed by the value of `config_path`. Finally, it uses the escape sequence `\033[0m` to reset the text color back to the default.
+                                                # print(f"\033[91m{part.strip(" :;")} {config_path} -------------------------------------------- \033[0m")
                                                 pass
                                 except Exception as e:
                                     pass

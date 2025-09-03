@@ -93,7 +93,7 @@ def add_entity(line: str, entity_type: str):
                 tagged_values = [f"{repr(k)}: {repr(v).replace("{","\\{").replace("}","\\}")}" for k, v in data.items()]
             except Exception as e:
                 tagged_values = tagged_values.split("}")[0].split("{")[1].split(",")
-                print("ERROR",e)
+                print(f"\033[91mERROR {e}\033[0m")
         else:
             tagged_values = line.split("tagged_values =")[1].split("}")[0].split("{")[1].split(",")
     

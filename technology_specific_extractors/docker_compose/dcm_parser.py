@@ -91,7 +91,7 @@ def extract_microservices(file_content, file_name) -> set:
     if tmp.tmp_config.has_option("DFD", "microservices"):
         microservices_dict =  ast.literal_eval(tmp.tmp_config["DFD"]["microservices"])
     else:
-        microservices_dict= dict()
+        microservices_dict = dict()
     
     microservices_set = set()
     properties_dict = dict()
@@ -236,14 +236,14 @@ def extract_service_from_file(s, file_content, file_name, data, microservices_di
             if ki in image and ":" in image:
                 properties_dict[s] = properties
                 microservices_set.add((s, image, "type", port, trace))
-                print("\033[31m",s, image, port," ---> Is known docker image\033[0m")
+                print("\033[93m",s, image, port," ---> Is known docker image\033[0m")
                 isImage=True
                 break
         
         if not isImage:
             properties_dict[s] = properties
             microservices_set.add((s, image, "type", port, trace))
-            print("\033[31m",s, image, port,"\033[0m")
+            print("\033[93m",s, image, port,"\033[0m")
 
     # add additional information
     if exists and correct_id:
@@ -264,23 +264,44 @@ def extract_environment_props(data, s, lines: list, port: list, properties: set,
     
     if not environment_entries:
         return port, properties
+
+    if isinstance(environment_entries, ruamel.yaml.CommentedSeq):
+        print("\033[95m=================================================================================================================================================================================\033[0m")
+        new_environment_entries = dict()
+        for e in environment_entries:
+            key, value = e.split("=",1)
+            try:
+                new_environment_entries[key]=value.strip()
+            except:
+                pass
+        environment_entries = new_environment_entries 
         
-    for line_number, entry in enumerate(environment_entries):
-        if ':' not in entry:
-            continue
+    for i,j in environment_entries.items():
+        print(i,j)
+    for key, value in environment_entries.items():
+        if isinstance(value, str):
+            value = value.strip().strip('"')
+        # if ':' not in entry:
+        #     continue
         # looking for databases creds : 
-        if any(keyword in entry.upper() for keyword in ["USER", "PASS"]) and \
-           any(db in entry.upper() for db in ["MONGODB", "MYSQL", "POSTGRES"]):
-            value = environment_entries.get(entry)
-            line_number = data[s]["environment"][entry].lc.line
+        if any(keyword in key.upper() for keyword in ["MAIL", "USER", "PASS"]) and \
+           any(db in key.upper() for db in ["PGADMIN", "MONGO", "MYSQL", "POSTGR"]):
+            try:
+                line_number = data[s]["environment"][key].lc.line
+            except TypeError:
+                line_number = data[s]["environment"].lc.line
+            
             escaped_value = value.replace("$", "\\$")
-            escaped_line = lines[line_number].replace("$", "\\$")
-            length_tuple = re.search(escaped_value, escaped_line).span()
-            span = f"[{length_tuple[0]}:{length_tuple[1]}]"
+            try:
+                escaped_line = lines[line_number].replace("$", "\\$")
+                length_tuple = re.search(escaped_value, escaped_line).span()
+                span = f"[{length_tuple[0]}:{length_tuple[1]}]"
+            except AttributeError:
+                span = ""
             if "$" in value:
                 value = env.resolve_env_var(value)
             if value != None:
-                key_type = "datasource_username" if "USER" in entry.upper() else "datasource_password"
+                key_type = "datasource_username" if any(w in key.upper() for w in ["USER", "MAIL"]) else "datasource_password"
                 properties.add((key_type, value, (file_name, line_number + 1, span)))
 
         # port (kafka) -> KAFKA_ADVERTISED_PORT
@@ -293,24 +314,25 @@ def extract_environment_props(data, s, lines: list, port: list, properties: set,
         #     port = (port_nr, file_name, line_number + 1, span)
         # print(value, port)
         # Séparer la clé et la valeur
-        if "KAFKA" in entry.upper():
-            key, value = entry.split(':', 1)
-            key = key.strip()
-            value = value.strip().strip('"')
-
+        if "KAFKA" in key.upper():
             # Traitement spécial pour certains champs
             # if key == "KAFKA_LISTENER_SECURITY_PROTOCOL_MAP":
             if "KAFKA_ADVERTISED_LISTENERS" in key.upper():
                 # Convertir en dict {listener: host:port}
                 listeners = dict(item.split('://') for item in value.split(','))
-                line_number = data[s]["environment"].lc.key(entry)[0]
+                line_number = data[s]["environment"][key].lc.line
                 length_tuple = re.search(key, lines[line_number]).span()
                 span = f"[{str(length_tuple[0])}:{str(length_tuple[1])}]"
-                properties.add(("kafka_listeners", listeners, (file_name, line_number + 1, span)))
-            elif "JMX" in key:
-                line_number = data[s]["environment"].lc.key(entry)[0]
-                length_tuple = re.search(key, lines[line_number]).span()
-                span = f"[{str(length_tuple[0])}:{str(length_tuple[1])}]"
+                properties.add(("kafka_listeners", str(listeners), (file_name, line_number + 1, span)))
+            elif "JMX" in key.upper():
+                line_number = data[s]["environment"].lc.key(key)
+                if line_number:
+                    length_tuple = re.search(key, lines[line_number]).span()
+                    span = f"[{str(length_tuple[0])}:{str(length_tuple[1])}]"
+                else: 
+                    line_number = -1
+                    span = ""
+
                 properties.add(("kafka_monitoring_port", value, (file_name, line_number + 1, span)))
     
     
@@ -339,30 +361,33 @@ def extract_information_flows(file_content:  str, microservices: dict, informati
             try:
                 links = file.get("services", {}).get(s).get("links")
                 information_flows = get_flows(s,links, microservices, information_flows, registry_server, config_server)
-            except:
-                pass
+            except Exception as e:
+                print(f"\033[91m{e}\033[0m")
     else:
         for s in file.keys():
             try:
                 links = file.get(s).get("links")
                 information_flows = get_flows(s,links, microservices, information_flows, registry_server, config_server)
-            except:
-                pass
+            except Exception as e:
+                print(f"\033[91m{e}\033[0m")
     
     if "services" in file:
         for s in file.get("services"):
             try:
                 depends_on = file.get("services", {}).get(s).get("depends_on")
                 information_flows = get_flows(s,depends_on, microservices, information_flows, registry_server, config_server)
-            except:
-                pass
+                for i, j in information_flows.items():
+                    if j["receiver"]=="zookeeper":
+                        print(s)
+            except Exception as e:
+                print(f"\033[91m{e}\033[0m")
     else:
         for s in file.keys():
             try:
                 depends_on = file.get(s).get("depends_on")
                 information_flows = get_flows(s,depends_on, microservices, information_flows, registry_server, config_server)
-            except:
-                pass
+            except Exception as e:
+                print(f"\033[91m{e}\033[0m")
     
     return information_flows
 
