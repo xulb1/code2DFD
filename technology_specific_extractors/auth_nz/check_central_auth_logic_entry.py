@@ -74,7 +74,7 @@ def check_auth_logic_separation(microservices: dict) -> dict:
 
         # Étape 2 : Si non centralisé, chercher une implémentation locale
         if not is_centralized:
-            has_local_java_impl = any(fi.search_keywords(kw, directory_path, file_extension=["*.java"]) for kw in SECURITY_ANALYSIS_KEYWORDS["decentralized_implementation"]["java_code"])
+            has_local_java_impl = any(fi.search_keywords(kw, directory_path, file_extension=["*.java", "*.kt"]) for kw in SECURITY_ANALYSIS_KEYWORDS["decentralized_implementation"]["java_code"])
             has_local_config = any(fi.search_keywords(kw, directory_path, file_extension=["*.xml","*.gradle","*.sh","*.conf","*.json","*.properties","*.yml","*.yaml"]) for kw in SECURITY_ANALYSIS_KEYWORDS["decentralized_implementation"]["config_files"])
             
             if has_local_java_impl or has_local_config:

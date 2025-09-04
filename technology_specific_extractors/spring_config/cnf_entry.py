@@ -25,7 +25,7 @@ def detect_config_server(microservices: dict, dfd):
     """Finds config server and sets needed variables
     """
 
-    results = fi.search_keywords("@EnableConfigServer", file_extension=["*.java"])
+    results = fi.search_keywords("@EnableConfigServer", file_extension=["*.java", "*.kt"])
     config_server = False
     config_path = False
     config_file_path = False

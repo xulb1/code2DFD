@@ -7,7 +7,7 @@ def detect_spring_admin_server(microservices: dict, information_flows: dict, dfd
     """Detects Spring Admin Servers.
     """
 
-    results = fi.search_keywords("@EnableAdminServer", file_extension=["*.java"])
+    results = fi.search_keywords("@EnableAdminServer", file_extension=["*.java", "*.kt"])
     admin_server = False
     for r in results.values():
         admin_server = tech_sw.detect_microservice(r["path"], dfd)

@@ -7,7 +7,7 @@ def detect_circuit_breakers_v0(microservices: dict, information_flows: dict, dfd
     """Find circuit breakers.
     """
 
-    results = fi.search_keywords("@EnableCircuitBreaker", file_extension=["*.java"])     # content, name, path
+    results = fi.search_keywords("@EnableCircuitBreaker", file_extension=["*.java", "*.kt"])     # content, name, path
     for r in results.keys():
         microservice = tech_sw.detect_microservice(results[r]["path"], dfd)
         # Check if circuit breaker tech was found
@@ -69,7 +69,7 @@ def detect_circuit_breakers(microservices: dict, information_flows: dict, dfd) -
     #     print("")
     # print("--------------jdskqmfldkjslkfdjqsmlfjqslkdfqj---------------------")
     
-    results = fi.search_keywords(list({f"@{ann}" for anns in CIRCUIT_BREAKER_ANNOTATIONS.values() for ann in anns}), file_extension=["*.java"])
+    results = fi.search_keywords(list({f"@{ann}" for anns in CIRCUIT_BREAKER_ANNOTATIONS.values() for ann in anns}), file_extension=["*.java", "*.kt"])
     # print("----------------------------------")
     # for i in results.values():
     #     print(i["name"])

@@ -20,7 +20,7 @@ def detect_authorization_server(microservices: dict, dfd) -> dict:
     """Detects an authorization server.
     """
 
-    results = fi.search_keywords("@EnableAuthorizationServer", file_extension=["*.java"])
+    results = fi.search_keywords("@EnableAuthorizationServer", file_extension=["*.java", "*.kt"])
 
     authorization_server = str()
     for r in results.values():
@@ -46,7 +46,7 @@ def detect_resource_servers(microservices: dict, dfd) -> dict:
     """Detects resource servers.
     """
     
-    results = fi.search_keywords("@EnableResourceServer", file_extension=["*.java"])
+    results = fi.search_keywords("@EnableResourceServer", file_extension=["*.java", "*.kt"])
 
     resource_server = str()
     for r in results.values():
@@ -123,7 +123,7 @@ def detect_preauthorized_methods(microservices: dict, dfd) -> dict:
     """Detects methods annotated as pre-authroized.
     """
 
-    results = fi.search_keywords("@PreAuthorize", file_extension=["*.java"])
+    results = fi.search_keywords("@PreAuthorize", file_extension=["*.java", "*.kt"])
 
     for r in results.values():
         microservice = tech_sw.detect_microservice(r["path"], dfd)

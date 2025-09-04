@@ -85,7 +85,7 @@ def check_inter_service_encryption(microservices: dict, information_flows: dict)
             if results:
                 for i in results["content"]:
                     print(i)
-        is_server_ssl_enabled = any(fi.search_keywords(keyword, directory_path, file_extension=["*.java"]) for keyword in ENCRYPTION_KEYWORDS["server"]["java_code"]) or \
+        is_server_ssl_enabled = any(fi.search_keywords(keyword, directory_path, file_extension=["*.java", "*.kt"]) for keyword in ENCRYPTION_KEYWORDS["server"]["java_code"]) or \
                                 any(fi.search_keywords(keyword, directory_path, file_extension=["*.conf","*.sh","*.xml","*.gradle","*.json","*.yml","*.yaml","*.properties"]) for keyword in ENCRYPTION_KEYWORDS["server"]["config"])
         if is_server_ssl_enabled:
             m.setdefault("stereotype_instances", []).append("tls_enabled")
@@ -94,7 +94,7 @@ def check_inter_service_encryption(microservices: dict, information_flows: dict)
         # Détection SSL côté client
         is_client_ssl_enabled = any(fi.search_keywords(keyword, directory_path) for keyword in ENCRYPTION_KEYWORDS["client"]["all"]) or \
                                 any(fi.search_keywords(keyword, directory_path,file_extension=["*.conf","*.sh","*.xml","*.gradle","*.json","*.yml","*.yaml", "*.properties"]) for keyword in ENCRYPTION_KEYWORDS["client"]["config"]) or \
-                                any(fi.search_keywords(keyword, directory_path,file_extension=["*.java"]) for keyword in ENCRYPTION_KEYWORDS["client"]["java_code"])
+                                any(fi.search_keywords(keyword, directory_path,file_extension=["*.java", "*.kt"]) for keyword in ENCRYPTION_KEYWORDS["client"]["java_code"])
         if is_client_ssl_enabled:
             m.setdefault("stereotype_instances", []).append("client_tls_enabled")
             m.setdefault("tagged_values", []).append(("Security", "Client SSL/TLS Enabled"))

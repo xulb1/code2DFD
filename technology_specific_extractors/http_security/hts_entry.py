@@ -20,7 +20,7 @@ def detect_configurations(dfd):
     configuration_tuples = list()
     configuration_classes = ["AuthenticationManagerBuilder", "HttpSecurity"]
     for c_class in configuration_classes:
-        results = fi.search_keywords(c_class, file_extension=["*.java"])
+        results = fi.search_keywords(c_class, file_extension=["*.java", "*.kt"])
         for r in results.keys():
             microservice = tech_sw.detect_microservice(results[r]["path"], dfd)
             configurations = set()

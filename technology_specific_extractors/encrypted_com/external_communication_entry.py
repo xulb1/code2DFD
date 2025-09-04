@@ -71,7 +71,7 @@ def check_external_encryption(microservices: dict) -> dict:
         # Recherche dans le code Java (pour des implémentations personnalisées)
         for keyword in ENCRYPTION_KEYWORDS["code"]:
             # On cherche spécifiquement dans les fichiers .java
-            results = fi.search_keywords(keyword, directory_path, file_patterns=["*.java"])
+            results = fi.search_keywords(keyword, directory_path, file_patterns=["*.java", "*.kt"])
             if results:
                 is_secured = True
                 for _, res in results.items():

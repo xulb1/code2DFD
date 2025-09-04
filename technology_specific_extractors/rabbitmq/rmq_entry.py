@@ -39,7 +39,7 @@ def set_information_flows(dfd) -> set:
 
 
 def used_in_application():
-    return len(fi.search_keywords("RabbitTemplate", file_extension=["*.java"])) > 0
+    return len(fi.search_keywords("RabbitTemplate", file_extension=["*.java", "*.kt"])) > 0
 
 
 def get_routings() -> set:
@@ -47,7 +47,7 @@ def get_routings() -> set:
     """
 
     routings = set()
-    files = fi.search_keywords("@RabbitListenerConfigurer", file_extension=["*.java"])
+    files = fi.search_keywords("@RabbitListenerConfigurer", file_extension=["*.java", "*.kt"])
     for file in files.keys():
         f = files[file]
         for line in range(len(f["content"])):
@@ -67,7 +67,7 @@ def get_incoming_endpoints(dfd) -> set:
     """Finds Incoming queues, i.e. instances of RabbitListener
     """
 
-    files = fi.search_keywords("@RabbitListener", file_extension=["*.java"])
+    files = fi.search_keywords("@RabbitListener", file_extension=["*.java", "*.kt"])
     incoming_queues = set()
     for file in files.keys():
         f = files[file]
@@ -97,7 +97,7 @@ def get_outgoing_endpoints(routings: set, dfd) -> set:
     
     for template in rabbitTemplates:
         for command in sending_commands:
-            files = fi.search_keywords(f"{template}.{command}", file_extension=["*.java"])
+            files = fi.search_keywords(f"{template}.{command}", file_extension=["*.java", "*.kt"])
             for file in files.keys():
                 f = files[file]
                 if "README" not in f["name"]:

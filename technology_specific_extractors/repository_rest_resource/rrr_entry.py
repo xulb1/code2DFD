@@ -6,7 +6,7 @@ def detect_endpoints(microservices: dict, dfd) -> dict:
     """Detects endpoints offered via @RepositoryRestResource
     """
 
-    results = fi.search_keywords("@RepositoryRestResource", file_extension=["*.java"])
+    results = fi.search_keywords("@RepositoryRestResource", file_extension=[""*.java", "*.kt""])
     for r in results.keys():
         endpoints = set()
         microservice = tech_sw.detect_microservice(results[r]["path"], dfd)

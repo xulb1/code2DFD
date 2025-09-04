@@ -30,7 +30,7 @@ def detect_zookeeper(microservices: dict, information_flows: dict, dfd) -> dict:
     for role, keywords in ZOOKEEPER_KEYWORDS.items():
         for keyword in keywords:
             # Recherche de mots-clés dans tous les fichiers du projet
-            results = fi.search_keywords(keyword, file_extension=["*.xml","*.json","*.tf","*.gradle","*.conf","*.java","*.yml","*.yaml","*.properties"])
+            results = fi.search_keywords(keyword, file_extension=["*.xml","*.json","*.tf","*.gradle","*.conf","*.java", "*.kt","*.yml","*.yaml","*.properties"])
             for _, res in results.items():
     
                 if (keyword=="zookeeper:" and "docker" not in res['name'])\
