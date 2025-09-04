@@ -17,7 +17,7 @@ def detect_loggerfactory(microservices: dict, dfd) -> dict:
     """Detects logging directly via loggerfactory.
     """
 
-    results = fi.search_keywords("LoggerFactory", file_extension=["*.java"])
+    results = fi.search_keywords("LoggerFactory", file_extension=["*.java", "*.kt"])
     for r in results.keys():
         found = False
         if "test" in results[r]["path"].casefold():
@@ -29,22 +29,19 @@ def detect_loggerfactory(microservices: dict, dfd) -> dict:
                     logger = line.split("=")[0].strip().split(" ")[-1]
                     for line2 in results[r]["content"]:
                         for c in ["info", "error", "debug", "trace", "warn"]:
-                            if (logger.casefold() + "." + c) in line2.casefold():       # logger is used -> find mciroservice and add stereotype
-                                for m in microservices.keys():
-                                    if microservices[m]["name"] == microservice:
-                                        try:
-                                            microservices[m]["stereotype_instances"] += ["local_logging"]
-                                        except:
-                                            microservices[m]["stereotype_instances"] = ["local_logging"]
+                            if f"{logger.casefold()}.{c}" in line2.casefold():       # logger is used -> find mciroservice and add stereotype
+                                for m in microservices.values():
+                                    if m["name"] == microservice:
+                                        m.setdefault("stereotype_instances",[]).append("local_logging")
                                         found = True
 
-                                        trace = dict()
-                                        trace["parent_item"] = microservices[m]["name"]
-                                        trace["item"] = "local_logging"
-                                        trace["file"] = results[r]["path"]
-                                        trace["line"] = results[r]["line_nr"]
-                                        trace["span"] = results[r]["span"]
-                                        traceability.add_trace(trace)
+                                        traceability.add_trace({
+                                            "parent_item": m["name"],
+                                            "item": "local_logging",
+                                            "file": results[r]["path"],
+                                            "line": results[r]["line_nr"],
+                                            "span": results[r]["span"]
+                                        })
 
                                         break
                                     if found: break
@@ -61,7 +58,7 @@ def detect_lombok(microservices: dict, dfd) -> dict:
 
     annotations = ["Slf4j", "Log", "Log4j2", "CommonsLog"]
     for annotation in annotations:
-        results = fi.search_keywords(annotation, file_extension=["*.java"])
+        results = fi.search_keywords(annotation, file_extension=["*.java", "*.kt"])
         for r in results.keys():
             if "test" in results[r]["path"].casefold():
                 continue
@@ -79,22 +76,16 @@ def detect_lombok(microservices: dict, dfd) -> dict:
 
             if annotation_found and use_found:
                 microservice = tech_sw.detect_microservice(results[r]["path"], dfd)
-                for m in microservices.keys():
-                    if microservices[m]["name"] == microservice:
-                        try:
-                            microservices[m]["stereotype_instances"].append("local_logging")
-                        except:
-                            microservices[m]["stereotype_instances"] = ["local_logging"]
-                        try:
-                            microservices[m]["tagged_values"].append(("Logging Technology", "Lombok"))
-                        except:
-                            microservices[m]["tagged_values"] = [("Logging Technology", "Lombok")]
-                        trace = dict()
-                        trace["parent_item"] = microservices[m]["name"]
-                        trace["item"] = "local_logging"
-                        trace["file"] = results[r]["path"]
-                        trace["line"] = results[r]["line_nr"]
-                        trace["span"] = results[r]["span"]
-                        traceability.add_trace(trace)
+                for m in microservices.values():
+                    if m["name"] == microservice:
+                        m.setdefault("stereotype_instances",[]).append("local_logging")
+                        m.setdefault("tagged_values",[]).append(("Logging Technology", "Lombok"))
+                        traceability.add_trace({
+                            "parent_item": m["name"],
+                            "item": "local_logging",
+                            "file": results[r]["path"],
+                            "line": results[r]["line_nr"],
+                            "span": results[r]["span"]
+                        })
 
     return microservices
