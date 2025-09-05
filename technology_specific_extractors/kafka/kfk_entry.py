@@ -508,7 +508,11 @@ def detect_kafka_server(microservices: dict) -> dict:
     if len(raw_files) == 0:
         return microservices
     
-    file = yaml.load(raw_files[0]["content"], Loader = yaml.FullLoader)
+    try:
+        file = yaml.load(raw_files[0]["content"], Loader=yaml.FullLoader)
+    except yaml.YAMLError as e:
+        print(f"\033[91mERROR extracting microservice from docker-compose file : {raw_files[0]["path"]}\033[0m")
+        return microservices
 
     if "services" in file:
         for s in file.get("services"):

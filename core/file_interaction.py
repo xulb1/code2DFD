@@ -545,15 +545,16 @@ def get_file_as_lines(filename: str) -> dict:
 
     if stdout:
         for line in stdout.decode().splitlines():
-            key = max(files.keys(), default=-1) + 1
+            if not os.path.isfile(line):
+                continue
             
+            key = max(files.keys(), default=-1) + 1
             files[key] = dict()
 
             with open(line, 'r') as file:
                 files[key]["content"] = file.readlines()
 
             files[key]["name"] = os.path.basename(line)
-
             files[key]["path"] = os.path.relpath(line, start=local_path)
 
     return files

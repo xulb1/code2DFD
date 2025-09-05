@@ -83,7 +83,12 @@ def extract_microservices(file_content, file_name) -> set:
 
     yaml = ruamel.yaml.YAML()
     yaml.Constructor = MyConstructor
-    file = yaml.load(file_content)
+    try:
+        file = yaml.load(file_content)
+    except ruamel.yaml.scanner.ScannerError as e:
+        print(f"\033[91mERROR extracting microservice from docker-compose file : {file_name}\033[0m")
+        file = None
+        
     print("===========================================")
 
     image = False
@@ -96,6 +101,9 @@ def extract_microservices(file_content, file_name) -> set:
     microservices_set = set()
     properties_dict = dict()
 
+    if not file:
+        return microservices_set, microservices_dict
+    
     if "services" in file.keys():
         print("SERVICES ----------------------------------")
         data  = file.get("services", {})
@@ -354,7 +362,12 @@ def extract_information_flows(file_content:  str, microservices: dict, informati
             if "configuration_server" in m["stereotype_instances"]:
                 config_server = m["name"]
 
-    file = yaml.load(file_content)
+    try:
+        file = yaml.load(file_content)
+    except ruamel.yaml.scanner.ScannerError as e:
+        print(f"\033[91mERROR extracting information flows from a docker-compose\033[0m")
+        return information_flows
+
 
     if "services" in file:
         for s in file.get("services"):
