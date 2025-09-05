@@ -99,6 +99,7 @@ serice:
 TODO: actuor endpoints
 dependency check
 
+TODO: ajout de broker un peu trop nombreux ?  vérifier pourquoi ?...
 
 TODO: suppr config_file_path_...
 TODO: database_passowrd/username duplication ...
@@ -110,29 +111,31 @@ TODO: faire le résolveur de variable en dernier ...
 VérifiR!gle sde sécurités 
 TODO: faire gestion des properties
 
-TODO: R1 : vérif de la présence de logique d'auth sur la gateway
-TODO: R2 : auth entre services
-TODO: R3 : une seul logique d'auth
+
+========  RULES  ==================================
+R1 : vérif de la présence de logique d'auth sur la gateway
+R2 : auth entre services
+R3 : une seul logique d'auth
 TODO: R4 : adaptation des tokens externes 
 TODO: R5 : vérif des token intern avant l'envoi de requetes
 TODO: R6 : limite sur le nbr de tentative de co
-TODO: R7 : 
-TODO: R8
-TODO: R9
-TODO: R10
-TODO: R11
-TODO: R12
+R7 : traffics ext chiffré
+R8 : traffic interne chiffré
+TODO: R9 : message de log -> log central+ dashboard de visu
+TODO: R10 : agent de log pour les services -> server central
+TODO: R11 : filtration des logs
+TODO: R12 : broker de msg (entre agent et server) -> auth mutuelle + chiffrage
 R13 : circuit breaker
 R14 : load balancer
-TODO: R15
-TODO: R16
-TODO: R17
-TODO: R18
-TODO: R19
+TODO: R15 : limite d'usage de ressources
+R16 : service registry
+TODO: R17 : enregistrement au registry -> authn authz
+TODO: R18 : 
+TODO: R19 - 
 TODO: R20 - 
 
 
 Ajouter detection ansible / k8s
 
 
-file ext = ["Dockerfile","*.yaml","*.yml", "*.tf","*.sh","*.json","*.java","*.conf","*.sh","*.xml","*.gradle","*.json","*.yml","*.yaml","*.properties"]
+file extraction = ["Dockerfile","*.yaml","*.yml", "*.tf","*.sh","*.json","*.java","*.conf","*.sh","*.xml","*.gradle","*.json","*.yml","*.yaml","*.properties"]
