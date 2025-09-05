@@ -51,6 +51,8 @@ from technology_specific_extractors.nginx.ngn_entry import detect_nginx
 from technology_specific_extractors.zuul.zul_entry import detect_zuul
 from technology_specific_extractors.ssl.ssl_entry import detect_ssl_services
 
+# R9-12
+from technology_specific_extractors.check_logging.logging_entry import analyze_logging_architecture
 # R17
 from technology_specific_extractors.secure_registry.check_secure_registry_entry import check_registry_security
 # R7
@@ -109,29 +111,20 @@ def DFD_extraction():
 
     # Parse internal and external configuration files
     microservices, information_flows, external_components = detect_spring_config(microservices, information_flows, external_components, dfd)
-    # print("a")
     microservices = detect_eureka_server_only(microservices, dfd)
-    # print("b")
     microservices = overwrite_port(microservices)
-    # print("c")
     # Classify brokers (needed for information flows)
     microservices = classify_brokers(microservices)
-    # print("d")
     
     # Check authentication information of services
     microservices = detect_authentication_scopes(microservices, dfd)
-    # print("e")
     tmp.tmp_config.set("DFD", "microservices", str(microservices).replace("%", "%%"))
-    # print("f")
 
     # Get information flows
     tmp.tmp_config.set("DFD", "external_components", str(external_components).replace("%", "%%"))
-    # print("g")
 
     new_information_flows = tech_sw.get_information_flows(dfd)
-    # print("h")
     external_components = ast.literal_eval(tmp.tmp_config["DFD"]["external_components"])
-    # print("i")
 
     # Merge old and new
     for new_flow in new_information_flows.keys():
@@ -142,13 +135,9 @@ def DFD_extraction():
     # Detect everything else / execute all technology implementations
     print("Classifying all services")
     microservices = tech_sw.get_microservices(dfd)
-    # print("k")
-    # microservice
-    # s1 = microservices
     
     # FIXME:
     microservices, information_flows, external_components = classify_microservices(microservices, information_flows, external_components, dfd)
-    # print("l")
     # assert microservices1 != microservices, "Egalité"
 
     # Merging
@@ -179,9 +168,8 @@ def DFD_extraction():
     traceability_content = traceability.output_traceability()
     try:
         visualizer.output_png(codeable_models_path)
-        print("pas bof")
-    except :
-        print("bof")
+    except Exception as e:
+        print(f"\033[91m{e}\033[0m")
         
     json_edges.generate_json_edges(information_flows)
     json_architecture.generate_json_architecture(microservices, information_flows, external_components)
@@ -217,74 +205,50 @@ def classify_microservices(microservices: dict, information_flows: dict, externa
 
     microservices, information_flows = detect_eureka(microservices, information_flows, dfd)
     # The above code is a Python script that prints the string "aa" to the console.
-    # print("aa")
     microservices, information_flows, external_components = detect_zuul(microservices, information_flows, external_components, dfd)
-    # print("ab")
     microservices, information_flows, external_components = detect_spring_cloud_gateway(microservices, information_flows, external_components, dfd)
-    # print("ac")
     microservices, information_flows = detect_spring_oauth(microservices, information_flows, dfd)
-    # print("ad")
     microservices, information_flows = detect_consul(microservices, information_flows, dfd)
-    # print("ae")
     microservices, information_flows = detect_hystrix_dashboard(microservices, information_flows, dfd)
-    # print("af")
     microservices, information_flows = detect_turbine(microservices, information_flows, dfd)
-    # print("ag")
     microservices, information_flows = detect_local_logging(microservices, information_flows, dfd)
-    # print("ah")
     microservices, information_flows = detect_zipkin_server(microservices, information_flows, dfd)
-    # print("ai")
     microservices, information_flows = detect_spring_admin_server(microservices, information_flows, dfd)
-    # print("aj")
     microservices, information_flows = detect_prometheus_server(microservices, information_flows, dfd)
-    # print("ak")
     microservices, information_flows = detect_circuit_breakers(microservices, information_flows, dfd)
-    # print("al")
     microservices, information_flows = detect_load_balancers(microservices, information_flows, dfd)
-    # print("aù")
     microservices = detect_ribbon_load_balancers(microservices, dfd)
-    # print("an")
     microservices, information_flows = detect_hystrix_circuit_breakers(microservices, information_flows, dfd)
-    # print("ao")
     microservices, information_flows = detect_zookeeper(microservices, information_flows, dfd)
     microservices, information_flows = detect_etcd(microservices, information_flows, dfd)
-    # print("ap")
     microservices, information_flows = detect_kibana(microservices, information_flows, dfd)
-    # print("aq")
     microservices, information_flows = detect_elasticsearch(microservices, information_flows, dfd)
-    # print("ar")
     microservices, information_flows, external_components = detect_logstash(microservices, information_flows, external_components, dfd)
-    # print("as")
     microservices, information_flows, external_components = detect_nginx(microservices, information_flows, external_components, dfd)
-    # print("at")
     microservices, information_flows = detect_grafana(microservices, information_flows, dfd)
-    # print("au")
     microservices, information_flows = detect_spring_encryption(microservices, information_flows, dfd)
-    # print("av")
     microservices = detect_endpoints(microservices, dfd)
-    # print("aw")
 
     microservices, information_flows, external_components = detect_miscellaneous(microservices, information_flows, external_components)
-    # print("ax")
     microservices, information_flows, external_components = detect_apachehttpd_webserver(microservices, information_flows, external_components, dfd)
-    # print("ay")
     microservices = classify_internal_infrastructural(microservices)
-    # print("az")
     microservices = set_plaintext_credentials(microservices)
     
     # Check security rules
-    # print("aza")
+    print("aza")
     microservices = check_registry_security(microservices)
-    # print("azb")
+    print("azb")
     #  long ->
     microservices = check_inter_service_encryption(microservices,information_flows)
-    # print("azc")
+    print("azc")
     microservices = check_external_encryption(microservices)
-    # print("azd")
+    print("azd")
     microservices = check_inter_service_auth_and_authz(microservices, information_flows)
-    # print("aze")
+    print("aze")
     microservices = check_auth_logic_separation(microservices)
-    # print("azf")
+    print("azf")
+    microservices = analyze_logging_architecture(microservices, information_flows, dfd)
+    print("azg")
     
     return microservices, information_flows, external_components
 
