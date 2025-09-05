@@ -99,13 +99,13 @@ def add_entity(line: str, entity_type: str):
     
     # Create new line
     if entity_type=="flow":
-        new_line = f"        {sender} -> {receiver} [label = \" "
+        new_line = f"        {sender.replace(".","_")} -> {receiver} [label = \" "
     elif entity_type=="service":
-        new_line = f"        {name} [label = \"{{Service: {name} | "
+        new_line = f"        {name.replace(".","_")} [label = \"{{Service: {name} | "
     elif entity_type=="database":
-        new_line = f"        {name} [label = \"|{{Service: {name} | "
+        new_line = f"        {name.replace(".","_")} [label = \"|{{Service: {name} | "
     else:
-        new_line = f"        {name} [label = \"{{External Entity: {name} | "
+        new_line = f"        {name.replace(".","_")} [label = \"{{External Entity: {name} | "
     
     for stereotype in stereotypes:
         new_line += f"--{stereotype.strip()}--\\n"
