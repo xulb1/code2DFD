@@ -2,13 +2,14 @@ import ast
 import os
 import re
 
-import core.file_interaction as fi
-from output_generators.logger import logger
-import core.parse_files as parse
-import core.technology_switch as tech_sw
-import technology_specific_extractors.docker.dcr_entry as dcr
-import tmp.tmp as tmp
 import output_generators.traceability as traceability
+from output_generators.logger import logger
+import core.technology_switch as tech_sw
+import core.file_interaction as fi
+import core.parse_files as parse
+import technology_specific_extractors.docker.dcr_entry as dcr
+from technology_specific_extractors.xml_var import resolve_pom, substitute
+import tmp.tmp as tmp
 
 try:
     from lxml import etree
@@ -206,6 +207,11 @@ def extract_servicename_pom_file(pom_file) -> str:
     """Extracts the name of a Maven-module based on the <finalName> tag if existing, else the <artifactIf>.
     """
 
+    local_path = tmp.tmp_config.get("Repository", "local_path")
+    local_path = os.path.join(local_path, pom_file["path"])
+
+    _, props = resolve_pom(local_path)
+    
     microservice = [False, False]
     file_name = pom_file["path"]
     pom_path = os.path.join(tmp.tmp_config.get("Repository", "local_path"), file_name)
@@ -218,20 +224,26 @@ def extract_servicename_pom_file(pom_file) -> str:
     if artifactId is None:
         return microservice
 
-    microservice[0] = artifactId.text.strip()
+    if "$" in artifactId.text:
+        microservice[0] = substitute(artifactId.text, props)
+    else:
+        microservice[0] = artifactId.text.strip()
 
     # tracing
     if XML_BACKEND == "LXML":
         line_nr = artifactId.sourceline - 1
         line = pom_file["content"][line_nr]
-        length_tuple = re.search(microservice[0], line).span()
-        span = "[" + str(length_tuple[0]) + ":" + str(length_tuple[1]) + "]"
+        try:
+            length_tuple = re.search(microservice[0], line).span()
+            span = f"[{str(length_tuple[0])}:{str(length_tuple[1])}]"
+        except:
+            span = "None"
     else:
         line_nr = None
         span = "[?:?]"
     trace = (file_name, line_nr, span)
 
-    microservice[0] = "pom_" + microservice[0]
+    microservice[0] = f"pom_{microservice[0]}"
     microservice[1] = trace
 
     return microservice
