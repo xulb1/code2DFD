@@ -118,7 +118,7 @@ def extract_dependencies(properties: set, pom_file) -> set:
                 
     return properties
 
-#TODO add detect dependencies and properties for Load Ballencer, security, ...
+#TODO: add detect dependencies and properties for Load Ballencer, security, ...
 
 
 def extract_modules(pom_file: dict) -> list:

@@ -58,68 +58,6 @@ def extract_variable(line, submodule):
     return line.split("=")[0].strip().split()[-1] if "=" in line else line.split(";")[0].strip().split()[-1]
 
 
-def search_keywords_v0(keywords: str, directory_path=None):
-    """Searches keywords locally using grep.
-    """
-
-    repo_folder = tmp.tmp_config["Repository"]["local_path"]
-    if directory_path:
-        if repo_folder not in directory_path:
-            repo_folder = f"{repo_folder}{directory_path}"
-        else:
-            repo_folder = directory_path
-
-    results = dict()
-
-    if isinstance(keywords, str):
-        keywords = [keywords]
-
-    for keyword in keywords:
-        if keyword[-1] == "(":
-            keyword = "\"" + keyword + "\""
-        out = subprocess.Popen(['grep', '-rn', keyword, repo_folder], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        stdout, stderr = out.communicate()
-        seen = set()
-        for line in stdout.decode().splitlines():
-            if line.startswith("Binary file"):
-                continue
-            line_parts = line.split(":")
-            if len(line_parts) < 3:
-                continue
-            full_path = line_parts[0]
-            if full_path not in seen:
-                seen.add(full_path)
-                if not "test" in full_path and len(full_path) >= 3 and not os.path.splitext(full_path)[1] == ".md":
-                    path = os.path.relpath(full_path, start=repo_folder)
-                    name = os.path.basename(path)
-                    line_nr = line_parts[1]
-                    code_line = ":".join(line_parts[2:])
-                    try:
-                        match = re.search(keyword, code_line)
-                    except Exception as e:
-                        logger.info(f"Error in regex matching for regex keyword {keyword}: {e}")
-                        match = None
-                    if match is None:
-                        continue
-                    span = match.span()
-                    try:
-                        with open(full_path) as file:
-                            content = file.readlines()
-                    except:
-                        content = False
-
-                    if content:
-                        id_ = max(results.keys(), default=-1) + 1
-                        results[id_] = {
-                            "content": content,
-                            "name": name,
-                            "path": path,
-                            "line_nr": line_nr,
-                            "span": str(span)
-                        }
-    return results
-
-
 def search_keywords(keywords: str, directory_path=None, file_extension=None):
     """
     Recherche des mots-clés localement en utilisant grep avec un filtre d'extension de fichier.
@@ -204,12 +142,13 @@ def search_keywords(keywords: str, directory_path=None, file_extension=None):
                     try:
                         with open(full_path, 'r', encoding='utf-8') as file:
                             content = file.readlines()
-                    except:
+                    except Exception as e:
+                        logger.info(f"Couldn't read lines in file {full_path}: {e}")
                         content = False
 
                     if content:
-                        id_ = max(results.keys(), default=-1) + 1
-                        results[id_] = {
+                        key = max(results.keys(), default=-1) + 1
+                        results[key] = {
                             "content": content,
                             "name": name,
                             "path": path,
@@ -228,11 +167,11 @@ def pagList2lines(pagList) -> dict:
         for file in containing_files_URLs.keys():
             f = containing_files_URLs[file]
             key = max(results.keys(), default=-1) + 1
-            results[key] = dict()
-
-            results[key]["content"] = file_as_lines(f["path"])
-            results[key]["name"] = f["name"]
-            results[key]["path"] = f["path"]
+            results[key] = {
+                "content": file_as_lines(f["path"]),
+                "name": f["name"],
+                "path": f["path"]
+            }
 
         return results
 
@@ -523,12 +462,12 @@ def get_file_as_yaml(filename: str) -> dict:
     if stdout:
         for line in stdout.decode().splitlines():
             if os.path.isfile(line):
-                id_ = max(files.keys(), default=-1) + 1
-                files[id_] = dict()
+                key = max(files.keys(), default=-1) + 1
+                files[key] = dict()
                 with open(line, 'r') as file:
-                    files[id_]["content"] = file.read()
+                    files[key]["content"] = file.read()
 
-                files[id_]["path"] = os.path.relpath(line, start=local_path)
+                files[key]["path"] = os.path.relpath(line, start=local_path)
 
     return files
 
@@ -560,7 +499,7 @@ def get_file_as_lines(filename: str) -> dict:
     return files
 
 
-def search_files(patterns, path=None):
+def search_files(patterns, path=None, getContent=True):
     """Recherche tous les fichiers correspondant aux motifs fournis dans le répertoire racine.    """
     repo_folder = tmp.tmp_config["Repository"]["local_path"]
     if path and repo_folder not in path:
@@ -577,11 +516,16 @@ def search_files(patterns, path=None):
         for pattern in patterns:
             for filename in fnmatch.filter(filenames, pattern):
                 full_path = os.path.join(dirpath, filename)
-                try:
-                    with open(full_path, "r", encoding="utf-8") as f:
-                        content = f.read().splitlines()
-                    found_files[full_path] = content
-                except Exception as e:
-                    print(f"Erreur en lisant {full_path}: {e}")
+                if getContent:
+                    try:
+                        with open(full_path, "r", encoding="utf-8") as f:
+                            content = f.read().splitlines()
+                    except Exception as e:
+                        print(f"Erreur en lisant {full_path}: {e}")
+                        content = ""
+                else:
+                    content = ""
+                
+                found_files[full_path] = content
 
     return found_files

@@ -82,9 +82,6 @@ environnement et profils : spring.profiles: dev/prod/docker/test/...
 Sleuth vs Micrometer Tracing (plus récent, opentelemetry)
 
 
-java file : 
-@GetMapping(value = "/count")
-
 fichier application.yml : 
 service, pour avoir les liaisons entre services ...
 serice: 
@@ -93,7 +90,9 @@ serice:
 
 
 
-
+TODO:TODO:TODO:TODO:TODO:TODO:TODO:TODO:TODO:TODO:
+            ... QUALIFIER L'OUTIL ...
+TODO:TODO:TODO:TODO:TODO:TODO:TODO:TODO:TODO:TODO:
 
 
 TODO: actuor endpoints

@@ -5,6 +5,7 @@ from output_generators.logger import logger
 import technology_specific_extractors.docker_compose.dcm_entry as dcm
 import technology_specific_extractors.gradle.grd_entry as grd
 import technology_specific_extractors.maven.mvn_entry as mvn
+import technology_specific_extractors.kubernetes.k8s_entry as k8s
 # Flow extractors
 import technology_specific_extractors.database_connections.dbc_entry as dbc
 import technology_specific_extractors.implicit_connections.imp_entry as imp
@@ -13,6 +14,8 @@ import technology_specific_extractors.resttemplate.rst_entry as rst
 import technology_specific_extractors.rabbitmq.rmq_entry as rmq
 import technology_specific_extractors.html.html_entry as html
 import technology_specific_extractors.kafka.kfk_entry as kfk
+# import technology_specific_extractors.restAPI.restAPI_entry as restapi
+# import technology_specific_extractors.grpc.grpc_entry as grpc
 
 import tmp.tmp as tmp
 
@@ -39,6 +42,7 @@ def get_microservices(dfd) -> dict:
     mvn.set_microservices(dfd)
     grd.set_microservices(dfd)
     dcm.set_microservices(dfd)
+    k8s.set_microservices(dfd)
     # TODO: détect k8s manifest and ansible
     if tmp.tmp_config.has_option("DFD", "microservices"):
         return ast.literal_eval(tmp.tmp_config["DFD"]["microservices"])
@@ -83,4 +87,7 @@ def detect_microservice(file_path: str, dfd) -> str:
     if not microservice:
         microservice = dcm.detect_microservice(file_path, dfd)
         if microservice: print("dcm")
+    if not microservice:
+        microservice = k8s.detect_microservice(file_path, dfd)
+        if microservice: print("k8s")
     return microservice
