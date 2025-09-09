@@ -61,9 +61,6 @@ def check_inter_service_encryption(microservices: dict, information_flows: dict)
         if path:
             directory_path = (m.get(f"{path}")).rsplit("/",1)[0]
         
-        print(directory_path,"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-        
-        
         # Détection SSL via l'infrastructure
         is_infra_ssl_enabled = any(fi.search_keywords(keyword, file_extension=["*.conf","*.xml","*.gradle","*.sh","*.json","*.yml","*.yaml", "*.properties"]) for keyword in ENCRYPTION_KEYWORDS["infra"])
         if is_infra_ssl_enabled:

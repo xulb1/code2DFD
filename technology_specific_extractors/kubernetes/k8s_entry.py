@@ -14,6 +14,7 @@ import core.file_interaction as fi
 # from kubernetes import client
 # from kubernetes.config import ConfigException
 
+# FIXME: Rechercher plus d'attribut de sécurité et vérifier la qualité de la détection de services et de liens
 
 def set_microservices(dfd) -> dict:
     """
@@ -137,73 +138,59 @@ def parse_k8s_manifests(k8s_content: str) -> list:
         return []
 
 
-def detect_microservice_2(file_path: str, dfd):
+def detect_microservice(file_path: str, dfd) -> str:
     """
-    Détecte les liens de communication et les attributs de sécurité
-    entre les microservices identifiés.
+    Détecte le microservice auquel un manifeste Kubernetes appartient
+    en se basant sur le nom de la ressource.
     """
-    
+
+    # S'assurer que le fichier est un manifeste YAML
+    if not file_path.lower().endswith(('.yaml', '.yml')):
+        return None
+
     microservices = tech_sw.get_microservices(dfd)
-
-    k8s_files = fi.search_files(["*.yaml", "*.yml"], getContent=True)
     
-    for kf, content in k8s_files.items():
-        if not os.path.basename(kf).startswith("test"):
-            
-            manifests = parse_k8s_manifests(content)
-            
-            if manifests:
-                for manifest in manifests:
-                    kind = manifest.get('kind')
-                    metadata = manifest.get('metadata', {})
-                    spec = manifest.get('spec', {})
-                    name = metadata.get('name')
+    try:
+        with open(file_path, 'r') as f:
+            manifests = list(yaml.safe_load_all(f))
+    except (yaml.YAMLError, FileNotFoundError) as e:
+        logger.error(f"Erreur de lecture ou de parsing YAML pour {file_path}: {e}")
+        return None
 
-                    if not name:
-                        continue
+    for manifest in manifests:
+        if not isinstance(manifest, dict):
+            continue
 
-                    # 1. Détection des liens de communication
-                    if kind in ["Deployment", "StatefulSet", "DaemonSet", "Job"]:
-                        template_spec = spec.get('template', {}).get('spec', {})
-                        for container in template_spec.get('containers', []):
-                            for env_var in container.get('env', []):
-                                if env_var.get('name') and ('_SERVICE_HOST' in env_var['name'] or '_SERVICE_PORT' in env_var['name']):
-                                    target_svc_name = env_var['name'].split('_SERVICE_')[0].lower().replace('_', '-')
-                                    if dfd.has_service(target_svc_name):
-                                        dfd.add_flow(name, target_svc_name, "Communication via variable d'environnement")
-
-                    # 2. Détection des attributs de sécurité
-                    # NetworkPolicy
-                    if kind == "NetworkPolicy":
-                        policy_name = name
-                        dfd.add_security_annotation(policy_name, "NetworkPolicy")
-                    
-                    # Secrets
-                    if kind in ["Deployment", "StatefulSet", "DaemonSet", "Job"]:
-                        template_spec = spec.get('template', {}).get('spec', {})
-                        for volume in template_spec.get('volumes', []):
-                            if volume.get('secret'):
-                                secret_name = volume['secret'].get('secretName')
-                                if secret_name:
-                                    dfd.add_security_annotation(name, f"Utilisation du Secret: {secret_name}")
-
-                    if kind in ["Deployment", "StatefulSet", "DaemonSet", "Job"]:
-                        template_spec = spec.get('template', {}).get('spec', {})
-                        if template_spec.get('securityContext'):
-                            dfd.add_security_annotation(name, "securityContext")
-
-    # Pour se conformer à la signature de grd_entry.py, retourne le nom du premier microservice
-    if microservices:
-        first_ms = next(iter(microservices.values()))
-        return first_ms['name']
+        metadata = manifest.get('metadata', {})
+        resource_name = metadata.get('name')
         
-    return False
+        if resource_name:
+            # Tenter une correspondance directe avec le nom de la ressource
+            for m in microservices.values():
+                ms_name = m["name"]
+                # On compare le nom de la ressource avec le nom du microservice
+                if resource_name.lower() == ms_name.lower():
+                    logger.info(f"Microservice '{ms_name}' détecté via le manifeste Kubernetes '{resource_name}'")
+                    return ms_name
+
+            # Si aucune correspondance directe, chercher des schémas de nommage courants
+            for m in microservices.values():
+                ms_name = m["name"]
+                if ms_name.lower() in resource_name.lower():
+                    logger.info(f"Microservice '{ms_name}' détecté via le nom de ressource '{resource_name}' (nom partiel)")
+                    return ms_name
+
+    logger.info(f"Aucun microservice détecté pour le manifeste {file_path}")
+    return None
 
 
-
-# ==================================================================
+##============================================================================================
+##============================================================================================
+##============================================================================================
 #                           DETECT FLOWS
-# ==================================================================
+##============================================================================================
+##============================================================================================
+##============================================================================================
 
 def set_information_flows(dfd) -> dict:
     """Adds connections based on parsed Kubernetes config files.
@@ -228,13 +215,13 @@ def set_information_flows(dfd) -> dict:
 
 def detect_k8s_flows(microservices: dict) -> dict:
     """
-    Detects communication flows by analyzing Kubernetes manifest files.
+    Détecte les flux de communication en analysant les fichiers manifestes Kubernetes.
     """
     k8s_files = fi.search_files(["*.yaml", "*.yml"], getContent=True)
     flows = defaultdict(dict)
     
-    # Pre-parse all manifests to have a full view of the cluster resources
-    all_manifests = {}
+    # Step 1: Global view of the Cluster
+    all_manifests = defaultdict(lambda: defaultdict(dict))
     for kf, content in k8s_files.items():
         if not os.path.basename(kf).startswith("test"):
             manifests = parse_k8s_manifests(content)
@@ -242,35 +229,47 @@ def detect_k8s_flows(microservices: dict) -> dict:
                 kind = manifest.get('kind')
                 name = manifest.get('metadata', {}).get('name')
                 if kind and name:
-                    # Store manifests by kind and name for easy lookup
-                    if kind not in all_manifests:
-                        all_manifests[kind] = {}
                     all_manifests[kind][name] = manifest
 
-    # Find flows by analyzing Deployments, StatefulSets, etc.
+    # Step 2: Link services to Workloads (Deployments, StatefulSets, etc.)
+    service_to_workload = {}
+    for svc_name, svc_manifest in all_manifests['Service'].items():
+        selector = svc_manifest.get('spec', {}).get('selector', {})
+        if selector:
+            # looking for workload corresponding to this selector
+            for wl_kind in ['Deployment', 'StatefulSet', 'DaemonSet']:
+                for wl_name, wl_manifest in all_manifests[wl_kind].items():
+                    wl_labels = wl_manifest.get('spec', {}).get('template', {}).get('metadata', {}).get('labels', {})
+                    if all(item in wl_labels.items() for item in selector.items()):
+                        service_to_workload[svc_name] = wl_name
+                        break
+                if svc_name in service_to_workload:
+                    break
+
+    # Step 3: Detect flows
     for kf, content in k8s_files.items():
         if not os.path.basename(kf).startswith("test"):
             manifests = parse_k8s_manifests(content)
             for manifest in manifests:
                 kind = manifest.get('kind')
+                source_ms_name = manifest.get('metadata', {}).get('name')
+                
+                # A. Workloads Analysis (Deployments, StatefulSets, etc.)
                 if kind in ["Deployment", "StatefulSet", "DaemonSet", "Job"]:
-                    source_ms_name = manifest.get('metadata', {}).get('name')
                     template_spec = manifest.get('spec', {}).get('template', {}).get('spec', {})
                     
-                    # 1. Analyze environment variables for links
+                    # 1. Env var Analysis
                     for container in template_spec.get('containers', []):
                         for env_var in container.get('env', []):
-                            # Common patterns for service URLs
-                            if env_var.get('value') and isinstance(env_var['value'], str):
-                                # Regex to find hostnames (e.g., "my-svc:8080", "my-svc.namespace.svc.cluster.local")
-                                match = re.search(r"([a-zA-Z0-9-]+\.)?([a-zA-Z0-9-]+)(:\d+)?", env_var['value'])
-                                if match:
-                                    target_svc_name = match.group(2)
+                            value = env_var.get('value')
+                            if isinstance(value, str):
+                                target_svc_name = infer_target_service(value)
+                                if target_svc_name:
                                     target_ms = find_microservice_by_name(microservices, target_svc_name)
                                     if target_ms:
-                                        add_flow(flows, source_ms_name, target_ms['name'], "Via env variable", "Data Flow", {"env_var": env_var['name']})
+                                        add_flow(flows, source_ms_name, target_ms['name'], "Data Flow", {"env_var": env_var['name']})
 
-                    # 2. Analyze ConfigMaps/Secrets for links
+                    # 2. ConfigMaps/Secrets Analysis
                     for volume in template_spec.get('volumes', []):
                         if 'configMap' in volume:
                             cm_name = volume['configMap']['name']
@@ -281,49 +280,93 @@ def detect_k8s_flows(microservices: dict) -> dict:
                                     if target_svc_name:
                                         target_ms = find_microservice_by_name(microservices, target_svc_name)
                                         if target_ms:
-                                            add_flow(flows, source_ms_name, target_ms['name'], "Via ConfigMap", "Data Flow", {"configMap_key": key})
+                                            add_flow(flows, source_ms_name, target_ms['name'], "Data Flow", {"configMap_key": key})
                         
                         if 'secret' in volume:
                             secret_name = volume['secret']['secretName']
-                            # Note: We cannot read secret data from the manifest, so this is a limited check
-                            # unless you have a way to decrypt them. We can only infer a link if the Secret name
-                            # matches a pattern, e.g., "db-secret", "api-key-service-a"
-                            if 'api-key' in secret_name or 'url' in secret_name:
-                                target_svc_name = infer_target_service(secret_name)
-                                if target_svc_name:
-                                    target_ms = find_microservice_by_name(microservices, target_svc_name)
-                                    if target_ms:
-                                        add_flow(flows, source_ms_name, target_ms['name'], "Via Secret Name", "Data Flow", {"secret_name": secret_name})
+                            target_svc_name = infer_target_service(secret_name)
+                            if target_svc_name:
+                                target_ms = find_microservice_by_name(microservices, target_svc_name)
+                                if target_ms:
+                                    add_flow(flows, source_ms_name, target_ms['name'], "Data Flow", {"secret_name": secret_name})
 
+                # B. Ingress Analysis
+                elif kind == "Ingress":
+                    rules = manifest.get('spec', {}).get('rules', [])
+                    for rule in rules:
+                        # Ingress with Host or path ?
+                        host = rule.get('host', 'default')
+                        http_paths = rule.get('http', {}).get('paths', [])
+                        
+                        for path in http_paths:
+                            backend = path.get('backend', {})
+                            # K8s versions (>= 1.19)
+                            service_name = backend.get('service', {}).get('name')
+                            # older versions
+                            if not service_name:
+                                service_name = backend.get('serviceName')
+
+                            if service_name:
+                                # which service is behind (workload)
+                                target_workload_name = service_to_workload.get(service_name)
+                                if target_workload_name:
+                                    target_ms = find_microservice_by_name(microservices, target_workload_name)
+                                    if target_ms:
+                                        add_flow(
+                                            flows, 
+                                            service_name,  # external source
+                                            target_ms['name'],
+                                            "External Flow",
+                                            {"host": host, "path": path.get('path', '/')}
+                                        )
+
+                # C. Services Analysis (inter-services connectivity)
+                elif kind == "Service":
+                    target_ms_name = service_to_workload.get(source_ms_name)
+                    if target_ms_name:
+                        pass
+                    if manifest.get('spec', {}).get('type') == 'ExternalName':
+                        external_name = manifest.get('spec', {}).get('externalName')
+                        # considered as outgoing flow
+                        source_ms_name = service_to_workload.get(manifest.get('metadata', {}).get('name'))
+                        if source_ms_name:
+                            add_flow(
+                                flows,
+                                source_ms_name,
+                                external_name,
+                                "External Flow",
+                                None
+                            )
+    
     return flows
 
-def add_flow(flows, from_ms, to_ms, label, flow_type, properties):
+def add_flow(information_flows: dict, from_ms: str, to_ms: str, flow_type: str, properties: set):
     """Helper function to add a flow to the flows dictionary."""
-    flow_key = f"{from_ms}->{to_ms}"
-    if flow_key not in flows:
-        flows[flow_key] = {
+    print(f"""NEW FLOW :
+          From: {from_ms}
+          To  : {to_ms}""")
+    
+    flow_key = max(information_flows.keys(), default=-1) + 1
+    if flow_key not in information_flows:
+        information_flows[flow_key] = {
             "sender": from_ms,
             "receiver": to_ms,
-            "stereotype_instances": ["restful_http"]
-
-            "label": label,
-            "type": flow_type,
+            "stereotype_instances": ["restful_http", flow_type],
             "properties": properties
         }
 
-def find_microservice_by_name(microservices: dict, name: str) -> dict or None:
+def find_microservice_by_name(microservices: dict, name: str) -> dict:
     """Helper function to find a microservice by its name."""
     return next(
             (ms for ms in microservices.values() if ms['name'] == name),
             None
         )
 
-def infer_target_service(value: str) -> str or None:
+def infer_target_service(value: str) -> str:
     """Infers a service name from a string (e.g., URL, variable name)."""
-    # Regex to find service names from a URL or a name
+    
     match = re.search(r"([a-zA-Z0-9-]+\.)?([a-zA-Z0-9-]+)(:\d+)?", value)
     return match.group(2) if match else None
-
 
 def parse_k8s_manifests(k8s_content: str) -> list:
     """Parses K8s manifest, handling multiple YAML documents."""
@@ -331,5 +374,7 @@ def parse_k8s_manifests(k8s_content: str) -> list:
         content = "\n".join(k8s_content)
         return list(yaml.safe_load_all(content))
     except yaml.YAMLError as e:
+        print(f"\033[91mError parsing K8s content: {e}\033[0m")
         logger.error(f"Error parsing K8s content: {e}")
         return []
+
