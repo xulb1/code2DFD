@@ -119,16 +119,16 @@ def extract_routes_yaml(path, service):
     try:
         with open(path, 'r') as f:
             text = f.read()
+        new_information_flows = dict()
         for document in yaml.load(text, Loader=yaml.FullLoader):
             routes = document.get("zuul").get("routes")
 
-            new_information_flows = dict()
             key = max(new_information_flows.keys(), default=-1) + 1
             new_information_flows[key] = {
                 "sender": service,
                 "receiver": str(routes),
                 "stereotype_instances": ["restful_http"]
             }
-            return new_information_flows
+        return new_information_flows
     except:
         return False

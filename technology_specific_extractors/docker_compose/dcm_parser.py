@@ -260,7 +260,6 @@ def extract_service_from_file(s, file_content, file_name, data, microservices_di
     return microservices_set, microservices_dict
 
 
-# FIXME: detection du même port plusieurs fois -> optimiser
 def extract_environment_props(data, s, lines: list, port: list, properties: set,file_name: str) -> tuple[tuple,set]:
     """Extracts environment variable properties and port information from a service definition.
 

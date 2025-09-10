@@ -192,7 +192,7 @@ def parse_properties_file(file_path: str) -> str:
     return microservice, properties
 
 
-# FIXME: beaucoup trop long ...
+# TODO: refactor -> beaucoup trop long ...
 def parse_yaml_file(file_path: str) -> str:
     """Extracts servicename from a .yml or .yaml file.
     """
@@ -777,3 +777,4 @@ def create_trace(keyword: str, file_name: str, lines: list, line_number: int) ->
                 trace = (file_name, line_number+2, "(0:0)")
 
     return trace
+

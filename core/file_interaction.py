@@ -369,7 +369,7 @@ def check_dockerfile(build_path: str):
     """Checks if under the service's build-path there is a dockerfile. If yes, returns it.
     """
     local_repo_path = tmp.tmp_config["Repository"]["local_path"]
-
+    
     # find docker-compose path, since build-path is relative to that
     possible_filenames = ["docker-compose.yml", "docker-compose.yaml", "docker-compose*"]
     raw_files = ""
@@ -384,7 +384,7 @@ def check_dockerfile(build_path: str):
 
     build_path = PurePosixPath(build_path.strip("-'"))  # Build path is always posix, so resolve it accordingly
     build_path = os.path.normpath(build_path)
-
+    
     docker_path = os.path.join(local_repo_path, os.path.join(docker_compose_dir, build_path))
     lines = list()
 

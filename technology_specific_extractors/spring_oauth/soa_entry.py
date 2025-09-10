@@ -184,7 +184,7 @@ def extract_endpoint_part(line: str) -> str:
     if "path" in line:          # not found in documentation, but used in piggy to name endpoint
         endpoint_part = line.split("path")[1].split(",")[0].split('\"')[1]
     elif "value" in line:       # usual keyword to describe path
-        endpoint_part = line.split("value")[1].split(",")[0].split('\"')[1]
+        endpoint_part = line.split("value")[1].split(",")[0].split('=')[1].strip(" \")")
     elif "," not in line and "/" in line:       # only for the "/" endpoint
         endpoint_part = line.split('\"')[1]
     return endpoint_part

@@ -108,7 +108,7 @@ def add_entity(line: str, entity_type: str):
         new_line = f"        {name.replace(".","_")} [label = \"{{External Entity: {name} | "
     
     for stereotype in stereotypes:
-        new_line += f"--{stereotype.strip()}--\\n"
+        new_line += f"--{stereotype.strip().replace("\"", "")}--\\n"
     if tagged_values:
         if entity_type=="flow":
             for tagged_value in tagged_values:

@@ -55,13 +55,17 @@ def check_inter_service_auth_and_authz(microservices: dict, information_flows: d
             service.setdefault("tagged_values", []).append(("Security Risk", "No OAuth or Token Security"))
 
         # Détection de l'injection de token côté client
-        client_auth_found = any(fi.search_keywords(pattern, directory_path, file_extension=["*.java", "*.kt"]) for pattern in AUTH_PATTERNS["client"]["java_code"])
-        if client_auth_found:
-            # Vérification de l'existence d'appels non sécurisés
-            if "RestTemplate().getForObject(\"http:" in client_auth_found:
-                service.setdefault("stereotype_instances", []).append("security_vulnerability")
-                service.setdefault("tagged_values", []).append(("Security Risk", "Unsecured HTTP call detected alongside secured calls."))
-            else:
+        client_auth_found = [fi.search_keywords(pattern, directory_path, file_extension=["*.java", "*.kt"]) for pattern in AUTH_PATTERNS["client"]["java_code"]]
+        if client_auth_found != [{}, {}, {}]:
+            done = False
+            for results in client_auth_found:
+                # Vérification de l'existence d'appels non sécurisés
+                if any(".getForObject(\"http:" in r["content"] for _,r in results.items()):
+                    service.setdefault("stereotype_instances", []).append("security_vulnerability")
+                    service.setdefault("tagged_values", []).append(("Security Risk", "Unsecured HTTP call detected alongside secured calls."))
+                    done = True
+                    break
+            if not done:
                 service.setdefault("stereotype_instances", []).append("auth_client_enabled")
                 service.setdefault("tagged_values", []).append(("Security", "Client Adds Auth Header"))
 

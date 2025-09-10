@@ -156,6 +156,12 @@ def DFD_extraction():
 
     # Printing
     print("\nFinished extraction")
+    print(f"""
+==================================
+    Found:
+       - {max(microservices.keys(), default=0)} microservices
+       - {max(information_flows.keys(), default=0)} flows
+==================================""")
 
     # Saving
     tmp.tmp_config.set("DFD", "microservices", str(microservices).replace("%", "%%"))
@@ -613,7 +619,7 @@ def merge_duplicate_annotations(collection: dict):
 
     for item in collection.values():
         if "stereotype_instances" in item:
-            item["stereotype_instances"] = list(set(item["stereotype_instances"]))
+            item["stereotype_instances"] = [s for s in set(item["stereotype_instances"]) if '\"' not in s]
 
         if "tagged_values" in item:
             merged_tagged_values = {}

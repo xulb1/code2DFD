@@ -135,7 +135,7 @@ def check_properties(microservices: dict, information_flows: dict, external_comp
                 else:
                     database_type = "UnknownDB"
 
-            #FIXME: duplicate database found
+            #FIXME: duplicate database found, why ?
             # create external component
             key = max(external_components.keys(), default=-1) + 1
             external_components[key] = {
@@ -201,10 +201,11 @@ def clean_database_connections(microservices: dict, information_flows: dict):
 
     to_purge = set()
     for microservice in microservices.values():
-        if microservice["type"] == "database_component":
+        if microservice.get("type","") == "database_component":
             for i in information_flows:
                 if information_flows[i]["receiver"] == microservice["name"]:
                     to_purge.add(i)
     
     for p in to_purge:
         del information_flows[p]
+        

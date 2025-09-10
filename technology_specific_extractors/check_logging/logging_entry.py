@@ -126,8 +126,17 @@ def detect_loggerfactory_and_mark(microservices: Dict[str, dict], dfd) -> Dict[s
                 used = True
                 break
         if used:
-            ms = microservices.setdefault(ms_name, {"name": ms_name})
-            ms.setdefault("stereotype_instances", [])
+            ms = [m for m in microservices.values() if m['name'] == ms_name]
+            if not ms:
+                key = max(microservices.keys(), default=-1) + 1
+                microservices[key] = {
+                    "name": ms_name,
+                    "stereotype_instances": []
+                }
+                ms = microservices[key]
+            else :
+                ms = ms[0]
+
             if "local_logging" not in ms["stereotype_instances"]:
                 ms["stereotype_instances"].append("local_logging")
             ms.setdefault("tagged_values", []).append(("Logging Technology", "LoggerFactory"))
@@ -155,11 +164,21 @@ def detect_lombok_and_mark(microservices: Dict[str, dict], dfd) -> Dict[str, dic
             annotation_found = any(f"@{ann}" in line for line in content)
             use_found = any(re.search(r"\blog\.(info|error|warn|debug|trace)\b", line, flags=re.IGNORECASE) for line in content)
             if annotation_found and use_found:
-                ms = microservices.setdefault(ms_name, {"name": ms_name})
-                ms.setdefault("stereotype_instances", [])
+                ms = [m for m in microservices.values() if m['name'] == ms_name]
+                if not ms:
+                    key = max(microservices.keys(), default=-1) + 1
+                    microservices[key] = {
+                        "name": ms_name,
+                        "stereotype_instances": []
+                    }
+                    ms = microservices[key]
+                else :
+                    ms = ms[0]
+
                 if "local_logging" not in ms["stereotype_instances"]:
                     ms["stereotype_instances"].append("local_logging")
-                ms.setdefault("tagged_values", []).append(("Logging Technology", f"Lombok"))
+                
+                ms.setdefault("tagged_values", []).append(("Logging Technology", "Lombok"))
                 _add_trace(ms_name, "local_logging", path, entry.get("line_nr"), entry.get("span"), note=f"Lombok @{ann}")
     return microservices
 
@@ -179,11 +198,21 @@ def detect_file_appenders_and_mark(microservices: Dict[str, dict], dfd) -> Dict[
             if not ms_name:
                 print("Service non-trouvé:",path)
                 continue
-            ms = microservices.setdefault(ms_name, {"name": ms_name})
-            ms.setdefault("stereotype_instances", [])
+            
+            ms = [m for m in microservices.values() if m['name'] == ms_name]
+            if not ms:
+                key = max(microservices.keys(), default=-1) + 1
+                microservices[key] = {
+                    "name": ms_name,
+                    "stereotype_instances": []
+                }
+                ms = microservices[key]
+            else :
+                ms = ms[0]
+
             if "local_logging" not in ms["stereotype_instances"]:
                 ms["stereotype_instances"].append("local_logging")
-            ms.setdefault("tagged_values", []).append(("Logging Technology", f"FileAppender")) #:{kw}"))
+            ms.setdefault("tagged_values", []).append(("Logging Technology", "FileAppender")) #:{kw}"))
             _add_trace(ms_name, "local_logging", path, entry.get("line_nr"), entry.get("span"), note=f"file appender keyword {kw}")
     return microservices
 
@@ -321,7 +350,17 @@ def detect_sensitive_logging_ast(microservices: Dict[str, dict], dfd) -> Dict[st
                     # replaceAll with sensitive patterns used to obfuscate - we regard presence as good if it's used to sanitize,
                     # but if replaceAll is applied incorrectly (no mask), we can't easily judge statically.
         if suspicious_found:
-            ms = microservices.setdefault(ms_name, {"name": ms_name})
+            ms = [m for m in microservices.values() if m['name'] == ms_name]
+            if not ms:
+                key = max(microservices.keys(), default=-1) + 1
+                microservices[key] = {
+                    "name": ms_name,
+                    "stereotype_instances": []
+                }
+                ms = microservices[key]
+            else:
+                ms = ms[0]
+
             ms.setdefault("tagged_values", []).append(("SensitiveLogging", evidence_note))
             ms.setdefault("stereotype_instances", []).append("local_logging_suspect")
             _add_trace(ms_name, "sensitive_logging", path, entry.get("line_nr"), entry.get("span"), note=evidence_note)
@@ -343,7 +382,15 @@ def detect_central_logging_components(microservices: dict, dfd) -> dict:
             if not ms_name:
                 print("Service non-trouvé:",path)
                 continue
-            ms = microservices.setdefault(ms_name, {"name": ms_name})
+            
+            ms = [m for m in microservices.values() if m['name'] == ms_name]
+            if not ms:
+                key = max(microservices.keys(), default=-1) + 1
+                microservices[key] = {"name": ms_name}
+                ms = microservices[key]
+            else :
+                ms = ms[0]
+
             ms.setdefault("tagged_values", []).append(("Central Logger", kw))
             ms.setdefault("stereotype_instances", []).append("central_logging_server")
             _add_trace("central_logging", "component_found", path, entry.get("line_nr"), entry.get("span"))
@@ -365,7 +412,15 @@ def detect_local_agents(microservices: dict, dfd) -> dict:
             if not ms_name:
                 print("Service non-trouvé:",path)
                 continue
-            ms = microservices.setdefault(ms_name, {"name": ms_name})
+            
+            ms = [m for m in microservices.values() if m['name'] == ms_name]
+            if not ms:
+                key = max(microservices.keys(), default=-1) + 1
+                microservices[key] = {"name": ms_name}
+                ms = microservices[key]
+            else :
+                ms = ms[0]
+
             ms.setdefault("tagged_values", []).append(("Local Agent", filename.split('.')[0]))
             ms.setdefault("stereotype_instances", []).append("local_logging_agent")
             _add_trace("local_agent", "config_found", path, entry.get("line_nr"), entry.get("span"))
@@ -381,8 +436,16 @@ def detect_local_agents(microservices: dict, dfd) -> dict:
             if not ms_name:
                 print("Service non-trouvé:",path)
                 continue
-            ms = microservices.setdefault(ms_name, {"name": ms_name})
-            ms.setdefault("tagged_values", []).append(("Local Agent", k.split('.')[0]))
+            
+            ms = [m for m in microservices.values() if m['name'] == ms_name]
+            if not ms:
+                key = max(microservices.keys(), default=-1) + 1
+                microservices[key] = {"name": ms_name}
+                ms = microservices[key]
+            else :
+                ms = ms[0]
+                
+            ms.setdefault("tagged_values", []).append(("Local Agent", kw))
             ms.setdefault("stereotype_instances", []).append("local_logging_agent")
             _add_trace("local_agent", "manifest_mention", path, entry.get("line_nr"), entry.get("span"))
     
@@ -401,7 +464,15 @@ def detect_sanitization_mechanisms(microservices: dict, dfd) -> dict:
         if not ms_name:
             print("Service non-trouvé:",path)
             continue
-        ms = microservices.setdefault(ms_name, {"name": ms_name})
+        
+        ms = [m for m in microservices.values() if m['name'] == ms_name]
+        if not ms:
+            key = max(microservices.keys(), default=-1) + 1
+            microservices[key] = {"name": ms_name}
+            ms = microservices[key]
+        else :
+            ms = ms[0]
+
         ms.setdefault("stereotype_instances", []).append("sanitization_mechanism")
         _add_trace("sanitization", "config_keyword", path, entry.get("line_nr"), entry.get("span"))
     # code replaceAll(...) for secret masking
@@ -416,7 +487,15 @@ def detect_sanitization_mechanisms(microservices: dict, dfd) -> dict:
                 if not ms_name:
                     print("Service non-trouvé:",path)
                     continue
-                ms = microservices.setdefault(ms_name, {"name": ms_name})
+                
+                ms = [m for m in microservices.values() if m['name'] == ms_name]
+                if not ms:
+                    key = max(microservices.keys(), default=-1) + 1
+                    microservices[key] = {"name": ms_name}
+                    ms = microservices[key]
+                else:
+                    ms = ms[0]
+
                 ms.setdefault("stereotype_instances", []).append("sanitization_mechanism")
                 _add_trace("sanitization", "code_redaction", path, entry.get("line_nr"), entry.get("span"))
                 break
@@ -437,7 +516,13 @@ def detect_broker_and_security(microservices: dict, dfd) -> dict:
             if not ms_name:
                 print("Service non-trouvé:",path)
                 continue
-            ms = microservices.setdefault(ms_name, {"name": ms_name})
+            ms = [m for m in microservices.values() if m['name'] == ms_name]
+            if not ms:
+                key = max(microservices.keys(), default=-1) + 1
+                microservices[key] = {"name": ms_name}
+                ms = microservices[key]
+            else:
+                ms = ms[0]
             ms.setdefault("tagged_values", []).append(("Message Broker", b))
             ms.setdefault("stereotype_instances", []).append("message_broker")
             _add_trace("broker", "mention", entry.get("path"), entry.get("line_nr"), entry.get("span"))

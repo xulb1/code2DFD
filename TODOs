@@ -123,10 +123,10 @@ TODO: R5 : vérif des token intern avant l'envoi de requetes
 TODO: R6 : limite sur le nbr de tentative de co
 R7 : traffics ext chiffré
 R8 : traffic interne chiffré
-TODO: R9 : message de log -> log central+ dashboard de visu
-TODO: R10 : agent de log pour les services -> server central
-TODO: R11 : filtration des logs
-TODO: R12 : broker de msg (entre agent et server) -> auth mutuelle + chiffrage
+R9 : message de log -> log central+ dashboard de visu
+R10 : agent de log pour les services -> server central
+R11 : filtration des logs
+R12 : broker de msg (entre agent et server) -> auth mutuelle + chiffrage
 R13 : circuit breaker
 R14 : load balancer
 TODO: R15 : limite d'usage de ressources
@@ -137,7 +137,18 @@ TODO: R19 -
 TODO: R20 - 
 
 
+FIXME: Vérification de l'implémentation des règles
+
 Ajouter detection ansible / k8s
 
 
 file extraction = ["Dockerfile","*.yaml","*.yml", "*.tf","*.sh","*.json","*.java","*.conf","*.sh","*.xml","*.gradle","*.json","*.yml","*.yaml","*.properties"]
+
+
+
+
+TODO: this afternoon : 
+- finir les règles de sécu
+- reformer la construction du json
+- le dataset: ajouter des éléments
+

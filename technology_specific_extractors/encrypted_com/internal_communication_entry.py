@@ -1,3 +1,4 @@
+import tmp.tmp as tmp
 import core.file_interaction as fi
 import output_generators.traceability as traceability
 
@@ -67,8 +68,12 @@ def check_inter_service_encryption(microservices: dict, information_flows: dict)
             m.setdefault("stereotype_instances", []).append("infra_tls_enabled")
             m.setdefault("tagged_values", []).append(("Security", "Infrastructure SSL/TLS Enabled"))
         #FIXME: pas sûr pour infra
-        if not directory_path:
+        
+        repo_folder = tmp.tmp_config["Repository"]["local_path"]
+        if not directory_path or directory_path in repo_folder:
             continue
+        
+        
         
         # Détection SSL côté serveur
         #TODO: detection pb

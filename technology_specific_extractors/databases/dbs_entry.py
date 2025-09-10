@@ -50,6 +50,8 @@ def detect_via_docker(microservices: dict, m: int) -> dict:
     """
 
     path = microservices[m]["image"]
+    if path == "image_placeholder":
+        return microservices
     dockerfile_lines = fi.check_dockerfile(path)
 
     database = False

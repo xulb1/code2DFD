@@ -30,14 +30,22 @@ def set_microservices(dfd) -> dict:
     k8s_files = fi.search_files(["*.yaml", "*.yml"], getContent=True)
     for kf, content in k8s_files.items():
         if not os.path.basename(kf).startswith("test"):
-            manifests = parse_k8s_manifests(content)
+            manifests = parse_k8s_manifests(kf,content)
             if manifests:
                 for manifest in manifests:
+                    if not manifest:
+                        continue
                     entity_name = None
                     entity_type = "unknown"
-                    kind = manifest.get('kind')
-                    metadata = manifest.get('metadata')
-                    spec = manifest.get('spec', {})
+                    try:
+                        kind = manifest.get('kind')
+                        metadata = manifest.get('metadata')
+                        spec = manifest.get('spec', {})
+                    except AttributeError:
+                        print("\033[31mERROR with manifest (list instead of dict object -> get() on the first element of the list)\033[0m")
+                        kind = manifest[0].get('kind',None)
+                        metadata = manifest[0].get('metadata',None)
+                        spec = manifest[0].get('spec', {})
                     
                     if not metadata or 'name' not in metadata:
                         continue
@@ -117,25 +125,9 @@ def set_microservices(dfd) -> dict:
                             "line": 0,
                             "span": (0, 0)
                         })
-
     
     tmp.tmp_config.set("DFD", "microservices", str(microservices).replace("%", "%%"))
     return microservices
-
-
-def parse_k8s_manifests(k8s_content: str) -> list:
-    """
-    Analyse un manifeste Kubernetes à partir de son contenu et retourne une liste de dictionnaires.
-    """
-    try:
-        # load_all charge plusieurs documents YAML d'un seul fichier
-        content = "\n".join(k8s_content)
-        
-        return list(yaml.safe_load_all(content))
-    except yaml.YAMLError as e:
-        print((f"Erreur lors de l'analyse du contenu K8s: {e}"))
-        logger.error(f"Erreur lors de l'analyse du contenu K8s: {e}")
-        return []
 
 
 def detect_microservice(file_path: str, dfd) -> str:
@@ -224,10 +216,20 @@ def detect_k8s_flows(microservices: dict) -> dict:
     all_manifests = defaultdict(lambda: defaultdict(dict))
     for kf, content in k8s_files.items():
         if not os.path.basename(kf).startswith("test"):
-            manifests = parse_k8s_manifests(content)
+            manifests = parse_k8s_manifests(kf,content)
             for manifest in manifests:
-                kind = manifest.get('kind')
-                name = manifest.get('metadata', {}).get('name')
+                if not manifest:
+                    continue
+                try:
+                    kind = manifest.get('kind')
+                    name = manifest.get('metadata', {}).get('name')
+                except AttributeError:
+                    print("\033[31mERROR with manifest (list instead of dict object -> get() on the first element of the list)\033[0m")
+                    kind = manifest[0].get('kind',None)
+                    name = manifest[0].get('metadata', {}).get('name')
+
+
+            
                 if kind and name:
                     all_manifests[kind][name] = manifest
 
@@ -249,10 +251,18 @@ def detect_k8s_flows(microservices: dict) -> dict:
     # Step 3: Detect flows
     for kf, content in k8s_files.items():
         if not os.path.basename(kf).startswith("test"):
-            manifests = parse_k8s_manifests(content)
+            manifests = parse_k8s_manifests(kf,content)
             for manifest in manifests:
-                kind = manifest.get('kind')
-                source_ms_name = manifest.get('metadata', {}).get('name')
+                if not manifest:
+                    continue
+                try:
+                    kind = manifest.get('kind')
+                    source_ms_name = manifest.get('metadata', {}).get('name')                
+                except AttributeError:
+                    print("\033[31mERROR with manifest (list instead of dict object -> get() on the first element of the list)\033[0m")
+                    kind = manifest[0].get('kind',None)
+                    source_ms_name = manifest[0].get('metadata', {}).get('name')                
+
                 
                 # A. Workloads Analysis (Deployments, StatefulSets, etc.)
                 if kind in ["Deployment", "StatefulSet", "DaemonSet", "Job"]:
@@ -351,7 +361,7 @@ def add_flow(information_flows: dict, from_ms: str, to_ms: str, flow_type: str, 
         information_flows[flow_key] = {
             "sender": from_ms,
             "receiver": to_ms,
-            "stereotype_instances": ["restful_http", flow_type],
+            "stereotype_instances": ["restful_http"],
             "properties": properties
         }
 
@@ -368,13 +378,12 @@ def infer_target_service(value: str) -> str:
     match = re.search(r"([a-zA-Z0-9-]+\.)?([a-zA-Z0-9-]+)(:\d+)?", value)
     return match.group(2) if match else None
 
-def parse_k8s_manifests(k8s_content: str) -> list:
+def parse_k8s_manifests(path_file, k8s_content: str) -> list:
     """Parses K8s manifest, handling multiple YAML documents."""
     try:
         content = "\n".join(k8s_content)
         return list(yaml.safe_load_all(content))
     except yaml.YAMLError as e:
-        print(f"\033[91mError parsing K8s content: {e}\033[0m")
-        logger.error(f"Error parsing K8s content: {e}")
+        print(f"\033[91m--> {path_file} <--\nError parsing K8s content: {e}\033[0m")
+        logger.error(f"--> {path_file} <-- | Error parsing K8s content: {e}")
         return []
-

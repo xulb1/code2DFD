@@ -17,74 +17,36 @@ try:
 except ImportError:
     import xml.etree.ElementTree as etree
     XML_BACKEND = "PYTHON"
-
 NAMESPACE = {"mvn": "http://maven.apache.org/POM/4.0.0"}
 
-# Cache XML
-_POM_CACHE = {}
-
-
-def parse_pom_file_once(pom_file_path):
-    """Parse un pom.xml et garde le résultat en cache."""
-    if pom_file_path in _POM_CACHE:
-        return _POM_CACHE[pom_file_path]
-    try:
-        if XML_BACKEND == "LXML":
-            parser = etree.XMLParser(recover=True)  # tolérant aux erreurs
-            tree = etree.parse(pom_file_path, parser)
-        else:
-            tree = etree.parse(pom_file_path)
-        root = tree.getroot()
-        _POM_CACHE[pom_file_path] = root
-        return root
-    except etree.XMLSyntaxError as e:
-        print(f"\033[91mERROR in {pom_file_path}: {e}\033[0m")
-        return None
-
-
-# -------------------------------
-# Utilitaires XML factorisés
-# -------------------------------
-
-def get_dependencies(root):
-    return root.find('mvn:dependencies', NAMESPACE)
-
-def get_modules(root):
-    return root.find('mvn:modules', NAMESPACE)
-
-def get_artifact_or_final_name(root):
-    artifactId = root.find('mvn:build/mvn:finalName', NAMESPACE)
-    if artifactId is None:
-        artifactId = root.find('mvn:artifactId', NAMESPACE)
-    return artifactId
-
-
-# -------------------------------
-# Fonctions principales
-# -------------------------------
 
 def set_microservices(dfd) -> dict:
-    """Extracts the list of services from pom.xml files and sets the variable in the tmp-file."""
+    """Extracts the list of services from pom.xml files and sets the variable in the tmp-file.
+    """
+
     if tmp.tmp_config.has_option("DFD", "microservices"):
         microservices = ast.literal_eval(tmp.tmp_config["DFD"]["microservices"])
     else:
-        microservices = {}
+        microservices = dict()
     microservices_set = set()
 
     pom_files = fi.get_file_as_lines("pom.xml")
-    module_dict = {}
+    module_dict = dict()
 
     image = "image_placeholder"
-    for _, pom_file in pom_files.items():
+    for pf in pom_files.keys():
+        pom_file = pom_files[pf]
         modules = extract_modules(pom_file)
         if modules:
-            module_dict[pom_file["name"]] = modules
+            module_dict[(pom_file["name"])] = modules
         else:
             microservice, properties = parse_configurations(pom_file)
-            print("Dépendences maven de :", microservice[0])
+            
+            print("Dépendences maven de :",microservice[0])
             properties = extract_dependencies(properties, pom_file)
             if microservice[0]:
                 port = dcr.detect_port(pom_file["path"])
+                # create microservice in dict
                 key = max(microservices.keys(), default=-1) + 1
                 microservices[key] = {
                     "name": microservice[0],
@@ -92,9 +54,13 @@ def set_microservices(dfd) -> dict:
                     "type": "internal",
                     "pom_path": pom_file["path"],
                     "properties": properties,
-                    "stereotype_instances": []
+                    "stereotype_instances": list()
                 }
-                microservices[key]["tagged_values"] = [("Port", port)] if port else []
+                if port:
+                    microservices[key]["tagged_values"] = [("Port", port)]
+                else:
+                    microservices[key]["tagged_values"] = list()
+                
                 traceability.add_trace({
                     "item": microservice[0].replace("pom_", ""),
                     "file": microservice[1][0],
@@ -105,71 +71,118 @@ def set_microservices(dfd) -> dict:
     nested_microservices = check_nested_modules(module_dict)
     microservices_set.update(nested_microservices)
 
-    tmp.tmp_config.set("DFD", "microservices", str(microservices).replace("%", "%%"))
+    tmp.tmp_config.set("DFD", "microservices", str(microservices).replace("%", "%%"))   # Need to escape single percentage signs for ConfigParser
+
     return microservices
 
 
 def extract_dependencies(properties: set, pom_file) -> set:
-    pom_path = os.path.join(tmp.tmp_config.get("Repository", "local_path"), pom_file["path"])
-    root = parse_pom_file_once(pom_path)
-    if root is None:
-        return properties
+    """Parses pom_file to check for dependencies.
+    """
 
-    dependencies = get_dependencies(root)
+    file_name = pom_file["path"]
+    pom_path = os.path.join(tmp.tmp_config.get("Repository", "local_path"), file_name)
+    tree = etree.parse(pom_path)
+    root = tree.getroot()
+
+
+    dependencies = root.find('mvn:dependencies', NAMESPACE)
+
     if dependencies is not None:
         for dependency in dependencies.findall('mvn:dependency', NAMESPACE):
+            groupId = dependency.find('mvn:groupId', NAMESPACE)
             artifactId = dependency.find('mvn:artifactId', NAMESPACE)
+
+            
             if artifactId is not None:
                 aid = artifactId.text.strip()
-                print("-", aid)
-
+                print("-",aid)
+                
+                # Hystrix
                 if aid == "spring-cloud-starter-netflix-hystrix":
                     properties.add(("circuit_breaker", "Hystrix", ("file", "line", "span")))
+
+                # Resilience4j (Spring Boot Starter or modules)
                 if aid.startswith("resilience4j-") or aid == "spring-boot-starter-resilience4j":
                     properties.add(("circuit_breaker", "Resilience4j", ("file", "line", "span")))
+
+                # MicroProfile Fault Tolerance
                 if aid == "microprofile-fault-tolerance-api":
                     properties.add(("circuit_breaker", "MicroProfile FT", ("file", "line", "span")))
+
+                # Failsafe
                 if aid == "failsafe":
                     properties.add(("circuit_breaker", "Failsafe", ("file", "line", "span")))
+                    
+                # print("<<<<<<<<<<>>>>><<<<<<<<< CICUIT BREAKER found in dependencies >>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+                
     return properties
+
+#TODO: add detect dependencies and properties for Load Ballencer, security, ...
 
 
 def extract_modules(pom_file: dict) -> set:
-    pom_path = os.path.join(tmp.tmp_config.get("Repository", "local_path"), pom_file["path"])
-    root = parse_pom_file_once(pom_path)
-    if root is None:
-        return set()
+    """Extracts modules of a Maven project based on the <module> </module>-tag.
+    """
 
-    modules = get_modules(root)
-    return {m.text.strip() for m in modules.findall('mvn:module', NAMESPACE)} if modules is not None else set()
+    file_name = pom_file["path"]
+    print(file_name)
+    pom_path = os.path.join(tmp.tmp_config.get("Repository", "local_path"), file_name)
+    try:
+        tree = etree.parse(pom_path)
+    except etree.XMLSyntaxError as e:
+        print(f"\033[91mERROR: {e}\033[0m")
+        return set()
+    
+    root = tree.getroot()
+
+    modules_list = set()
+    modules = root.find('mvn:modules', NAMESPACE)
+    if modules is not None:
+        modules_list = {module.text.strip() for module in modules.findall('mvn:module', NAMESPACE)}
+
+    return modules_list
 
 
 def check_nested_modules(module_tuples: dict) -> set:
+    """Takes list of tuples of the form [(component, [modules])] and checks for links between them.
+    If yes, returns list of components = services that need to be added to the list.
+    """
+
     modules = set(*module_tuples.values())
     components = set(module_tuples.keys())
     microservices = components & modules
+
     return microservices
 
 
 def parse_configurations(pom_file) -> str:
-    """Extracts servicename and properties for a given file. Tries properties file first, then pom file."""
+    """Extracts servicename and properties for a given file. Tries properties file first, then pom file.
+    """
+
     microservice, properties = parse_properties_file(pom_file["path"])
     if not microservice[0]:
         microservice = extract_servicename_pom_file(pom_file)
     if not microservice[0]:
         return (False, False), set()
+
     return microservice, properties
 
 
 def parse_properties_file(pom_path: str):
-    """Goes down folder structure to find properties file. Then tries to extract servicename. Else returns False."""
+    """Goes down folder structure to find properties file. Then tries to extract servicename. Else returns False.
+    """
+
     properties = set()
     microservice = [False, False]
-
+    # find properties file
     path = os.path.dirname(pom_path)
+
     local_repo_path = tmp.tmp_config["Repository"]["local_path"]
 
-    dirs = [os.scandir(os.path.join(local_repo_path, path))]
+    dirs = list()
+    dirs.append(os.scandir(os.path.join(local_repo_path, path)))
+
     while dirs:
         dir = dirs.pop()
         for entry in dir:
@@ -178,16 +191,18 @@ def parse_properties_file(pom_path: str):
                 new_microservice, new_properties = None, None
                 if filename in ["application.properties", "bootstrap.properties"]:
                     logger.info(f"Found application.properties here: {entry.path}")
-                    new_microservice, new_properties = parse.parse_properties_file(entry.path)
-                elif filename in ["application.yaml", "application.yml", "bootstrap.yml", "bootstrap.yaml",
-                                  "filebeat.yml", "filebeat.yaml"]:
+                    file_path = entry.path
+                    new_microservice, new_properties = parse.parse_properties_file(file_path)
+                elif filename in ["application.yaml", "application.yml", "bootstrap.yml", "bootstrap.yaml", "filebeat.yml", "filebeat.yaml"]:
                     logger.info(f"Found properties file here: {entry.path}")
-                    new_microservice, new_properties = parse.parse_yaml_file(entry.path)
+                    file_path = entry.path
+                    new_microservice, new_properties = parse.parse_yaml_file(file_path)
 
                 if new_microservice and new_microservice[0]:
                     microservice = new_microservice
                 if new_properties:
-                    properties |= new_properties
+                    properties = properties.union(new_properties)
+
             elif entry.is_dir():
                 dirs.append(os.scandir(entry.path))
 
@@ -195,69 +210,90 @@ def parse_properties_file(pom_path: str):
 
 
 def extract_servicename_pom_file(pom_file) -> str:
-    """Extracts the name of a Maven-module based on the <finalName> tag if existing, else the <artifactId>."""
-    local_path = os.path.join(tmp.tmp_config.get("Repository", "local_path"), pom_file["path"])
+    """Extracts the name of a Maven-module based on the <finalName> tag if existing, else the <artifactIf>.
+    """
+
+    local_path = tmp.tmp_config.get("Repository", "local_path")
+    local_path = os.path.join(local_path, pom_file["path"])
+
     _, props = resolve_pom(local_path)
-
+    
     microservice = [False, False]
-    root = parse_pom_file_once(local_path)
-    if root is None:
+    file_name = pom_file["path"]
+    pom_path = os.path.join(tmp.tmp_config.get("Repository", "local_path"), file_name)
+    try:
+        tree = etree.parse(pom_path)
+    except etree.XMLSyntaxError as e:
+        print(f"\033[91mERROR: {e}\033[0m")
         return microservice
+    
+    root = tree.getroot()
 
-    artifactId = get_artifact_or_final_name(root)
+    artifactId = root.find('mvn:build/mvn:finalName', NAMESPACE)
+    if artifactId is None:
+        artifactId = root.find('mvn:artifactId', NAMESPACE)
     if artifactId is None:
         return microservice
 
-    text = artifactId.text.strip()
-    microservice[0] = substitute(text, props) if "$" in text else text
+    if "$" in artifactId.text:
+        microservice[0] = substitute(artifactId.text, props)
+    else:
+        microservice[0] = artifactId.text.strip()
 
     # tracing
-    file_name = pom_file["path"]
     if XML_BACKEND == "LXML":
         line_nr = artifactId.sourceline - 1
         line = pom_file["content"][line_nr]
         try:
             length_tuple = re.search(microservice[0], line).span()
-            span = f"[{length_tuple[0]}:{length_tuple[1]}]"
-        except Exception:
+            span = f"[{str(length_tuple[0])}:{str(length_tuple[1])}]"
+        except:
             span = "None"
     else:
-        line_nr, span = None, "[?:?]"
+        line_nr = None
+        span = "[?:?]"
     trace = (file_name, line_nr, span)
 
     microservice[0] = f"pom_{microservice[0]}"
     microservice[1] = trace
+
     return microservice
 
 
 def detect_microservice(file_path, dfd):
-    """Detects which microservice a file belongs to by looking for next pom.xml."""
+    """Detects which microservice a file belongs to by looking for next pom.xml.
+    """
+
     microservice = [False, False]
     microservices = tech_sw.get_microservices(dfd)
 
     found_pom = False
+
     local_repo_path = tmp.tmp_config["Repository"]["local_path"]
     dirs = []
-    path = os.path.dirname(file_path)
-
+    path = file_path
+    path = os.path.dirname(path)
+    
     while not found_pom and path != "":
         dirs.append(os.scandir(os.path.join(local_repo_path, path)))
         while dirs and not found_pom:
             dir = dirs.pop()
             for entry in dir:
-                if entry.is_file() and entry.name.casefold() == "pom.xml":
-                    pom_path = os.path.relpath(entry.path, start=local_repo_path)
-                    logger.info("Found pom.xml here: " + str(entry.path))
-                    found_pom = True
+                if entry.is_file():
+                    if entry.name.casefold() == "pom.xml":
+                        pom_path = os.path.relpath(entry.path, start=local_repo_path)
+                        logger.info("Found pom.xml here: " + str(entry.path))
+                        found_pom = True
         path = os.path.dirname(path)
 
     if found_pom:
-        pom_file = {"path": pom_path}
+        pom_file = dict()
+        pom_file["path"] = pom_path
         for m in microservices.keys():
             try:
                 if microservices[m]["pom_path"] == pom_path:
                     microservice[0] = microservices[m]["name"]
-            except Exception:
+            except:
                 pass
         if not microservice[0]:
             pom_file["content"] = fi.file_as_lines(pom_path)
@@ -266,13 +302,14 @@ def detect_microservice(file_path, dfd):
         logger.info("Did not find microservice")
 
     if not microservice[0]:
+
         for m in microservices.keys():
             try:
                 image = microservices[m]["image"]
                 path = os.path.dirname(file_path)
                 if image in path:
                     microservice[0] = microservices[m]["name"]
-            except Exception:
+            except:
                 pass
 
     return microservice[0]

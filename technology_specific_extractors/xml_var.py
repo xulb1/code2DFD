@@ -33,7 +33,11 @@ def resolve_tree(element, props):
         resolve_tree(child, props)
 
 def resolve_pom(pom_file):
-    tree = ET.parse(pom_file)
+    try:
+        tree = ET.parse(pom_file)
+    except ET.ParseError as e:
+        print(f"\033[91mERROR: {e}\033[0m")
+        return None, None
     root = tree.getroot()
     ns = {"m": "http://maven.apache.org/POM/4.0.0"}
 
