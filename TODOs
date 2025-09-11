@@ -101,16 +101,12 @@ TODO:TODO:TODO:TODO:TODO:TODO:TODO:TODO:TODO:TODO:
 TODO: actuor endpoints
 dependency check
 
-TODO: ajout de broker un peu trop nombreux ?  vérifier pourquoi ?...
-TODO: faire gaffe au logging detection, peut-etre des pb ?
-TODO: suppr config_file_path_...
-TODO: database_passowrd/username duplication ...
+TODO: ajout de broker un peu trop nombreux ? vérifier pourquoi ?...
+TODO: logging detection, peut-etre des pb ?
+TODO: passowrd/username duplication ...
 TODO: \n en fin de valeurs ...
-TODO: AttributeError: 'CommentedSeq' object has no attribute 'items'
 TODO: implémenter la logique de reconnaissance de nom de service à la découverte d'un microservice
-TODO: faire un résolveur de variable
-TODO: faire le résolveur de variable en dernier ...
-VérifiR!gle sde sécurités 
+TODO: faire le résolveur de variable ...
 TODO: faire gestion des properties
 
 
@@ -139,10 +135,8 @@ TODO: R20 -
 
 FIXME: Vérification de l'implémentation des règles
 
-Ajouter detection ansible / k8s
 
-
-file extraction = ["Dockerfile","*.yaml","*.yml", "*.tf","*.sh","*.json","*.java","*.conf","*.sh","*.xml","*.gradle","*.json","*.yml","*.yaml","*.properties"]
+file extraction types = ["Dockerfile","*.yaml","*.yml", "*.tf","*.sh","*.json","*.java","*.conf","*.sh","*.xml","*.gradle","*.json","*.yml","*.yaml","*.properties"]
 
 
 

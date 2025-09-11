@@ -81,14 +81,14 @@ def detect_microservice(file_path: str, dfd) -> str:
     # print(f"\033[32mDetect_microservice appelée depuis la fonction '{fonction}' dans le fichier '{fichier}'\033[0m")
     
     microservice = mvn.detect_microservice(file_path, dfd)
-    if microservice: print("mvn")
+    # if microservice: print("mvn")
     if not microservice:
         microservice = grd.detect_microservice(file_path, dfd)
-        if microservice: print("grd")
+        # if microservice: print("grd")
     if not microservice:
         microservice = dcm.detect_microservice(file_path, dfd)
-        if microservice: print("dcm")
+        # if microservice: print("dcm")
     if not microservice:
         microservice = k8s.detect_microservice(file_path, dfd)
-        if microservice: print("k8s")
+        # if microservice: print("k8s")
     return microservice
