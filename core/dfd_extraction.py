@@ -3,6 +3,7 @@ from pydriller import Repository
 from datetime import datetime
 import ast
 import os
+import re
 
 import core.technology_switch as tech_sw
 from core.DFD import CDFD
@@ -55,14 +56,18 @@ from technology_specific_extractors.ssl.ssl_entry import detect_ssl_services
 from technology_specific_extractors.check_logging.logging_entry import analyze_logging_architecture
 # R17
 from technology_specific_extractors.secure_registry.check_secure_registry_entry import check_registry_security
+# R6
+from technology_specific_extractors.check_loginAttemps.login_security_entry import detect_login_attempt_limits
 # R7
 from technology_specific_extractors.encrypted_com.external_communication_entry import check_external_encryption
 # R8
 from technology_specific_extractors.encrypted_com.internal_communication_entry import check_inter_service_encryption
 # R2
-from technology_specific_extractors.auth_nz.check_mutual_auth_entry import check_inter_service_auth_and_authz
+from technology_specific_extractors.check_auth_nz.check_mutual_auth_entry import check_inter_service_auth_and_authz
 # R3
-from technology_specific_extractors.auth_nz.check_central_auth_logic_entry import check_auth_logic_separation
+from technology_specific_extractors.check_auth_nz.check_central_auth_logic_entry import check_auth_logic_separation
+# R4-R5
+from technology_specific_extractors.check_token_validation.check_identity_entry import detect_internal_identity, detect_token_validation
 
 def perform_analysis():
     """
@@ -70,7 +75,10 @@ def perform_analysis():
     """
     local_path = tmp.tmp_config.get("Repository", "local_path")
     url_path = tmp.tmp_config.get("Repository", "url")
-
+    owner = "Unknown"
+    if match := re.search(r"github\.com[:/](.+?)/", url_path):
+        owner = match.group(1)
+        
     os.makedirs(local_path, exist_ok=True)
     repository = Repository(path_to_repo=url_path, clone_repo_to=local_path)
     with repository._prep_repo(url_path) as git_repo:
@@ -81,7 +89,8 @@ def perform_analysis():
         else:
             commit = head
         repo_name = git_repo.project_name
-        tmp.tmp_config.set("Analysis Settings", "output_path", os.path.join(os.getcwd(), "code2DFD_output", repo_name.replace("/", "--"), commit))
+        
+        tmp.tmp_config.set("Analysis Settings", "output_path", os.path.join(os.getcwd(), "code2DFD_output/dataset", f"{owner}@{repo_name.replace("/", "--")}", commit))
         git_repo.checkout(commit)
         print(f"\nStart extraction of DFD for {repo_name} on commit {commit} at {datetime.now().strftime('%H:%M:%S')}")
         codeable_models, traceability_content = DFD_extraction()
@@ -159,10 +168,10 @@ def DFD_extraction():
     print(f"""
 ==================================
     Found:
-       - {max(microservices.keys(), default=0)} microservices
-       - {max(information_flows.keys(), default=0)} flows
+       - {len(microservices)} microservices
+       - {len(information_flows)} flows
 ==================================""")
-
+    
     # Saving
     tmp.tmp_config.set("DFD", "microservices", str(microservices).replace("%", "%%"))
     tmp.tmp_config.set("DFD", "information_flows", str(information_flows).replace("%", "%%"))
@@ -251,10 +260,15 @@ def classify_microservices(microservices: dict, information_flows: dict, externa
     print("azd")
     microservices = check_inter_service_auth_and_authz(microservices, information_flows)
     print("aze")
-    microservices = check_auth_logic_separation(microservices)
+    microservices = detect_login_attempt_limits(microservices, dfd)
     print("azf")
-    microservices = analyze_logging_architecture(microservices, information_flows, dfd)
+    microservices = check_auth_logic_separation(microservices)
     print("azg")
+    microservices = detect_internal_identity(microservices,dfd)
+    microservices = detect_token_validation(microservices, dfd)
+    print("azh")
+    microservices = analyze_logging_architecture(microservices, information_flows, dfd)
+    print("azi")
     
     return microservices, information_flows, external_components
 
@@ -486,49 +500,53 @@ def detect_miscellaneous(microservices: dict, information_flows: dict, external_
 def merge_duplicate_flows(information_flows: dict):
     """Multiple flows with the same sender and receiver might occur. They are merged here.
     """
-    print("@@@@@@@@@@@@@@@@@@@@@@ DuplicatFlow @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    print("@@@@@@@@@@@@@@@@@@@@@@ DuplicateFlow @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    
+    total_flows = len(information_flows)
+    normalized_flows = {}
     to_delete = set()
-    for i, j in combinations(information_flows.keys(), 2):
-        if i == j:
+    
+    for key, flow in information_flows.items():
+        sender = flow.get("sender")
+        receiver = flow.get("receiver")
+        
+        if not sender or not receiver:
+            to_delete.add(key)
             continue
         
-        flow_i = information_flows[i]
-        if flow_i["sender"] and flow_i["receiver"]:
-            flow_i["sender"] = flow_i["sender"].casefold()
-            flow_i["receiver"] = flow_i["receiver"].casefold()
+        sender = sender.casefold()
+        receiver = receiver.casefold()
+        key_pair = (sender, receiver)
+        
+        if key_pair in normalized_flows:
+            # Fusion des champs
+            existing_flow = normalized_flows[key_pair]
+            # print(" - ",key_pair[0]," -> ",key_pair[1])
+            for field, value in flow.items():
+                if field in ["sender", "receiver"]:
+                    continue
+                if field in existing_flow:
+                    existing_flow[field] = list(existing_flow[field]) + list(value)
+                else:
+                    existing_flow[field] = list(value)
+            to_delete.add(key)
         else:
-            to_delete.add(i)
-            continue
-
-        flow_j = information_flows[j]
-        if flow_j["sender"] and flow_j["receiver"]:
-            flow_j["sender"] = flow_j["sender"].casefold()
-            flow_j["receiver"] = flow_j["receiver"].casefold()
-        else:
-            to_delete.add(j)
-            continue
-
-        if (flow_i["sender"],flow_i["receiver"]) == (flow_j["sender"],flow_j["receiver"]):
-            # merge
-            for field, j_value in flow_j.items():
-                if field not in ["sender", "receiver"]:
-                    print(" - ",flow_i," -> ",j_value)
-                    try:
-                        flow_i[field] = flow_i.get(field, []) + list(j_value)
-                    except Exception:
-                        try:
-                            flow_i[field] = list(j_value).append(flow_i.get(field, []))
-                        except TypeError:
-                            pass
-            to_delete.add(j)
+            flow["sender"] = sender
+            flow["receiver"] = receiver
+            normalized_flows[key_pair] = flow
+    
+    # Suppression des doublons
     for k in to_delete:
         del information_flows[k]
+        
+    print(f"   ->  FROM:{total_flows}  TO:{len(information_flows)}")
 
 
 def merge_duplicate_nodes(nodes: dict, information_flows: dict):
     """Merge duplicate nodes
     """
-
+    total = len(nodes)
+    
     # Microservices
     to_delete = set()
     print("@@@@@@@@@@@@@@@@@@@@@@ DuplicatNode @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
@@ -549,7 +567,7 @@ def merge_duplicate_nodes(nodes: dict, information_flows: dict):
         
         if node_i_clean == node_j_clean:
             if len(node_i)>len(node_j):
-                print("1.1",node_j['name'],"->",node_i['name'])
+                # print("1.1",node_j['name'],"->",node_i['name'])
                 keep = node_i
                 delete = node_j
                 to_delete.add(j)
@@ -557,7 +575,7 @@ def merge_duplicate_nodes(nodes: dict, information_flows: dict):
                 keep = node_j
                 delete = node_i
                 to_delete.add(i)
-                print("1.2",node_i['name'],"->",node_j['name'])
+                # print("1.2",node_i['name'],"->",node_j['name'])
 
 
         # FIXME:
@@ -579,13 +597,13 @@ def merge_duplicate_nodes(nodes: dict, information_flows: dict):
                     keep=node_i
                     delete=node_j
                     to_delete.add(j)
-                    print("2.1",node_j['name'],"->",node_i['name'])
+                    # print("2.1",node_j['name'],"->",node_i['name'])
             if node_j["name"] == image_i \
                 and node_i_clean in node_j_clean:
                     keep=node_j
                     delete=node_i
                     to_delete.add(i)
-                    print("2.2",node_i['name'],"->",node_j['name'])
+                    # print("2.2",node_i['name'],"->",node_j['name'])
         
         if keep and delete:
             for field, j_value in delete.items():
@@ -601,6 +619,7 @@ def merge_duplicate_nodes(nodes: dict, information_flows: dict):
         
     for k in to_delete:
         del nodes[k]
+    print(f"   ->  FROM:{total}  TO:{len(nodes)}")
 
 def rename_information_flow_services(keep: str, delete: str, information_flows: dict):
     for flow in information_flows.values():

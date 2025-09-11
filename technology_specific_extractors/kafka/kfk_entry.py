@@ -134,7 +134,7 @@ def get_incoming_endpoints(dfd) -> set:
     """Finds all Kafka consumers via @KafkaListener or @StreamListener."""
     incoming_endpoints = set()
     placeholders = load_kafka_placeholders()
-    files = fi.search_keywords(["@KafkaListener", "@StreamListener"], file_extension=["*.java", "*.kt"])
+    files = fi.search_keywords(["@KafkaListener", "@StreamListener"], file_extension=["*.java", "*.kt", "*.scala"])
 
     for fpath, file in files.items():
         microservice = tech_sw.detect_microservice(file["path"], dfd)
@@ -174,7 +174,7 @@ def get_outgoing_endpoints(dfd) -> set:
 
     # 1. KafkaTemplate.send(
     for template in kafkatemplates:
-        files = fi.search_keywords(f"{template}.send", file_extension=["*.java", "*.kt"])
+        files = fi.search_keywords(f"{template}.send", file_extension=["*.java", "*.kt", "*.scala"])
         for fpath, file in files.items():
             # print(fpath)
             microservice = tech_sw.detect_microservice(file["path"], dfd)
@@ -216,7 +216,7 @@ def get_outgoing_endpoints(dfd) -> set:
                 outgoing_endpoints.add((topic, microservice, asset, trace))
 
     # 2. Détection des annotations @SendTo
-    files = fi.search_keywords("@SendTo", file_extension=["*.java", "*.kt"])
+    files = fi.search_keywords("@SendTo", file_extension=["*.java", "*.kt", "*.scala"])
     for fpath, file in files.items():
         microservice = tech_sw.detect_microservice(file["path"], dfd)
         # Mapping des variables injectées via @Value
@@ -245,7 +245,7 @@ def get_outgoing_endpoints(dfd) -> set:
 
 def get_incoming_endpoints_v1(dfd) -> set:
     """Finds all Kafka consumers via @KafkaListener or @StreamListener."""
-    files = fi.search_keywords(["@KafkaListener", "@StreamListener"], file_extension=["*.java", "*.kt"])
+    files = fi.search_keywords(["@KafkaListener", "@StreamListener"], file_extension=["*.java", "*.kt", "*.scala"])
     placeholder_map = load_kafka_placeholders()
     incoming_endpoints = set()
     for _, f in files.items():
@@ -261,7 +261,7 @@ def get_outgoing_endpoints_v1(dfd) -> set:
 
     # ---- 1. KafkaTemplate.send(...) ----
     for template in kafkatemplates:
-        files = fi.search_keywords(f"{template}.send", file_extension=["*.java", "*.kt"])
+        files = fi.search_keywords(f"{template}.send", file_extension=["*.java", "*.kt", "*.scala"])
         for fpath, file in files.items():
             microservice = tech_sw.detect_microservice(file["path"], dfd)
 
@@ -294,7 +294,7 @@ def get_outgoing_endpoints_v1(dfd) -> set:
                 trace = (fpath, line_idx, span)
                 outgoing_endpoints.add((topic, microservice, "producer", asset, trace))
     # ---- 2. Détection des annotations @SendTo ----
-    files = fi.search_keywords("@SendTo", file_extension=["*.java", "*.kt"])
+    files = fi.search_keywords("@SendTo", file_extension=["*.java", "*.kt", "*.scala"])
     for fpath, f in files.items():
         outgoing_endpoints.update(
             extract_kafka_endpoints(f, dfd, placeholders, endpoint_type="producer")
@@ -598,7 +598,7 @@ def add_kafka_information_flow(isProducer: bool, topic, m: dict, information_flo
         keyword = "@StreamListener"
         texte = "consumer"
     
-    results = fi.search_keywords(keyword, file_extension=["*.java", "*.kt"])
+    results = fi.search_keywords(keyword, file_extension=["*.java", "*.kt", "*.scala"])
     for r in results.keys():
         if tech_sw.detect_microservice(results[r]["path"], dfd) == m["name"]:
             key = max(information_flows.keys(), default=-1) + 1
@@ -673,7 +673,7 @@ def get_incoming_endpoints_v0(dfd) -> set:
     """
 
     listening_topics = set()
-    files = fi.search_keywords("@KafkaListener", file_extension=["*.java", "*.kt"])
+    files = fi.search_keywords("@KafkaListener", file_extension=["*.java", "*.kt", "*.scala"])
 
     for f in files.keys():
         file = files[f]
@@ -711,7 +711,7 @@ def get_outgoing_endpoints_v0(dfd) -> set:
     asset = str()
     for template in kafkatemplates:
         for command in commands:
-            files = fi.search_keywords(f"{template}.{command}", file_extension=["*.java", "*.kt"])
+            files = fi.search_keywords(f"{template}.{command}", file_extension=["*.java", "*.kt", "*.scala"])
             for file in files.keys():
                 f = files[file]
                 microservice = tech_sw.detect_microservice(f["path"], dfd)

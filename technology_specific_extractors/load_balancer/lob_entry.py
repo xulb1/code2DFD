@@ -7,7 +7,7 @@ def detect_load_balancers(microservices: dict, information_flows: dict, dfd) -> 
     """Find load balancers.
     """
 
-    results = fi.search_keywords("@LoadBalanced", file_extension=["*.java", "*.kt"])     # content, name, path
+    results = fi.search_keywords("@LoadBalanced", file_extension=["*.java", "*.kt", "*.scala"])     # content, name, path
     for r in results.keys():
         microservice = tech_sw.detect_microservice(results[r]["path"], dfd)
 

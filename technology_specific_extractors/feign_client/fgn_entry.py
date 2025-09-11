@@ -18,7 +18,7 @@ def set_information_flows(dfd) -> dict:
         information_flows = dict()
 
     # check for circuit breaker
-    results = fi.search_keywords("@EnableFeignClients", file_extension=["*.java", "*.kt"])     # content, name, path
+    results = fi.search_keywords("@EnableFeignClients", file_extension=["*.java", "*.kt", "*.scala"])     # content, name, path
     for id in results.keys():
         microservice = tech_sw.detect_microservice(results[id]["path"], dfd)
         for line in results[id]["content"]:
@@ -28,7 +28,7 @@ def set_information_flows(dfd) -> dict:
                         m.setdefault("properties",set()).update("hystrix_enabled")
                         # print("fgn_entry : ","hystrix","<<<<<<<<< circuit breaker",microservice)
 
-    results = fi.search_keywords("@FeignClient", file_extension=["*.java", "*.kt"])     # content, name, path
+    results = fi.search_keywords("@FeignClient", file_extension=["*.java", "*.kt", "*.scala"])     # content, name, path
     for id in results.keys():
         microservice = tech_sw.detect_microservice(results[id]["path"], dfd)
 

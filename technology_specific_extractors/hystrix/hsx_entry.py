@@ -7,7 +7,7 @@ def detect_hystrix_dashboard(microservices: dict, information_flows: dict, dfd) 
     """Detects hystrix monitoring dashboards .
     """
 
-    results = fi.search_keywords("@EnableHystrixDashboard", file_extension=["*.java", "*.kt"])     # content, name, path
+    results = fi.search_keywords("@EnableHystrixDashboard", file_extension=["*.java", "*.kt", "*.scala"])     # content, name, path
     for r in results.keys():
         microservice = tech_sw.detect_microservice(results[r]["path"], dfd)
         for line in results[r]["content"]:
@@ -38,7 +38,7 @@ def detect_hystrix_circuit_breakers(microservices: dict, information_flows: dict
     """Detects HystrixCommand.
     """
 
-    results = fi.search_keywords("@EnableHystrix", file_extension=["*.java", "*.kt"])     # content, name, path
+    results = fi.search_keywords("@EnableHystrix", file_extension=["*.java", "*.kt", "*.scala"])     # content, name, path
     for r in results.keys():
         microservice = tech_sw.detect_microservice(results[r]["path"], dfd)
         for line in results[r]["content"]:

@@ -118,9 +118,9 @@ TODO: faire gestion des properties
 R1 : vérif de la présence de logique d'auth sur la gateway
 R2 : auth entre services
 R3 : une seul logique d'auth
-TODO: R4 : adaptation des tokens externes 
-TODO: R5 : vérif des token intern avant l'envoi de requetes
-TODO: R6 : limite sur le nbr de tentative de co
+R4 : adaptation des tokens externes 
+R5 : vérif des token intern avant l'envoi de requetes
+R6 : limite sur le nbr de tentative de co
 R7 : traffics ext chiffré
 R8 : traffic interne chiffré
 R9 : message de log -> log central+ dashboard de visu
@@ -131,7 +131,7 @@ R13 : circuit breaker
 R14 : load balancer
 TODO: R15 : limite d'usage de ressources
 R16 : service registry
-TODO: R17 : enregistrement au registry -> authn authz
+R17 : enregistrement au registry -> authn authz
 TODO: R18 : 
 TODO: R19 - 
 TODO: R20 - 
@@ -148,7 +148,7 @@ file extraction = ["Dockerfile","*.yaml","*.yml", "*.tf","*.sh","*.json","*.java
 
 
 TODO: this afternoon : 
-- finir les règles de sécu
+- faire en sorte d'analyser aussi les env de déploiement
 - reformer la construction du json
 - le dataset: ajouter des éléments
 

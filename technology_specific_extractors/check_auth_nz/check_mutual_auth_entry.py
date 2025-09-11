@@ -49,13 +49,13 @@ def check_inter_service_auth_and_authz(microservices: dict, information_flows: d
 
         # Détection des mécanismes de sécurité côté serveur
         server_security_found = any(fi.search_keywords(pattern, directory_path, file_extension=["*.properties", "*.yml", "*.yaml","*.xml","*.sh","*.json","*.conf"]) for pattern in AUTH_PATTERNS["server"]["config_files"]) or \
-                                any(fi.search_keywords(pattern, directory_path, file_extension=["*.java", "*.kt"]) for pattern in AUTH_PATTERNS["server"]["java_code"])
+                                any(fi.search_keywords(pattern, directory_path, file_extension=["*.java", "*.kt", "*.scala"]) for pattern in AUTH_PATTERNS["server"]["java_code"])
         if not server_security_found:
             service.setdefault("stereotype_instances", []).append("security_vulnerability")
             service.setdefault("tagged_values", []).append(("Security Risk", "No OAuth or Token Security"))
 
         # Détection de l'injection de token côté client
-        client_auth_found = [fi.search_keywords(pattern, directory_path, file_extension=["*.java", "*.kt"]) for pattern in AUTH_PATTERNS["client"]["java_code"]]
+        client_auth_found = [fi.search_keywords(pattern, directory_path, file_extension=["*.java", "*.kt", "*.scala"]) for pattern in AUTH_PATTERNS["client"]["java_code"]]
         if client_auth_found != [{}, {}, {}]:
             done = False
             for results in client_auth_found:

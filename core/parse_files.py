@@ -424,7 +424,7 @@ def parse_yaml_file(file_path: str) -> str:
                                         complete_config_path = ("/").join(file_path.split("/")[:-1]) + "/" + config_path.split(":")[1].strip("/")
                                         if complete_config_path != None:
                                             line_nr = document["spring"]["cloud"]["config"]["server"]["native"]["search-locations"].lc.line
-                                            properties.add(("config_file_path_local", complete_config_path, ("file", "line", "span")))
+                                            properties.add(("config_file_path_local", complete_config_path.replace(local_path,""), ("file", "line", "span")))
 
 
                                 if "searchLocations" in document.get("spring").get("cloud").get("config").get("server").get("native"):
@@ -436,7 +436,7 @@ def parse_yaml_file(file_path: str) -> str:
                                             span = re.search(re.escape(config_path), lines[line_nr]).span()
                                             span = (span[0] + 1, span[1] + 1)
                                             trace = (file_path, line_nr + 1, span)
-                                            properties.add(("config_file_path_local", complete_config_path, trace))
+                                            properties.add(("config_file_path_local", complete_config_path.replace(local_path,""), trace))
 
                             if "git" in document.get("spring").get("cloud").get("config").get("server"):
                                 if "search-uri" in document.get("spring").get("cloud").get("config").get("server").get("git"):

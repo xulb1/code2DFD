@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 # ----------------- constantes -----------------
-LOGGING_JAVA_EXT = ["*.java", "*.kt"]
+LOGGING_JAVA_EXT = ["*.java", "*.kt", "*.scala"]
 LOG_CONFIG_EXTS = ["Dockerfile", "*.gradle", "*.xml", "*.yml", "*.yaml", "*.properties", "*.tf", "*.sh", "*.json", "*.conf"]
 
 
@@ -508,7 +508,7 @@ def detect_broker_and_security(microservices: dict, dfd) -> dict:
     Identifies message broker usage and associated security mechanisms in microservices.
     """
     for b in BROKER_KEYWORDS:
-        results = fi.search_keywords(b, file_extension=["*.yml", "*.yaml", "*.properties", "*.xml", "*.java", "*.kt"])
+        results = fi.search_keywords(b, file_extension=["*.yml", "*.yaml", "*.properties", "*.xml", "*.java", "*.kt", "*.scala"])
         for r in results.keys():
             entry = results[r]
             path = entry.get("path")
@@ -542,7 +542,7 @@ def detect_broker_and_security(microservices: dict, dfd) -> dict:
             path = m["path"]
             for h in HEALTH_INDICATORS:
                 results = fi.search_keywords(h, directory_path=path)
-                                            #  file_extension=["*.yml", "*.yaml", "*.java", "*.kt", "*.properties"])
+                                            #  file_extension=["*.yml", "*.yaml", "*.java", "*.kt", "*.scala", "*.properties"])
                 for r in results.keys():
                     entry = results[r]
                     m.setdefault("stereotype_instances", []).append("monitored_message_broker")

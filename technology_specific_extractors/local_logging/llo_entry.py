@@ -17,7 +17,7 @@ def detect_loggerfactory(microservices: dict, dfd) -> dict:
     """Detects logging directly via loggerfactory.
     """
 
-    results = fi.search_keywords("LoggerFactory", file_extension=["*.java", "*.kt"])
+    results = fi.search_keywords("LoggerFactory", file_extension=["*.java", "*.kt", "*.scala"])
     for r in results.keys():
         found = False
         if "test" in results[r]["path"].casefold():
@@ -58,7 +58,7 @@ def detect_lombok(microservices: dict, dfd) -> dict:
 
     annotations = ["Slf4j", "Log", "Log4j2", "CommonsLog"]
     for annotation in annotations:
-        results = fi.search_keywords(annotation, file_extension=["*.java", "*.kt"])
+        results = fi.search_keywords(annotation, file_extension=["*.java", "*.kt", "*.scala"])
         for r in results.keys():
             if "test" in results[r]["path"].casefold():
                 continue
