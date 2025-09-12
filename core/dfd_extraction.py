@@ -69,6 +69,8 @@ from technology_specific_extractors.check_auth_nz.check_central_auth_logic_entry
 # R4-R5
 from technology_specific_extractors.check_token_validation.check_identity_entry import detect_internal_identity, detect_token_validation
 
+from core.deployment_information_extractor import analyze_project
+
 def perform_analysis():
     """
     Entrypoint for the DFD extraction that initializes the repository
@@ -163,6 +165,10 @@ def DFD_extraction():
     print("Cleaning database connections")
     clean_database_connections(microservices, information_flows)
 
+    # Getting information about deployement structures
+    deployment_dict = analyze_project(tmp.tmp_config["Repository"]["local_path"], microservices, dfd)
+    print(deployment_dict)
+    
     # Printing
     print("\nFinished extraction")
     print(f"""
@@ -171,11 +177,14 @@ def DFD_extraction():
        - {len(microservices)} microservices
        - {len(information_flows)} flows
 ==================================""")
+
     
     # Saving
     tmp.tmp_config.set("DFD", "microservices", str(microservices).replace("%", "%%"))
     tmp.tmp_config.set("DFD", "information_flows", str(information_flows).replace("%", "%%"))
     tmp.tmp_config.set("DFD", "external_components", str(external_components).replace("%", "%%"))
+    tmp.tmp_config.set("DFD", "deployement_structure", str(deployment_dict).replace("%", "%%"))
+
 
     microservices = clean_props(microservices)
     plaintext.write_plaintext(microservices, information_flows, external_components)

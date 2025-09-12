@@ -1,6 +1,6 @@
-import fnmatch
 import os
 import re
+import glob
 import subprocess
 from pathlib import Path, PurePosixPath
 
@@ -499,6 +499,8 @@ def get_file_as_lines(filename: str) -> dict:
     return files
 
 
+
+
 def search_files(patterns, path=None, getContent=True):
     """Recherche tous les fichiers correspondant aux motifs fournis dans le répertoire racine.    """
     repo_folder = tmp.tmp_config["Repository"]["local_path"]
@@ -511,21 +513,19 @@ def search_files(patterns, path=None, getContent=True):
         patterns = [patterns]
 
     found_files = {}
-
-    for dirpath, _, filenames in os.walk(path):
-        for pattern in patterns:
-            for filename in fnmatch.filter(filenames, pattern):
-                full_path = os.path.join(dirpath, filename)
+    
+    for pattern in patterns:
+        for file_path in glob.glob(os.path.join(path, '**', pattern), recursive=True):
+            # evite les dossiers
+            if os.path.isfile(file_path):
+                content = ""
                 if getContent:
                     try:
-                        with open(full_path, "r", encoding="utf-8") as f:
+                        with open(file_path, "r", encoding="utf-8") as f:
                             content = f.read().splitlines()
                     except Exception as e:
-                        print(f"Erreur en lisant {full_path}: {e}")
-                        content = ""
-                else:
-                    content = ""
+                        print(f"Erreur en lisant {file_path}: {e}")
                 
-                found_files[full_path] = content
+                found_files[file_path] = content
 
     return found_files
