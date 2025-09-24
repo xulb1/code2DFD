@@ -76,17 +76,7 @@ def check_inter_service_encryption(microservices: dict, information_flows: dict)
         
         
         # Détection SSL côté serveur
-        #TODO: detection pb
-        for mot in ENCRYPTION_KEYWORDS["server"]["java_code"]:
-            results = fi.search_keywords(mot, directory_path)
-            if results:
-                for i in results.values():
-                    print(i["path"])
-        for mot in ENCRYPTION_KEYWORDS["server"]["config"]:
-            results = fi.search_keywords(mot, directory_path)
-            if results:
-                for i in results["content"]:
-                    print(i)
+        #TODO: detection pb ?
         is_server_ssl_enabled = any(fi.search_keywords(keyword, directory_path, file_extension=["*.java", "*.kt", "*.scala"]) for keyword in ENCRYPTION_KEYWORDS["server"]["java_code"]) or \
                                 any(fi.search_keywords(keyword, directory_path, file_extension=["*.conf","*.sh","*.xml","*.gradle","*.json","*.yml","*.yaml","*.properties"]) for keyword in ENCRYPTION_KEYWORDS["server"]["config"])
         if is_server_ssl_enabled:
@@ -122,7 +112,7 @@ def check_inter_service_encryption(microservices: dict, information_flows: dict)
         # client + serveur => une configuration SSL
         if sender_uses_tls and receiver_accepts_tls:
             # Pour garantir la certitude, on peut chercher la chaîne "https://" dans la configuration du sender.
-            print(sender_service.get("directory_path"),"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            # print(sender_service.get("directory_path"),"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             secure_url_found = fi.search_keywords(f"https://{receiver_name}", sender_service.get("directory_path"))
             if secure_url_found:
                 is_secured = True

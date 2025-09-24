@@ -15,7 +15,7 @@ kafka_server = str()
 def set_information_flows(dfd) -> set:
     """Connects incoming endpoints, outgoing endpoints, and routings to information flows
     """
-    print("################ Resolve Kafka Relations (Topic) #################")
+    # print("################ Resolve Kafka Relations (Topic) #################")
     information_flows = dict()
     if tmp.tmp_config.has_option("DFD", "information_flows"):
         information_flows = ast.literal_eval(tmp.tmp_config["DFD"]["information_flows"])
@@ -24,10 +24,9 @@ def set_information_flows(dfd) -> set:
 
     incoming_endpoints = get_incoming_endpoints(dfd)
     outgoing_endpoints = get_outgoing_endpoints(dfd)
-    if incoming_endpoints or outgoing_endpoints:
-        print("((((((((((((((((((((((((((()))))))))))))))))))))))))))")
-        print("in:",incoming_endpoints)
-        print("out:",outgoing_endpoints)
+    # if incoming_endpoints or outgoing_endpoints:
+    #     print("in:",incoming_endpoints)
+    #     print("out:",outgoing_endpoints)
     new_information_flows = match_incoming_to_outgoing_endpoints(microservices, incoming_endpoints, outgoing_endpoints)
 
     # merge old and new flows

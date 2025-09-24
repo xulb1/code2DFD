@@ -343,7 +343,7 @@ def resolve_url(url: str, microservice: str, dfd) -> str:
                             if prop[0] == "Port":
                                 if port == prop[1]:
                                     target_service = microservices[m]["name"]
-                print("\033[34mResolve_url",port,"////////////////////\033[0m")
+                # print("\033[34mResolve_url",port,"\033[0m")
         else:
             for m in microservices.keys():
                 url_parts = url.split("/")
@@ -524,7 +524,7 @@ def search_files(patterns, path=None, getContent=True):
                         with open(file_path, "r", encoding="utf-8") as f:
                             content = f.read().splitlines()
                     except Exception as e:
-                        print(f"Erreur en lisant {file_path}: {e}")
+                        print(f"\033[91mErreur en lisant {file_path}: {e}\033[0m")
                 
                 found_files[file_path] = content
 

@@ -69,7 +69,7 @@ def check_registry_security(microservices: dict) -> dict:
         
         if not directory_path.strip():
             continue
-        print(directory_path," ((((((((((((((((((((()))))))))))))))))))))")
+        # print(directory_path," ((((((((((((((((((((()))))))))))))))))))))")
         
         # 4. Search for the keywords in the service's directory
         for keyword in keywords_to_search:

@@ -42,7 +42,7 @@ def set_microservices(dfd) -> dict:
         else:
             microservice, properties = parse_configurations(pom_file)
             
-            print("Dépendences maven de :",microservice[0])
+            # print("Dépendences maven de :",microservice[0])
             properties = extract_dependencies(properties, pom_file)
             if microservice[0]:
                 port = dcr.detect_port(pom_file["path"])
@@ -96,7 +96,7 @@ def extract_dependencies(properties: set, pom_file) -> set:
             
             if artifactId is not None:
                 aid = artifactId.text.strip()
-                print("-",aid)
+                # print("-",aid)
                 
                 # Hystrix
                 if aid == "spring-cloud-starter-netflix-hystrix":
@@ -126,7 +126,7 @@ def extract_modules(pom_file: dict) -> set:
     """
 
     file_name = pom_file["path"]
-    print(file_name)
+    # print(file_name)
     pom_path = os.path.join(tmp.tmp_config.get("Repository", "local_path"), file_name)
     try:
         tree = etree.parse(pom_path)

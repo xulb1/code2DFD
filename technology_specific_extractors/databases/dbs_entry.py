@@ -23,7 +23,7 @@ def detect_databases(microservices: dict) -> dict:
             elif "redis" in m["image"].lower():
                 database = "Redis"
             elif "database" in m["image"].lower():
-                print(f"\033[91mm{m["image"]}\033[0m")
+                print(f"\033[91mmUnknown database : {m["image"]}\033[0m")
                 database = "Unknown DB"
             
 
@@ -75,7 +75,7 @@ def detect_via_docker(microservices: dict, m: int) -> dict:
             elif "redis" in line.lower():
                 database = "Redis"
             elif "database" in line.lower():
-                print(f"\033[91m{line}\033[0m")
+                print(f"\033[91mUnknown database : {line}\033[0m")
                 database = "Unknown DB"
 
     if not database:

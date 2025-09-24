@@ -105,7 +105,7 @@ def detect_loggerfactory_and_mark(microservices: Dict[str, dict], dfd) -> Dict[s
         content = entry.get("content", [])
         ms_name = tech_sw.detect_microservice(path, dfd)
         if not ms_name:
-            print("Service non-trouvé:",path)
+            # print("Service non-trouvé:",path)
             continue
         # trouve la variable logger déclarée
         logger_var = None
@@ -159,7 +159,7 @@ def detect_lombok_and_mark(microservices: Dict[str, dict], dfd) -> Dict[str, dic
             content = entry.get("content", [])
             ms_name = tech_sw.detect_microservice(path, dfd)
             if not ms_name:
-                print("Service non-trouvé:",path)
+                # print("Service non-trouvé:",path)
                 continue
             annotation_found = any(f"@{ann}" in line for line in content)
             use_found = any(re.search(r"\blog\.(info|error|warn|debug|trace)\b", line, flags=re.IGNORECASE) for line in content)
@@ -196,7 +196,7 @@ def detect_file_appenders_and_mark(microservices: Dict[str, dict], dfd) -> Dict[
                 continue
             ms_name = tech_sw.detect_microservice(path, dfd)
             if not ms_name:
-                print("Service non-trouvé:",path)
+                # print("Service non-trouvé:",path)
                 continue
             
             ms = [m for m in microservices.values() if m['name'] == ms_name]
@@ -282,7 +282,7 @@ def detect_sensitive_logging_ast(microservices: Dict[str, dict], dfd) -> Dict[st
             continue
         ms_name = tech_sw.detect_microservice(path, dfd)
         if not ms_name:
-            print("Service non-trouvé:",path)
+            # print("Service non-trouvé:",path)
             continue
         content_lines = entry.get("content", [])
         joined = "\n".join(content_lines)
@@ -380,7 +380,7 @@ def detect_central_logging_components(microservices: dict, dfd) -> dict:
             
             ms_name = tech_sw.detect_microservice(path, dfd)
             if not ms_name:
-                print("Service non-trouvé:",path)
+                # print("Service non-trouvé:",path)
                 continue
             
             ms = [m for m in microservices.values() if m['name'] == ms_name]
@@ -410,7 +410,7 @@ def detect_local_agents(microservices: dict, dfd) -> dict:
             
             ms_name = tech_sw.detect_microservice(path, dfd)
             if not ms_name:
-                print("Service non-trouvé:",path)
+                # print("Service non-trouvé:",path)
                 continue
             
             ms = [m for m in microservices.values() if m['name'] == ms_name]
@@ -434,7 +434,7 @@ def detect_local_agents(microservices: dict, dfd) -> dict:
             
             ms_name = tech_sw.detect_microservice(path, dfd)
             if not ms_name:
-                print("Service non-trouvé:",path)
+                # print("Service non-trouvé:",path)
                 continue
             
             ms = [m for m in microservices.values() if m['name'] == ms_name]
@@ -462,7 +462,7 @@ def detect_sanitization_mechanisms(microservices: dict, dfd) -> dict:
         path = entry.get("path")
         ms_name = tech_sw.detect_microservice(path, dfd)
         if not ms_name:
-            print("Service non-trouvé:",path)
+            # print("Service non-trouvé:",path)
             continue
         
         ms = [m for m in microservices.values() if m['name'] == ms_name]
@@ -485,7 +485,7 @@ def detect_sanitization_mechanisms(microservices: dict, dfd) -> dict:
             if re.search(r"replaceAll\(.{0,120}(password|secret|token|apikey|apiKey).{0,120}\)", line, flags=re.IGNORECASE):
                 ms_name = tech_sw.detect_microservice(path, dfd)
                 if not ms_name:
-                    print("Service non-trouvé:",path)
+                    # print("Service non-trouvé:",path)
                     continue
                 
                 ms = [m for m in microservices.values() if m['name'] == ms_name]
@@ -514,7 +514,7 @@ def detect_broker_and_security(microservices: dict, dfd) -> dict:
             path = entry.get("path")
             ms_name = tech_sw.detect_microservice(path, dfd)
             if not ms_name:
-                print("Service non-trouvé:",path)
+                # print("Service non-trouvé:",path)
                 continue
             ms = [m for m in microservices.values() if m['name'] == ms_name]
             if not ms:
@@ -557,7 +557,7 @@ def analyze_logging_architecture(microservices: Dict[str, dict], information_flo
     Orchestration haute-niveau :
      - détections infra R9, R10 (partiel), R11, R12,
     """
-    print("-------------------- CHECK LOGGING --------------------")
+    # print("-------------------- CHECK LOGGING --------------------")
     # Detect and mark local logging at code level
     microservices = detect_loggerfactory_and_mark(microservices, dfd)
     microservices = detect_lombok_and_mark(microservices, dfd)

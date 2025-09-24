@@ -89,7 +89,7 @@ def extract_microservices(file_content, file_name) -> set:
         print(f"\033[91mERROR extracting microservice from docker-compose file : {file_name}\033[0m")
         file = None
         
-    print("===========================================")
+    # print("===========================================")
 
     image = False
     build = False
@@ -105,20 +105,20 @@ def extract_microservices(file_content, file_name) -> set:
         return microservices_set, microservices_dict
     
     if "services" in file.keys():
-        print("SERVICES ----------------------------------")
+        # print("SERVICES ----------------------------------")
         data  = file.get("services", {})
         
         for s in data:
-            print(s)
+            # print(s)
             microservices_set, microservices_dict = extract_service_from_file(s, file_content,file_name,data, microservices_dict, microservices_set, properties_dict, image, build)
-            print("___________________________________")
+            # print("___________________________________")
             
     else:
-        print("NO SERVICES -------------------------------")
+        # print("NO SERVICES -------------------------------")
         data = file
         
         for s in file.keys():
-            print(s)
+            # print(s)
             microservices_set, microservices_dict = extract_service_from_file(s, file_content, file_name, data, microservices_dict, microservices_set, properties_dict, image, build)
 
 
@@ -214,7 +214,7 @@ def extract_service_from_file(s, file_content, file_name, data, microservices_di
 
     # Port via "Expose" (overrules "ports")
     ports = data.get(s).get("expose")
-    print("\033[34m",s,ports,"\033[0m")
+    # print("\033[34m",s,ports,"\033[0m")
     if ports:
         port_nr = []
         for i in range(len(ports)):
@@ -229,7 +229,7 @@ def extract_service_from_file(s, file_content, file_name, data, microservices_di
             length_tuple = length_tuple.span()
             span = f"[{length_tuple[0]}:{length_tuple[1]}]"
             port = (tuple(port_nr), file_name, line_number + 1, span)
-        print("\033[32m",s, port,"\033[0m")
+        # print("\033[32m",s, port,"\033[0m")
 
 
     if not image:
@@ -244,14 +244,14 @@ def extract_service_from_file(s, file_content, file_name, data, microservices_di
             if ki in image and ":" in image:
                 properties_dict[s] = properties
                 microservices_set.add((s, image, "type", port, trace))
-                print("\033[93m",s, image, port," ---> Is known docker image\033[0m")
+                # print("\033[93m",s, image, port," ---> Is known docker image\033[0m")
                 isImage=True
                 break
         
         if not isImage:
             properties_dict[s] = properties
             microservices_set.add((s, image, "type", port, trace))
-            print("\033[93m",s, image, port,"\033[0m")
+            # print("\033[93m",s, image, port,"\033[0m")
 
     # add additional information
     if exists and correct_id:
@@ -273,7 +273,7 @@ def extract_environment_props(data, s, lines: list, port: list, properties: set,
         return port, properties
 
     if isinstance(environment_entries, ruamel.yaml.CommentedSeq):
-        print("\033[95m=================================================================================================================================================================================\033[0m")
+        # print("\033[95m==========================================================================================================================\033[0m")
         new_environment_entries = dict()
         for e in environment_entries:
             key, value = e.split("=",1)
@@ -283,8 +283,8 @@ def extract_environment_props(data, s, lines: list, port: list, properties: set,
                 pass
         environment_entries = new_environment_entries 
         
-    for i,j in environment_entries.items():
-        print(i,j)
+    # for i,j in environment_entries.items():
+        # print(i,j)
     for key, value in environment_entries.items():
         if isinstance(value, str):
             value = value.strip().strip('"')
@@ -388,9 +388,9 @@ def extract_information_flows(file_content:  str, microservices: dict, informati
             try:
                 depends_on = file.get("services", {}).get(s).get("depends_on")
                 information_flows = get_flows(s,depends_on, microservices, information_flows, registry_server, config_server)
-                for i, j in information_flows.items():
-                    if j["receiver"]=="zookeeper":
-                        print(s)
+                # for i, j in information_flows.items():
+                #     if j["receiver"]=="zookeeper":
+                #         print(s)
             except Exception as e:
                 print(f"\033[91m{e}\033[0m")
     else:

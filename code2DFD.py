@@ -73,6 +73,7 @@ def cli_invocation():
     settings = parser.add_argument_group("Analysis Settings", "Parameters for additional analysis settings")
     settings.add_argument("--commit", type=str, help="Analyze repository at this commit")
     settings.add_argument("--development_mode", action='store_true', help="Switch on development mode")
+    # settings.add_argument("-v", help="Mode verbose, display more information while extracting")
 
     args = parser.parse_args()
 
@@ -111,6 +112,9 @@ def cli_invocation():
     elif tmp.tmp_config.has_option("Analysis Settings", "commit"):
         commit = tmp.tmp_config.get("Analysis Settings", "commit")[:7]
         tmp.tmp_config.set("Analysis Settings", "commit", commit)
+
+    # if args.v:
+    #     tmp.tmp_config.set("Analysis Settings", "verbose", "True")
 
     perform_analysis()
 

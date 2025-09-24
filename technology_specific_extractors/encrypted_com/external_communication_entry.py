@@ -46,7 +46,7 @@ def check_external_encryption(microservices: dict) -> dict:
         if path:
             directory_path = (m.get(f"{path}")).rsplit("/",1)[0]
         
-        print(directory_path,"&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
+        # directory_path,"&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
         
 
         # Recherche des mots-clés dans les fichiers de configuration

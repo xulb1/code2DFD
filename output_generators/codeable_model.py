@@ -132,6 +132,6 @@ def run():\n\
     generator.directory = output_directory\n\
     generator.object_model_renderer.left_to_right = True\n\
     generator.generate_object_models(model_name, [model, {}])\n\
-    print(f\"Generated models in {generator.directory!s}/\" + model_name)\n\
+    print(f\"\nGenerated models in {generator.directory!s}/\" + model_name)\n\
 if __name__ == \"__main__\":\n\
     run()"

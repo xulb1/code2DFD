@@ -62,19 +62,10 @@ ALL_ANNOTATIONS_PATTERN = re.compile(
 def detect_circuit_breakers(microservices: dict, information_flows: dict, dfd) -> dict:
     """Détecte tous les mécanismes de résilience dans les microservices, gère les répétitions et ignore les commentaires."""
 
-    
-    # results = fi.search_keywords(list({f"@{ann}" for anns in CIRCUIT_BREAKER_ANNOTATIONS.values() for ann in anns}))
-    # for i in results.values():
-    #     print(i["name"])
-    #     print("")
-    # print("--------------jdskqmfldkjslkfdjqsmlfjqslkdfqj---------------------")
-    
     results = fi.search_keywords(list({f"@{ann}" for anns in CIRCUIT_BREAKER_ANNOTATIONS.values() for ann in anns}), file_extension=["*.java", "*.kt", "*.scala"])
     # print("----------------------------------")
     # for i in results.values():
     #     print(i["name"])
-    #     print("")
-    # print("--------------jdskqmfldkjslkfdjqsmlfjqslkdfqj---------------------")
     
 
     for r in results.keys():

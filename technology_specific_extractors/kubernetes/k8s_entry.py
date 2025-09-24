@@ -70,7 +70,7 @@ def set_microservices(dfd) -> dict:
                             # Extraction de l'image Docker et des ports
                             if 'image' in container:
                                 image = container['image']
-                                print(image)
+                                # print(image)
                             if 'ports' in container:
                                 tagged_values.extend(("Port",[p.get('containerPort') for p in container['ports']]))
                                 
@@ -352,9 +352,9 @@ def detect_k8s_flows(microservices: dict) -> dict:
 
 def add_flow(information_flows: dict, from_ms: str, to_ms: str, flow_type: str, properties: set):
     """Helper function to add a flow to the flows dictionary."""
-    print(f"""NEW FLOW :
-          From: {from_ms}
-          To  : {to_ms}""")
+    # print(f"""NEW FLOW :
+    #       From: {from_ms}
+    #       To  : {to_ms}""")
     
     flow_key = max(information_flows.keys(), default=-1) + 1
     if flow_key not in information_flows:

@@ -33,8 +33,8 @@ def detect_config_server(microservices: dict, dfd):
     config_server_ports = []
     config_file_path_local = False
 
-    if len(results) > 1:
-        print("\033[94mMore than one config server. Picking first one found.\033[0m")
+    # if len(results) > 1:
+    #     print("\033[94mMore than one config server. Picking first one found.\033[0m")
     for r in results.values():
         config_server = tech_sw.detect_microservice(r["path"], dfd)
 
