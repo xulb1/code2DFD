@@ -1,27 +1,13 @@
 ## Code2DFD
 
-Code2DFD can automatically extract dataflow diagrams (DFDs) that are enriched with security-relevant annotations from the source code of microservice applications.
+This tool is a fork from https://github.com/tuhh-softsec/code2DFD.
+
+Code2DFD can automatically extract dataflow diagrams (DFDs) that are enriched with security-relevant annotations from the source code of microservice applications (based on OWASP, NIST and CSA recommandations).
 It is structured as a framework, where the *technology-specific extractors* in `technology_specific_extractors/` are executed and detect evidence for DFD items in the code.
 They use some general functionality from `core/`.
 
 The tool and underlying approach are presented in a publication in the Journal of Systems and Software (JSS).
 You can find the paper on [arXiv](https://arxiv.org/abs/2304.12769) or the publisher's [website](https://www.sciencedirect.com/science/article/abs/pii/S0164121223001176).
-If you use the tool in a scientific context, please cite as:
-
-```bibtex
-@article{Code2DFD23,
-  title = {Automatic Extraction of Security-Rich Dataflow Diagrams for Microservice Applications written in Java},
-  journal = {Journal of Systems and Software},
-  volume = {202},
-  pages = {111722},
-  year = {2023},
-  issn = {0164-1212},
-  doi = {https://doi.org/10.1016/j.jss.2023.111722},
-  author = {Simon Schneider and Riccardo Scandariato},
-  keywords = {Dataflow diagram, Automatic extraction, Security, Microservices, Architecture reconstruction, Feature detection}
-}
-```
-
 
 ##### 1. Installation and configuration
 Before running the tool, [Python](https://www.python.org/downloads/) version 3.x and the packages specified in `requirements.txt` need to be installed.
@@ -44,7 +30,7 @@ The config file needs to specify the following sections and parameters:
 - Analysis Settings (optional)
   - `development_mode`: boolean, turns on development mode
   - `commit`: hash of the commit to checkout and analyze; repository will be returned to the same commit it was in before analysis; if commit not provided, attempts to checkout `HEAD`
-  
+
 It is possible to provide these parameters also by command line, see `python3 code2DFD.py --help` for exact usage
 
 If both config file and CLI arguments provided, CLI arguments take precedence
@@ -58,8 +44,9 @@ Currently only GitHub URLs are supported this way.
 
 
 ##### 3. Output
-The tools puts the `PROJECT` analysis output into `code2DFD_output/PROJECT`
+The tools puts the `PROJECT` analysis output into `code2DFD_output/dataset/PROJECT`
 The tool creates multiple outputs:
+- A JSON file containing the architecture structure with deploiment informations, following a specific structure (specified with the metamodel /metamodel/mm-v2.uml)
 - The extracted DFD is saved as a UML diagram in `code2DFD_output/PROJECT/PROJECT_uml.txt`
 and as a .png rendered with [PlantUML](https://plantuml.com) in `code2DFD_output/PROJECT/PROJECT_uml.png`
 An internet connection is needed for this, otherwise no PNG will be created.
