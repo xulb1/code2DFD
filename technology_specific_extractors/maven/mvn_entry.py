@@ -81,7 +81,7 @@ def set_microservices(dfd) -> dict:
             module_dict[pom_file["name"]] = modules
         else:
             microservice, properties = parse_configurations(pom_file)
-            print("Dépendences maven de :", microservice[0])
+            # print("Dépendences maven de :", microservice[0])
             properties = extract_dependencies(properties, pom_file)
             if microservice[0]:
                 port = dcr.detect_port(pom_file["path"])
@@ -121,7 +121,7 @@ def extract_dependencies(properties: set, pom_file) -> set:
             artifactId = dependency.find('mvn:artifactId', NAMESPACE)
             if artifactId is not None:
                 aid = artifactId.text.strip()
-                print("-", aid)
+                # print("-", aid)
 
                 if aid == "spring-cloud-starter-netflix-hystrix":
                     properties.add(("circuit_breaker", "Hystrix", ("file", "line", "span")))
@@ -236,20 +236,31 @@ def detect_microservice(file_path, dfd):
     microservices = tech_sw.get_microservices(dfd)
 
     found_pom = False
+    pom_path = None
     local_repo_path = tmp.tmp_config["Repository"]["local_path"]
-    dirs = []
     path = os.path.dirname(file_path)
 
-    while not found_pom and path != "":
-        dirs.append(os.scandir(os.path.join(local_repo_path, path)))
-        while dirs and not found_pom:
-            dir = dirs.pop()
-            for entry in dir:
-                if entry.is_file() and entry.name.casefold() == "pom.xml":
-                    pom_path = os.path.relpath(entry.path, start=local_repo_path)
-                    logger.info("Found pom.xml here: " + str(entry.path))
-                    found_pom = True
-        path = os.path.dirname(path)
+    while not found_pom:
+        try:
+            with os.scandir(os.path.join(local_repo_path, path)) as entries:
+                for entry in entries:
+                    if entry.is_file() and entry.name.casefold() == "pom.xml":
+                        pom_path = os.path.relpath(entry.path, start=local_repo_path)
+                        logger.info(f"Found pom.xml here: {entry.path}")
+                        found_pom = True
+                        break
+        except FileNotFoundError:
+            break
+
+        if found_pom:
+            break
+
+        # Remonter d'un niveau
+        parent_path = os.path.dirname(path)
+        if parent_path == local_repo_path or parent_path == path:  # racine ?
+            break
+        path = parent_path
+
 
     if found_pom:
         pom_file = {"path": pom_path}

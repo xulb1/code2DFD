@@ -322,7 +322,8 @@ def analyze_project(root_path, microservices_dict, dfd):
             environments[env]["deploymentElements"].append(cluster_obj)
         
         service_name_deduced = tech_sw.detect_microservice(fpath, dfd)
-        
+        if not service_name_deduced:
+            service_name_deduced = ""
         container = parse_dockerfile(fpath, service_name_deduced, service_mapping)
         server_elements = environments[env]["deploymentElements"][0]["servers"][0]
         server_elements["containers"].append(container)

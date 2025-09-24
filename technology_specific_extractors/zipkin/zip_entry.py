@@ -11,7 +11,7 @@ def detect_zipkin_server(microservices: dict, information_flows: dict, iterative
         circuit_breaker, load_balancer = False, False
         tagged_values, load_balancer, circuit_breaker = False, False, False
 
-        for prop2 in microservices[m]["properties"]:
+        for prop2 in microservices[m].get("properties",[]):
             if prop2[0] == "load_balancer":
                 load_balancer = prop2[1]
             elif prop2[0] == "circuit_breaker":
@@ -32,7 +32,7 @@ def detect_zipkin_server(microservices: dict, information_flows: dict, iterative
         #         tagged_values = {("Circuit Breaker", circuit_breaker)}
 
         zipkin_server = False
-        for prop in microservices[m]["properties"]:
+        for prop in microservices[m].get("properties",[]):
             if prop[0] == "zipkin_url":
                 connections_exist = prop[1]
                 zipkin_url = prop[1]
@@ -70,7 +70,7 @@ def detect_zipkin_server(microservices: dict, information_flows: dict, iterative
 
 
         # Si pas de server zipkin : 
-        if not zipkin_server and "openzipkin/zipkin" in microservices[m]["image"]:
+        if not zipkin_server and "openzipkin/zipkin" in microservices[m].get("image",""):
             zipkin_server = microservices[m]["name"]
             correct_id = m
         

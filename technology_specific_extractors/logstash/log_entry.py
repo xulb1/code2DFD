@@ -9,7 +9,7 @@ def detect_logstash(microservices: dict, information_flows: dict, external_compo
     logstash = False
     trace_info = False
     for m in microservices.values():
-        if "logstash:" in m["image"]:
+        if "logstash:" in m.get("image",[]):
             logstash = m["name"]
             m.setdefault("stereotype_instances",[]).append("logging_server")
             m.setdefault("tagged_values",[]).append(("Logging Server", "Logstash"))

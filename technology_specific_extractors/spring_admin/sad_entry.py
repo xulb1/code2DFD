@@ -32,12 +32,13 @@ def detect_spring_admin_server(microservices: dict, information_flows: dict, dfd
         host = False
         reverse = False
         config_reverse = False
-        for prop in m["properties"]:
+        for prop in m.get("properties",[]):
             if prop[0] == "admin_server_url":
-                trace_info = dict()
-                trace_info[0] = prop[2][0]
-                trace_info[1] = prop[2][1]
-                trace_info[2] = prop[2][2]
+                trace_info = {
+                    0: prop[2][0],
+                    1: prop[2][1],
+                    2: prop[2][2]
+                }
                 if "://" in prop[1]:
                     host = prop[1].split("://")[1].split(":")[0]
         if "stereotype_instances" in m and "service_registry" in m["stereotype_instances"]:

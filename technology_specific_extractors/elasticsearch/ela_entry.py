@@ -7,7 +7,7 @@ def detect_elasticsearch(microservices: dict, information_flows: dict, dfd) -> d
 
     elasticsearch = False
     for m in microservices.keys():
-        if "elasticsearch:" in microservices[m]["image"]:
+        if "elasticsearch:" in microservices[m].get("image",""):
             elasticsearch = microservices[m]["name"]
             if "stereotype_instances" in microservices[m]:
                 microservices[m]["stereotype_instances"].append("search_engine")

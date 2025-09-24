@@ -74,7 +74,7 @@ def detect_token_server(microservices: dict, information_flows: dict, dfd) -> di
     for m in microservices.values():
         token_server = False
         client_secret = False
-        for prop in m["properties"]:
+        for prop in m.get("properties",[]):
             if prop[0] == "oauth_client_secret":
                 client_secret = env.resolve_env_var(prop[1])
         if client_secret:
@@ -83,7 +83,7 @@ def detect_token_server(microservices: dict, information_flows: dict, dfd) -> di
         else:
             stereotypes = ["auth_provider", "restful_http"]
             tagged_values = []
-        for prop in m["properties"]:
+        for prop in m.get("properties",[]):
             if prop[0] == "oauth_tokenuri":
                 token_server_uri = prop[1]
                 token_server = fi.resolve_url(token_server_uri, False, dfd)

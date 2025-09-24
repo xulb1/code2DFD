@@ -5,7 +5,7 @@ def detect_kibana(microservices: dict, information_flows: dict, dfd) -> dict:
     """
 
     for m in microservices.keys():
-        if "kibana:" in microservices[m]["image"]:
+        if "kibana:" in microservices[m].get("image",[]):
             try:
                 microservices[m]["stereotype_instances"].append("monitoring_dashboard")
             except:
