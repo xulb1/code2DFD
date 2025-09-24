@@ -65,6 +65,11 @@ def parse_dockerfile(path, service_name, service_mapping):
                 image_name = image_parts[0]
                 if len(image_parts) > 1: tag = image_parts[1]
         elif line.startswith("EXPOSE"):
+            # FIXME: pas de résolution de variables ...
+            # import technology_specific_extractors.environment_variables as env
+            # env.extract_environment_variables()
+            if "$" in line:
+                continue
             exposed_ports += [int(p) for p in line.split()[1:]]
     
     component_id = None
@@ -143,7 +148,7 @@ def parse_compose(path, service_mapping):
 
 def parse_k8s_file(path, service_mapping):
     docs = fi2.get_file_as_yaml(path)
-    if not docs: return []
+    if not docs: return [], None
     
     pods = []
     networks = []
