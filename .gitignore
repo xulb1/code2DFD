@@ -4,6 +4,9 @@ code2DFD_output/*
 output/*
 CodeableModels/
 
+*test.py
+
+
 ################################################################################
 # Bellow is the github python gitignore code from https://github.com/uzdun/CodeableModels
 

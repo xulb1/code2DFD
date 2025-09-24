@@ -152,7 +152,7 @@ def DFD_extraction():
     # assert microservices1 != microservices, "Egalité"
 
     # Merging
-    print("Merging duplicate items")
+    print("[x] Merging duplicate items")
     merge_duplicate_nodes(microservices, information_flows)
     merge_duplicate_nodes(external_components, information_flows)
     merge_duplicate_flows(information_flows)
@@ -162,12 +162,11 @@ def DFD_extraction():
     # print("r")
     
     
-    print("Cleaning database connections")
+    print("[x] Cleaning database connections")
     clean_database_connections(microservices, information_flows)
 
     # Getting information about deployement structures
-    deployment_dict = analyze_project(tmp.tmp_config["Repository"]["local_path"], microservices, dfd)
-    print(deployment_dict)
+    deployment_list = analyze_project(tmp.tmp_config["Repository"]["local_path"], microservices, dfd)
     
     # Printing
     print("\nFinished extraction")
@@ -183,20 +182,26 @@ def DFD_extraction():
     tmp.tmp_config.set("DFD", "microservices", str(microservices).replace("%", "%%"))
     tmp.tmp_config.set("DFD", "information_flows", str(information_flows).replace("%", "%%"))
     tmp.tmp_config.set("DFD", "external_components", str(external_components).replace("%", "%%"))
-    tmp.tmp_config.set("DFD", "deployement_structure", str(deployment_dict).replace("%", "%%"))
+    tmp.tmp_config.set("DFD", "deployement_structure", str(deployment_list).replace("%", "%%"))
 
 
     microservices = clean_props(microservices)
-    plaintext.write_plaintext(microservices, information_flows, external_components)
+    print("[x] Write extracted info to a txt file")
+    plaintext.write_plaintext(microservices, information_flows, external_components, deployment_list)
+    print("[x] Write a PlantUML format file of the architecture")
     codeable_models, codeable_models_path = codeable_model.output_codeable_model(microservices, information_flows, external_components)
+    print("[x] Create file with traceability informations of the running time")
     traceability_content = traceability.output_traceability()
+    print("[x] Trying to generate a PNG from UML, via www.plantuml.com/plantuml/img/  ...")
     try:
         visualizer.output_png(codeable_models_path)
     except Exception as e:
-        print(f"\033[91m{e}\033[0m")
+        print(f"\033[91m     {e}\033[0m")
         
+    print("[x] Generating json edge")
     json_edges.generate_json_edges(information_flows)
-    json_architecture.generate_json_architecture(microservices, information_flows, external_components)
+    print("[x] Generating json architecture")
+    json_architecture.generate_json_architecture(microservices, information_flows, external_components, deployment_list)
     # json_mm_arch.save_arch(microservices, information_flows, external_components)
 
     for m in microservices.values():
@@ -226,58 +231,78 @@ def classify_brokers(microservices: dict) -> dict:
 def classify_microservices(microservices: dict, information_flows: dict, external_components: dict, dfd) -> tuple[dict, dict, dict]:
     """Tries to determine the microservice's funcitonality.
     """
-
-    microservices, information_flows = detect_eureka(microservices, information_flows, dfd)
-    # The above code is a Python script that prints the string "aa" to the console.
-    microservices, information_flows, external_components = detect_zuul(microservices, information_flows, external_components, dfd)
+    print("[x] Detecting spring cloud gateway ...")
     microservices, information_flows, external_components = detect_spring_cloud_gateway(microservices, information_flows, external_components, dfd)
-    microservices, information_flows = detect_spring_oauth(microservices, information_flows, dfd)
+    
+    print("[x] Detecting Service Registry ...")
+    microservices, information_flows = detect_eureka(microservices, information_flows, dfd)
     microservices, information_flows = detect_consul(microservices, information_flows, dfd)
-    microservices, information_flows = detect_hystrix_dashboard(microservices, information_flows, dfd)
-    microservices, information_flows = detect_turbine(microservices, information_flows, dfd)
-    microservices, information_flows = detect_local_logging(microservices, information_flows, dfd)
-    microservices, information_flows = detect_zipkin_server(microservices, information_flows, dfd)
-    microservices, information_flows = detect_spring_admin_server(microservices, information_flows, dfd)
-    microservices, information_flows = detect_prometheus_server(microservices, information_flows, dfd)
-    microservices, information_flows = detect_circuit_breakers(microservices, information_flows, dfd)
-    microservices, information_flows = detect_load_balancers(microservices, information_flows, dfd)
-    microservices = detect_ribbon_load_balancers(microservices, dfd)
-    microservices, information_flows = detect_hystrix_circuit_breakers(microservices, information_flows, dfd)
     microservices, information_flows = detect_zookeeper(microservices, information_flows, dfd)
     microservices, information_flows = detect_etcd(microservices, information_flows, dfd)
-    microservices, information_flows = detect_kibana(microservices, information_flows, dfd)
+    
+    print("[x] Detecting routing services ...")
+    microservices, information_flows, external_components = detect_zuul(microservices, information_flows, external_components, dfd)
+    microservices, information_flows, external_components = detect_nginx(microservices, information_flows, external_components, dfd)
+    microservices, information_flows, external_components = detect_apachehttpd_webserver(microservices, information_flows, external_components, dfd)
+
+    print("[x] Detecting spring OAuth ...")
+    microservices, information_flows = detect_spring_oauth(microservices, information_flows, dfd)
+
+    print("[x] Looking for resilience modules ...")
+    microservices, information_flows = detect_hystrix_dashboard(microservices, information_flows, dfd)
+    microservices, information_flows = detect_turbine(microservices, information_flows, dfd)
+    
+    print("[x] Detecting observability services ...")
+    microservices, information_flows = detect_prometheus_server(microservices, information_flows, dfd)
+    microservices, information_flows = detect_grafana(microservices, information_flows, dfd)
+    microservices, information_flows = detect_zipkin_server(microservices, information_flows, dfd)
+    microservices, information_flows = detect_spring_admin_server(microservices, information_flows, dfd)
+    # ELK
     microservices, information_flows = detect_elasticsearch(microservices, information_flows, dfd)
     microservices, information_flows, external_components = detect_logstash(microservices, information_flows, external_components, dfd)
-    microservices, information_flows, external_components = detect_nginx(microservices, information_flows, external_components, dfd)
-    microservices, information_flows = detect_grafana(microservices, information_flows, dfd)
-    microservices, information_flows = detect_spring_encryption(microservices, information_flows, dfd)
+    microservices, information_flows = detect_kibana(microservices, information_flows, dfd)
+    
+    
+    print("[x] Detecting Circuit Breaker ...")
+    microservices, information_flows = detect_circuit_breakers(microservices, information_flows, dfd)
+    microservices, information_flows = detect_hystrix_circuit_breakers(microservices, information_flows, dfd)
+    
+    print("[x] Detecting Load Balancer ...")
+    microservices, information_flows = detect_load_balancers(microservices, information_flows, dfd)
+    microservices = detect_ribbon_load_balancers(microservices, dfd)
+
+
+    print("[x] Detecting endpoints ...")
     microservices = detect_endpoints(microservices, dfd)
 
+    print("[x] Doing others things ...")
+    microservices, information_flows = detect_local_logging(microservices, information_flows, dfd)
     microservices, information_flows, external_components = detect_miscellaneous(microservices, information_flows, external_components)
-    microservices, information_flows, external_components = detect_apachehttpd_webserver(microservices, information_flows, external_components, dfd)
     microservices = classify_internal_infrastructural(microservices)
+    
+    print("[x] And checking security rules impl ...")
+    microservices, information_flows = detect_spring_encryption(microservices, information_flows, dfd)
     microservices = set_plaintext_credentials(microservices)
     
     # Check security rules
-    print("aza")
+    print("   [x] Checking service registry security ...  (if there is one)")
     microservices = check_registry_security(microservices)
-    print("azb")
-    #  long ->
+    print("   [x] Checking internal communication encryption ...")
     microservices = check_inter_service_encryption(microservices,information_flows)
-    print("azc")
+    print("   [x] Checking external communication encryption ...")
     microservices = check_external_encryption(microservices)
-    print("azd")
-    microservices = check_inter_service_auth_and_authz(microservices, information_flows)
-    print("aze")
+    print("   [x] Detecting login attempt limits ...")
     microservices = detect_login_attempt_limits(microservices, dfd)
-    print("azf")
+    print("   [x] Checking mutual authentication/autorisation ...")
+    microservices = check_inter_service_auth_and_authz(microservices, information_flows)
+    print("   [x] Checking authN/authZ logic separation ...")
     microservices = check_auth_logic_separation(microservices)
-    print("azg")
+    print("   [x] Detecting internal identity security implementation ...")
     microservices = detect_internal_identity(microservices,dfd)
+    print("   [x] Detecting token validation ...")
     microservices = detect_token_validation(microservices, dfd)
-    print("azh")
+    print("   [x] Checking secure logging implementation ...")
     microservices = analyze_logging_architecture(microservices, information_flows, dfd)
-    print("azi")
     
     return microservices, information_flows, external_components
 
@@ -289,7 +314,6 @@ def overwrite_port(microservices: dict) -> dict:
     for microservice in microservices.values():
         for prop in microservice.get("properties", []):
             if prop[0] == "Port":
-                # print(prop)
                 port = None
                 if isinstance(prop[1], str):
                     if "port" in prop[1].casefold() and ":" in prop[1]:
@@ -509,7 +533,7 @@ def detect_miscellaneous(microservices: dict, information_flows: dict, external_
 def merge_duplicate_flows(information_flows: dict):
     """Multiple flows with the same sender and receiver might occur. They are merged here.
     """
-    print("@@@@@@@@@@@@@@@@@@@@@@ DuplicateFlow @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    print(">>>> Deleting duplicated flows ...")
     
     total_flows = len(information_flows)
     normalized_flows = {}
@@ -558,7 +582,7 @@ def merge_duplicate_nodes(nodes: dict, information_flows: dict):
     
     # Microservices
     to_delete = set()
-    print("@@@@@@@@@@@@@@@@@@@@@@ DuplicatNode @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    print(">>>> Deleting duplicate node ...")
     for i, j in combinations(nodes.keys(), 2):
         if i == j:
             continue
@@ -617,6 +641,8 @@ def merge_duplicate_nodes(nodes: dict, information_flows: dict):
         if keep and delete:
             for field, j_value in delete.items():
                 if field not in ["name", "type"]:
+                    if isinstance(j_value,str):
+                        j_value = [j_value]
                     try:
                         keep[field] = keep.get(field, []) + list(j_value)
                     except Exception:
