@@ -5,13 +5,14 @@ from pathlib import Path
 import tmp.tmp as tmp
 
 
-def generate_json_architecture(microservices: dict, information_flows: dict, external_components: dict):
+def generate_json_architecture(microservices: dict, information_flows: dict, external_components: dict, deploiment_structure: list):
     """Creates JSON file that contains the complete extracted architecture.
     """
-
+    
     full_dict = {"microservices": list(microservices.values()),
                  "information_flows": list(information_flows.values()),
-                 "external_components": list(external_components.values())}
+                 "external_components": list(external_components.values()),
+                 "deploiment_structure": list(deploiment_structure)}
     
     output_path = tmp.tmp_config["Analysis Settings"]["output_path"]
     parts = Path(output_path).parts

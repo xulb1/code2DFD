@@ -4,7 +4,7 @@ from pathlib import Path
 import tmp.tmp as tmp
 
 
-def write_plaintext(microservices, information_flows, external_components):
+def write_plaintext(microservices, information_flows, external_components, deploy_structure):
     output_path = tmp.tmp_config["Analysis Settings"]["output_path"]
     parts = Path(output_path).parts
     filename = f"{parts[-2]}--{parts[-1]}_results.txt"
@@ -28,3 +28,8 @@ def write_plaintext(microservices, information_flows, external_components):
             output_file.write("\n\nExternal Components:\n")
             for e in external_components.keys():
                 output_file.write("\n" + str(external_components[e]))
+        
+        if deploy_structure:
+            output_file.write("\n\nDeploiement Structure:\n")
+            for deployment_element in deploy_structure:
+                output_file.write("\n" + str(deployment_element))
