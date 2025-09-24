@@ -1,0 +1,613 @@
+@startuml
+' Metamodel for Java-based Microservice Architecture and Vulnerability Analysis'
+
+class Architecture
+{
+    +name: String
+    +description: String
+}
+
+
+' Zone 2: Component & Connector Types'
+package "Component & Connector Types" {
+    class ComponentAndConnectorStructure
+    {
+        +name: String
+        +description: String
+    }
+    Architecture "1" -- "1" ComponentAndConnectorStructure : has >
+
+    abstract class Component extends ComponentAndConnectorStructure {
+        +microserviceFramework: String
+        ' e.g., Spring Boot, Dropwizard, Micronaut - Discoverable via build files/dependencies'
+        +exposedProtocols: List<CommunicationProtocol>
+        ' e.g., HTTP, AMQP, Kafka, WebSocket, gRPC - Discoverable from code/configuration'
+        +isContainerized: Boolean
+        ' Discoverable from deployment configuration'
+        +language: String
+        +runtimeVersion: String
+        +buildTool: String
+        ' e.g., Maven, Gradle'
+    }
+
+    class WebMonolithicComponent extends Component {
+    }
+
+    class TechnicalComponent extends Component {
+        +technicalType: TechnicalComponentType
+    }
+
+    enum TechnicalComponentType {
+        Cache
+        ' LoadBalancer
+        Storage
+        Database
+        MessageQueue
+        ' MessageBroker
+        ' SecretManagementSystem
+        ' LogMonitoringTool
+        ' LoggingAgent
+        ' ServiceRegistry
+        ' AuthService
+    }
+
+    class ServiceRegistry extends TechnicalComponent {
+        +registryType: String
+        ' e.g., Eureka, Consul, Kubernetes Service Discovery - Discoverable from configuration'
+        +validationChecksEnabled: Boolean ->R17
+        ' Discoverable from configuration'
+        +deploymentStrategy: ServiceRegistryDeploymentStrategy ->R16
+        ' Discoverable from configuration'
+    }
+
+    enum ServiceRegistryDeploymentStrategy {
+        DedicatedServer
+        ServiceMeshIntegrated
+    }
+
+    class LoadBalancer extends TechnicalComponent {
+        +loadBalancerType: String
+        ' e.g., NGINX, AWS ELB, Kubernetes Ingress - Discoverable from configuration'
+        +targetPorts: List<Integer>
+        ' Discoverable from configuration'
+        +performsLoadBalancing: Boolean ->R14
+        ' Discoverable from configuration'
+    }
+
+    class SecretManagementSystem extends TechnicalComponent {
+        +systemType: String
+        ' e.g., HashiCorp Vault, AWS Secrets Manager, Azure Key Vault - Discoverable from configuration'
+        +centralized: Boolean ->R18
+        ' Discoverable from configuration'
+        +secretsAsAServicePrincipleApplied: Boolean ->R18
+        ' Discoverable from configuration'
+    }
+    Component "0..*" -- "1" SecretManagementSystem : retrievesSecretsFrom (R18) >
+
+    class LogMonitoringTool extends TechnicalComponent {
+        +toolName: String
+        ' e.g., Prometheus, Grafana, DataDog - Discoverable from configuration/dependencies'
+        +logFormat: String
+        ' e.g., JSON, plain text - Discoverable from configuration/code'
+        +metricsCollected: List<String>
+        ' e.g., response times, error rates, request counts - Discoverable from configuration/code'
+        +correlationIdEnabled: Boolean
+        ' Indicates if correlation IDs are used - Discoverable from code/configuration'
+        +isCentralLoggingSystem: Boolean ->R9
+        ' Discoverable from configuration/deployment'
+        +hasMonitoringDashboard: Boolean ->R9
+        ' Discoverable from configuration/presence of dashboard definitions'
+    }
+
+    class LoggingAgent extends TechnicalComponent {
+        'R10'
+        +isDecoupled: Boolean
+        ' Discoverable from configuration'
+        +writesToLocalFile: Boolean
+        ' Discoverable from configuration'
+        +performsSanitization: Boolean ->R11
+        ' Discoverable from configuration'
+        +sendsHealthData: Boolean ->R12
+        ' Discoverable from configuration'
+    }
+    Microservice "1" -- "1" LoggingAgent: sendLogsTo >
+    
+    class MessageBroker extends TechnicalComponent {
+        +brokerType: String
+        ' e.g., Kafka, RabbitMQ, ActiveMQ - Discoverable from configuration'
+        +topics: List<String>
+        ' Discoverable from configuration/code'
+        +queues: List<String>
+        ' Discoverable from configuration/code'
+        +mutualAuthenticationEnabled: Boolean ->R12
+        ' Discoverable from configuration'
+        +encryptionEnabled: Boolean ->R12
+        ' Discoverable from configuration'
+    }
+
+    ' Global Relationships (spanning across multiple packages)'
+    LoggingAgent "0..*" -- "1" MessageBroker : sendsLogsVia (R12) >
+    LogMonitoringTool "1" -- "1" MessageBroker : receiveLogsFrom (R12) >
+
+    class AuthService extends TechnicalComponent {
+        +securityMechanism: List<securityMechanismType> 
+        ' hashage, sanitization, ...
+        +loginAttemptLimit: Integer ->R6
+        ' For R6 - if auth is handled internally - Discoverable from code/configuration'
+        +authenticationCheck: Boolean
+        +authorizationCheck: Boolean
+        +useSecretManagmentSystem: Boolean
+    }
+
+    ' AuthService "0..*" -- "1" SecretManagementSystem : getSecretFrom >
+    Component "0..*" -- "1" AuthService : usesForAuthN (R3) >
+    Component "0..*" -- "1" AuthService : usesForAuthZ (R3) >
+
+    class FrontEndComponent extends Component {
+        +frontEndType: FrontEndType
+    }
+
+    enum FrontEndType {
+        Web
+        Mobile
+        Desktop
+    }
+
+    abstract class BackEndComponent extends Component {
+    }
+
+    class MonolithicBackEnd extends BackEndComponent {
+    }
+
+    class APIGateway extends BackEndComponent {
+        +gatewayType: String
+        ' e.g., Spring Cloud Gateway, Zuul, AWS API Gateway - Discoverable from configuration'
+        +isSingleEntrypoint: Boolean ->R1
+        ' Discoverable from configuration/architecture analysis'
+        +circuitBreakerEnabled: Boolean ->R13
+        ' For R13 (if proxy is API Gateway) - Discoverable from configuration'
+        +performsLoadBalancing: Boolean ->R14
+        ' For R14 (if API Gateway acts as LB) - Discoverable from configuration'
+        +tokenTransformationApplied: Boolean ->R4
+        ' For R4 - if identity transformation happens within this mechanism - Discoverable from code'
+        +identityTokenSigned: Boolean ->R4
+        ' For R4 - if identity tokens are signed - Discoverable from code/configuration'
+    }
+
+    class Microservice extends BackEndComponent {
+    }
+    
+    abstract class Interface
+    {
+        +authenticationRequired: Boolean ->R1
+        ' Discoverable from code/configuration'
+        +authorizationRequired: Boolean ->R1
+        ' Discoverable from code/configuration'
+        +isInternal: Boolean
+        ' Can be inferred if not exposed via API Gateway or explicit annotation'
+        +isEncryptedCommunication: Boolean ->R7,R8
+    }
+
+    MonolithicBackEnd "1" -- "1..*" Interface : exposes >
+    APIGateway "1" -- "1..*" Interface : exposes >
+    Microservice "1" -- "1..*" Interface : exposes >
+
+    class AsynchronousCommunicationInterface extends Interface {
+        +description: String
+        +messageQueueTopic: String
+        ' Discoverable from code (e.g., Kafka topics, RabbitMQ queues)'
+        +messageFormat: String
+        ' e.g., JSON, Avro, Protobuf - Discoverable from code/configuration'
+    }
+
+    class SynchronousCommunicationInterface extends Interface {
+        +description: String
+        +timeout: Int
+        +protocol: String
+        ' Discoverable from code/configuration'
+    }
+
+    SynchronousCommunicationInterface "1" -- "0..*" API : exposes >
+
+    class API
+    {
+        +isCorsEnabled: Boolean
+        ' Discoverable from code/configuration'
+        +baseURL: String
+        ' Discoverable from code/configuration'
+        +port: Integer
+        ' Discoverable from code/configuration'
+        +documentation: String
+        ' From JSON'
+        +apiType: APIType
+        ' REST, GraphQL - Discoverable from annotations/framework usage'
+        +tokenValidationEnabled: Boolean ->R5
+        ' For R5 - Discoverable from code/framework config'
+    }
+
+    API "0..*" -- "0..*" SecurityMechanism : uses > 
+    ' General security mechanisms like OAuth2, JWT'
+
+    enum APIType {
+        REST
+        GraphQL
+        SOAP
+        gRPC
+    }
+
+    API "1" -- "0..1" RESTEndpoint : has >
+    API "1" -- "0..1" GraphQLEndpoint : has >
+
+    class RESTEndpoint
+    {
+        +route: String
+        ' Discoverable from annotations/configuration'
+        +produces: List<String>
+        ' Content types produced (e.g., application/json) - Discoverable from code'
+        +consumes: List<String>
+        ' Content types consumed - Discoverable from code'
+    }
+
+    RESTEndpoint "1" -- "0..*" HTTPRequest : expects >
+    RESTEndpoint "1" -- "0..*" HTTPResponse : provides >
+
+    class HTTPRequest
+    {
+        +httpMethod: List<HttpMethod>
+        ' Discoverable from annotations/code'
+        +pathVariables: List<String>
+        ' Extractable from route annotations'
+        +queryParams: List<String>
+        ' Extractable from method parameters'
+    }
+
+    enum HttpMethod {
+        POST
+        GET
+        PUT
+        DELETE
+        PATCH
+    }
+
+    HTTPRequest "1" -- "0..*" RequestHeader : has >
+    HTTPRequest "1" -- "0..1" RequestBody : has >
+    HTTPRequest "1" -- "0..*" RequestParam : has >
+
+    class RequestHeader
+    {
+        +key: String
+        ' Discoverable from code/configuration'
+        +value: String
+        ' Discoverable from code/configuration (if default/static)'
+    }
+
+    class RequestBody
+    {
+        +contentType: String
+        ' e.g., application/json - Discoverable from code/annotations'
+        +content: String
+        ' From JSON'
+    }
+
+    class RequestParam
+    {
+        +key: String
+        ' Discoverable from code/annotations'
+        +value: String
+        ' From JSON'
+        +paramType: ParamType
+        ' Discoverable from code/annotations'
+    }
+
+    enum ParamType {
+        PATH
+        QUERY
+        HEADER
+        COOKIE
+        MATRIX
+    }
+
+    class HTTPResponse
+    {
+        +statusCode: List<Integer>
+        ' Discoverable from code/annotations'
+        +contentType: String
+        ' Discoverable from code/annotations'
+        +content: String
+        ' From JSON'
+        +message: String
+        ' From JSON'
+    }
+
+    class GraphQLEndpoint
+    {
+        +route: String
+        ' Discoverable from configuration'
+    }
+
+    GraphQLEndpoint "1" -- "1" GraphQLSchema : has >
+
+    class GraphQLSchema
+    {
+        +sdl: String
+        ' Schema Definition Language - Can be extracted'
+    }
+
+    GraphQLSchema "1" -- "0..*" Query : has >
+    GraphQLSchema "1" -- "0..*" Mutation : has >
+    GraphQLSchema "1" -- "0..*" Type : has >
+
+    class Query
+    {
+        +fields: List<String>
+        ' Discoverable from SDL'
+    }
+
+    class Mutation
+    {
+        +operation: String
+        ' Discoverable from SDL'
+        +fields: List<String>
+        ' Discoverable from SDL'
+    }
+
+    class Type
+    {
+        +name: String
+        ' Discoverable from SDL'
+        +fields: List<String>
+        ' Discoverable from SDL'
+    }
+
+    Query "1" -- "0..*" Type : has >
+    Mutation "1" -- "1" Type : has >
+
+
+    abstract class Connector extends ComponentAndConnectorStructure {
+        +protocol: CommunicationProtocol
+        ' e.g., HTTP, AMQP, Kafka, Database Protocol - Discoverable from code'
+        +isEncryptedCommunication: Boolean ->R7,R8
+        ' For R7, R8 - Discoverable from configuration (e.g., TLS enabled)'
+        +mutualAuthenticationRequired: Boolean ->R2,R12
+        ' For R2, R12 - Discoverable from configuration'
+    }
+
+    enum CommunicationProtocol {
+        HTTP
+        HTTPS
+        AMQP
+        Kafka
+        JMS
+        JDBC
+        FTP
+        gRPC
+        WebSocket
+        REST
+        GraphQL
+    }
+
+    Connector "1" -- "0..*" Component : source >
+    Connector "1" -- "0..*" Component : destination >
+
+    class HTTPConnector extends Connector {
+        +secure: Boolean
+        ' Discoverable from configuration (e.g., TLS cipher suites)'
+    }
+
+    class TechnicalConnector extends Connector {
+        +type: TechnicalConnectorType
+    }
+
+    enum TechnicalConnectorType {
+        DBConnector
+        FTP
+        MQConnector
+    }
+
+}
+
+' Zone 4: Deployment Structure'
+package "Deployment Structure" {
+    class DeploymentStructure
+    {
+        +name: String
+        +description: String
+        +environment: List<DeploymentEnvironment>
+        +containerOrchestrator: List<ContainerOrchestratorType>
+    }
+
+    enum DeploymentEnvironment{
+        PROD
+        TEST
+        DEV
+        STAGING
+    }
+
+    enum ContainerOrchestratorType {
+        KUBERNETES
+        DOCKER_COMPOSE
+        DOCKER_SWARM
+        AMAZON_ECS
+        AZURE_AKS
+        GOOGLE_GKE
+        REDHAT_OPENSHIFT
+    }
+
+    Architecture "1" -- "0..*" DeploymentStructure : deployedIn >
+    DeploymentStructure "1" -- "1..*" DeploymentElement : contains >
+
+    abstract class DeploymentElement
+    {
+        +name: String
+        +deployedVersion: String
+        ' Discoverable from deployment artifacts'
+    }
+
+    abstract class SoftwareElement extends DeploymentElement{
+        +name: String
+        ' Discoverable from code/configuration'
+    }
+    
+    class EnvironmentalElement extends DeploymentElement{
+        +networkAccessControlList: List<String>
+        ' Discoverable from network configuration'
+        +patchingFrequency: String
+        ' Discoverable from operational policies/tools (if integrated into config)'
+    }
+
+    SoftwareElement "1" -- "1" Component : representsDeployed >
+    SoftwareElement "1" -- "0..1" EnvironmentalElement : hosts on >
+    EnvironmentalElement "1" -- "0..1" EnvironmentalElement : has >
+
+    class Network extends EnvironmentalElement {
+        +networkPolicies: List<String>
+        ' Can be derived from Kubernetes NetworkPolicies, AWS Security Groups, etc.'
+    }
+
+    Network "1" -- "0..*" Subnet : contains >
+    Network "1" -- "0..1" Cluster : contains >
+    Network "1" -- "0..1" Server : contains >
+
+    class Subnet
+    {
+        +cidrBlock: String
+        ' Discoverable from infrastructure as code'
+    }
+
+    Subnet "1" -- "0..1" Cluster : contains >
+    Subnet "1" -- "0..1" Server : contains >
+
+    class Cluster extends EnvironmentalElement {
+        +orchestratorToolVersion: String
+        ' Discoverable from orchestration tool configuration'
+        +resourceLimitsConfigurable: Boolean ->R15
+        ' Discoverable from orchestration tool configuration'
+    }
+
+    Cluster "1" -- "0..*" Server : contains >
+    Cluster "1" -- "0..1" Container : contains
+
+    class Server extends EnvironmentalElement {
+        +serverType: ServerType
+        +operatingSystem: String
+        ' Discoverable from server configuration'
+        +javaRuntimeVersion: String
+        ' Discoverable from server/container configuration'
+    }
+
+    enum ServerType {
+        VIRTUAL
+        PHYSICAL
+        CLOUD_INSTANCE
+    }
+
+    Server "1" -- "0..*" ExecutionEnvironment : hosts >
+    Server "1" -- "0..1" Container : hosts >
+
+    class Container extends EnvironmentalElement {
+        +imageName: String
+        ' Discoverable from Dockerfile/Container Registry'
+        +tag: String
+        ' Discoverable from Dockerfile/Container Registry'
+        +exposedPorts: List<Integer>
+        ' Discoverable from Dockerfile/Container configuration'
+    }
+
+    Container "1" -- "1" ExecutionEnvironment : runs >
+
+    class ExecutionEnvironment extends EnvironmentalElement {
+    }
+
+}
+
+
+
+' FIXME seems inutil ...
+' Zone 6: Security Concepts
+package "Security Concepts" {
+    class SecurityMechanism
+    {
+        +name: String
+        ' Discoverable from code/configuration (e.g., bean names, class names)'
+        +type: SecurityMechanismType
+        ' Discoverable from code/dependencies (e.g., class types, annotations)'
+        +frameworkUsed: String
+        ' e.g., Spring Security, Apache Shiro - Discoverable from dependencies/code'
+        +version: String
+        ' Version of the security library/framework - Discoverable from build files/dependencies'
+    }
+    enum SecurityMechanismType {
+        Authentication
+        Authorization
+        Encryption
+        Logging
+        Auditing
+        InputValidation
+        RateLimiting
+        Firewall
+        IntrusionDetection
+        TLS
+        OAuth2
+        JWT
+        MFA
+        WAF
+        ServiceMeshSecurity
+        ContainerSecurity
+        MutualTLS
+        CircuitBreaker
+    }
+
+    ' class SecurityControl {
+    '     +name: String
+    '     ' Discoverable from defined policies/code (if named)'
+    '     +isAutomated: Boolean
+    '     ' Can be inferred from CI/CD setup/automation scripts'
+    '     +description: String
+    ' }
+
+    ' TODO bof pas très utile ?
+    class SecurityZone
+    {
+        +name: String
+        ' Discoverable from network configuration/labels'
+        +securityLevel: SecurityLevel
+        ' Can be inferred from network segmentation/access controls'
+        +networkSegmentation: String
+        ' Discoverable from network configuration'
+        +associatedNetworks: List<String>
+        ' References to Network elements - Discoverable from network configuration'
+    }
+
+    class Threat
+    {
+        +name: String
+        ' Can be mapped from known patterns in code/config'
+        +owaspCategory: String
+        ' e.g., A01:2021-Broken Access Control - Can be inferred from detected vulnerabilities'
+        +description: String
+    }
+
+    ' TODO bof pas utile ?
+    enum SecurityLevel {
+        Untrusted
+        DMZ
+        Internal
+        Restricted
+        HighlySensitive
+    }
+
+    ' NEW SECURITY RELATIONSHIPS '
+    SecurityMechanism "1" -- "0..*" Threat : mitigates >
+
+    ' Where vulnerabilities/threats manifest and controls are applied'
+    Component "0..*" -- "0..*" SecurityMechanism : applies >
+    Interface "0..*" -- "0..*" SecurityMechanism : applies >
+    Connector "0..*" -- "0..*" SecurityMechanism : applies >
+
+    ' Security Zone relationships'
+    SecurityZone "0..*" -- "0..*" DeploymentElement : protects >
+    SecurityZone "0..*" -- "0..*" SecurityMechanism : enforces >
+    SecurityZone "0..*" -- "0..*" Threat : influencesExposureTo >
+}
+
+@enduml
